@@ -1,0 +1,58 @@
+{
+  "name": "ledger",
+  "version": "0.0.1",
+  "description": "Double Entry Core Ledger for the Open Collective platform",
+  "main": "dist/index.js",
+  "engines": {
+    "node": "10.7.0",
+    "npm": "6.2.0"
+  },
+  "scripts": {
+    "clean": "rm -rf dist && mkdir dist",
+    "build-server": "babel server -d ./dist",
+    "build": "npm run clean && npm run build-server",
+    "dev": "nodemon server/index.js -x babel-node . -e js,hbs",
+    "start": "npm run build && node ./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opencollective/ledger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/opencollective/ledger/issues"
+  },
+  "homepage": "https://github.com/opencollective/ledger#readme",
+  "dependencies": {
+    "babel-cli": "6.26.0",
+    "babel-core": "6.26.0",
+    "babel-eslint": "7.2.3",
+    "babel-loader": "7.1.2",
+    "babel-plugin-add-module-exports": "0.2.1",
+    "babel-plugin-lodash": "3.2.11",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-es2015": "6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "babel-register": "6.26.0",
+    "express": "^4.16.3",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "babel-plugin-istanbul": "4.1.4",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "coveralls": "^3.0.2",
+    "eslint": "^5.2.0",
+    "eslint-config-opencollective": "^1.3.0",
+    "eslint-plugin-babel": "^5.1.0",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-mocha": "^5.1.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-react": "^7.10.0",
+    "mocha": "^5.2.0",
+    "nock": "^9.4.3",
+    "nodemon": "^1.18.3",
+    "nyc": "^12.0.2",
+    "sinon": "^6.1.4",
+    "webpack": "^4.16.3"
+  }
+}
