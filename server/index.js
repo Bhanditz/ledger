@@ -2,10 +2,11 @@ import express from 'express';
 import { Router } from './routes';
 import os from 'os';
 import config from '../config/config';
-const app = express();
+import models from './models';
 
-// app.use(require('./routes'));
-new Router(app);
+const app = express();
+app.routers = new Router(app);
+app.models = models;
 /**
  * Start server
  */
