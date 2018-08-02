@@ -1,5 +1,5 @@
 {
-  "presets": ["es2015", "stage-0"],
+  "presets": [["latest-node", { "target": "current" }], "stage-0"],
   "plugins": [
     "add-module-exports",
     "lodash"
