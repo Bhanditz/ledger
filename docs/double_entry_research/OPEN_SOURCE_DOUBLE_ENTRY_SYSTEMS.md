@@ -6,7 +6,9 @@ Here is a list of double entry projects I found that worth
 
 Most popular double entry OS project i've found so far(2500+ gh stars)
 Language: C++
+
 Awesome [documentation](https://www.ledger-cli.org/docs.html)
+
 [Github](https://github.com/ledger/ledger)
 
 As this project is just a CLI tool, there is [Frontend Project](https://github.com/lipidity/ledgible) that offers an interface.
@@ -15,12 +17,15 @@ As this project is just a CLI tool, there is [Frontend Project](https://github.c
 
 Second most popular implementation 
 Language: C
+
 [Documentation](http://www.gnucash.org/)
-[Github]()
+
+[Github](https://github.com/Gnucash/gnucash)
 
 ## Plutus
 
 Language: Ruby(framework rails)
+
 [Github](https://github.com/mbulat/plutus)
 
 ## Juxt
@@ -33,30 +38,38 @@ Language: Clojure+Datomic(database)
 ## Ledger in Go
 
 This project is based on the [C++ Ledger Project](##ledger) cited above but promises to be simpler and more straightforward
+
 Language: Go
+
 [Github](https://github.com/howeyc/ledger)
 
 
 ##  DoubleEntry
 
 Language: Ruby
+
 [Github](https://github.com/envato/double_entry)
 
 ## Webzash
 
 Language: PHP
+
 [Documentation](http://webzash.org/)
+
 [Github](https://github.com/strollo/webzash)
 
 ## Medici
 
 Language: Nodejs(with mongoDb)
+
 [Github](https://github.com/koresar/medici)
 
 ## dblbook
 
 Based on [ledger](##ledger) and [gnucash](##gnucash)
+
 Language: Javascript
+
 [Github](https://github.com/haberman/dblbook)
 
 
