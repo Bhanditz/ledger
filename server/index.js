@@ -3,8 +3,11 @@ import { Router } from './routes';
 import os from 'os';
 import config from '../config/config';
 import models from './models';
+import pino from 'express-pino-logger';
 
 const app = express();
+app.use(express.json());
+app.use(pino());
 app.routers = new Router(app);
 app.models = models;
 /**
