@@ -1,3 +1,5 @@
+import { transactionTypeEnum } from '../../server/globals/enums/transactionTypeEnum';
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('Transactions', {
@@ -6,38 +8,43 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true
       },
-      /* BY Some reason Sequelize was throwing error when trying to create tables with
-         References */
+      type: {
+        type: Sequelize.ENUM,
+        values: Object.values(transactionTypeEnum),
+      },
       FromAccountId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Accounts'},
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       ToAccountId: {
-      type: Sequelize.INTEGER,
+        type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Accounts'},
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      WalletId: {
+      FromWalletId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Wallets'},
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      PaymentProviderId: {
+      ToWalletId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'PaymentProviders'},
-        allowNull: false,
+        references: {key: 'id', model: 'Wallets'},
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       amount: {
         type: Sequelize.FLOAT,
+      },
+      TransactionGroup: {
+        type: Sequelize.UUID,
       },
       currency: {
         type: Sequelize.STRING,
@@ -45,16 +52,16 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       updatedAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       deletedAt: {
         type: Sequelize.DATE
       },
-    });
+    }, { timestamps: true, });
   },
 
   down: (queryInterface) => {

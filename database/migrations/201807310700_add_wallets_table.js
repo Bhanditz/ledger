@@ -10,8 +10,6 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'USD'
       },
-      /* BY Some reason Sequelize was throwing error when trying to create tables with
-         References */
       OwnerAccountId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Accounts'},
@@ -19,25 +17,22 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      PaymentProviderId: {
-        type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'PaymentProviders'},
+      type: {
+        type: Sequelize.STRING,
         allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
       },
       createdAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       updatedAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       deletedAt: {
         type: Sequelize.DATE
       },
-    });
+    }, { timestamps: true, });
   },
 
   down: (queryInterface) => {

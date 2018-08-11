@@ -12,19 +12,23 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'USD'
       },
-      slug: Sequelize.STRING,
+      slug: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+      },
       createdAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       updatedAt: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('NOW()')
       },
       deletedAt: {
         type: Sequelize.DATE
       },
-    });
+    }, { timestamps: true, });
   },
 
   down: (queryInterface) => {
