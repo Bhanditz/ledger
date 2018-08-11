@@ -8,6 +8,7 @@ lib-cov
 *.pid
 *.gz
 
+api-doc
 node_modules
 coverage
 dbdumps

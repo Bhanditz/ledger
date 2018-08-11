@@ -2,3 +2,4 @@ node_modules/
 database/
 coverage/
 dist/
+api-doc/
