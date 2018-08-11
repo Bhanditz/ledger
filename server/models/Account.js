@@ -22,7 +22,4 @@ export default class Account extends Sequelize.Model {
       },
     }, { sequelize });
   }
-
-  // static associate(models) {
-  // }
 }

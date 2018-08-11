@@ -19,12 +19,9 @@ export default class Wallet extends Sequelize.Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      PaymentProviderId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'PaymentProviders' },
+      type: {
+        type: Sequelize.STRING,
         allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -45,6 +42,5 @@ export default class Wallet extends Sequelize.Model {
    */
   static associate(models) {
     this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
-    this.belongsTo(models.PaymentProvider, { foreignKey: 'PaymentProviderId', as: 'paymentProvider' });
   }
 }

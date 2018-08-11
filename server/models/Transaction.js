@@ -11,33 +11,36 @@ export default class Transaction extends Sequelize.Model {
       FromAccountId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
       ToAccountId: {
-      type: Sequelize.INTEGER,
+        type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      WalletId: {
+      FromWalletId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Wallets' },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      PaymentProviderId: {
+      ToWalletId: {
         type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'PaymentProviders' },
-        allowNull: false,
+        references: { key: 'id', model: 'Wallets' },
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
       amount: {
         type: Sequelize.FLOAT,
+      },
+      TransactionGroup: {
+        type: Sequelize.UUID,
       },
       currency: {
         type: Sequelize.STRING,
@@ -60,8 +63,8 @@ export default class Transaction extends Sequelize.Model {
   static associate(models) {
     this.belongsTo(models.Account, { foreignKey: 'FromAccountId', as: 'fromAccount' });
     this.belongsTo(models.Account, { foreignKey: 'ToAccountId', as: 'toAccount' });
-    this.belongsTo(models.Wallet, { foreignKey: 'WalletId', as: 'wallet' });
-    this.belongsTo(models.PaymentProvider, { foreignKey: 'PaymentProviderId', as: 'paymentProvider' });
+    this.belongsTo(models.Wallet, { foreignKey: 'FromWalletId', as: 'fromWallet' });
+    this.belongsTo(models.Wallet, { foreignKey: 'ToWalletId', as: 'toWallet' });
   }
 
 }
