@@ -1,0 +1,7 @@
+{
+  "name": "Ledger API",
+  "version": "0.0.1",
+  "description": "API that will be responsible for transactions in the Open Collective platform",
+  "title": "Ledger API",
+  "url" : "http://localhost:3060"
+}

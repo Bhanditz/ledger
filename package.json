@@ -15,7 +15,8 @@
     "start": "npm run build && node ./dist/index.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
-    "db:seed": "node_modules/.bin/sequelize db:seed"
+    "db:seed": "node_modules/.bin/sequelize db:seed",
+    "doc": "node_modules/.bin/apidoc -i server/routes/ -o api-doc/ && open api-doc/index.html"
   },
   "repository": {
     "type": "git",
@@ -27,15 +28,21 @@
   "homepage": "https://github.com/opencollective/ledger#readme",
   "dependencies": {
     "express": "^4.16.3",
+    "express-pino-logger": "^4.0.0",
+    "express-validator": "^5.3.0",
+    "http-status-codes": "^1.3.0",
     "path": "^0.12.7",
     "pg": "^7.4.3",
     "pg-format": "^1.0.4",
     "pg-hstore": "^2.3.2",
+    "pino": "^5.0.1",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
-    "sequelize-temporal": "^1.0.6"
+    "sequelize-temporal": "^1.0.6",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "apidoc": "^0.17.6",
     "babel-cli": "6.26.0",
     "babel-core": "6.26.0",
     "babel-eslint": "7.2.3",
