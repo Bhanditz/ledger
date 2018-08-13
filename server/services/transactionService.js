@@ -16,10 +16,8 @@ export default class TransactionService extends AbstractCrudService {
 
   create(data) {
     const strategy = this._defineTransactionStrategy(data);
-    console.log(`strategy: ${strategy}`);
     // the strategy will return an array of transactions already formatted for the db
     const transactions = strategy.getTransactions();
-    console.log(`transactions: ${JSON.stringify(transactions)}`);
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
     return sequelize.transaction( t => {
