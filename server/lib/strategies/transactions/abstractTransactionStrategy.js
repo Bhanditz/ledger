@@ -10,7 +10,7 @@ export default class AbstractTransactionStrategy {
   **  if it doesn't have, insert them
   * @return {Array} of transactions
   */
-  getTransactions (){
+  async getTransactions (){
   }
 
   /** Given a transaction, check whether it has a TransactionGroup and a transactionGroupSequence
