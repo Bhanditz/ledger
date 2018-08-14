@@ -1,5 +1,34 @@
-# ledger
+# Ledger
+
 Core Ledger(Double-Entry System) Requirements and features.
+
+## Usage
+
+### Local
+
+Make sure you have postgres installed and create the database `opencollective_ledger_dvl` . You will find all the details on how to install and create the necessary permissions on the [postgres doc](docs/postgres.md).
+After having the database created, run :
+
+- `npm install`
+- `npm run db:migrate`
+- `npm run dev` (to use nodemon) OR `npm run start`
+
+#### Docker
+
+// TO DO
+
+
+## Tests
+
+- `npm install`
+- `npm run test`
+
+## Documentation(REST)
+
+We are using the library [apidoc](https://github.com/apidoc/apidoc) to generate this documentation. it generates a folder `api-docs` that has an `index.html` at its root which can be open to check the current endpoints.
+
+- `npm run doc`
+
 
 ## Database models
 
