@@ -19,7 +19,7 @@ export default class Wallet extends Sequelize.Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      type: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },

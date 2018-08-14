@@ -1,4 +1,5 @@
 import Sequelize from 'sequelize';
+import { transactionTypeEnum } from '../globals/enums/transactionTypeEnum';
 
 export default class Transaction extends Sequelize.Model {
   static init(sequelize) {
@@ -7,6 +8,11 @@ export default class Transaction extends Sequelize.Model {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+      },
+      type: {
+        type: Sequelize.ENUM,
+        allowNull: false,
+        values: Object.values(transactionTypeEnum),
       },
       FromAccountId: {
         type: Sequelize.INTEGER,
@@ -39,8 +45,13 @@ export default class Transaction extends Sequelize.Model {
       amount: {
         type: Sequelize.FLOAT,
       },
-      TransactionGroup: {
+      transactionGroupId: {
         type: Sequelize.UUID,
+        allowNull: false,
+      },
+      doubleEntryGroupId: {
+        type: Sequelize.UUID,
+        allowNull: false,
       },
       currency: {
         type: Sequelize.STRING,
