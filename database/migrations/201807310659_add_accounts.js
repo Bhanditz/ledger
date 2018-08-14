@@ -8,10 +8,6 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true
       },
-      currency: {
-        type: Sequelize.STRING,
-        defaultValue: 'USD'
-      },
       slug: {
         type: Sequelize.STRING,
         allowNull: false,
