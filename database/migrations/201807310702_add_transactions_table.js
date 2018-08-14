@@ -1,5 +1,3 @@
-import { transactionTypeEnum } from '../../server/globals/enums/transactionTypeEnum';
-
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('Transactions', {
@@ -10,7 +8,8 @@ module.exports = {
       },
       type: {
         type: Sequelize.ENUM,
-        values: Object.values(transactionTypeEnum),
+        allowNull: false,
+        values: ['CREDIT', 'DEBIT'],
       },
       FromAccountId: {
         type: Sequelize.INTEGER,
@@ -43,8 +42,13 @@ module.exports = {
       amount: {
         type: Sequelize.FLOAT,
       },
-      TransactionGroup: {
+      transactionGroupId: {
         type: Sequelize.UUID,
+        allowNull: false,
+      },
+      doubleEntryGroupId: {
+        type: Sequelize.UUID,
+        allowNull: false,
       },
       currency: {
         type: Sequelize.STRING,
@@ -61,7 +65,8 @@ module.exports = {
       deletedAt: {
         type: Sequelize.DATE
       },
-    }, { timestamps: true, });
+    }, { timestamps: true });
+
   },
 
   down: (queryInterface) => {
