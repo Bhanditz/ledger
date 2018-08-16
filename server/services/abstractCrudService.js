@@ -4,8 +4,8 @@ export default class AbstractCrudService {
     this.model = model;
   }
 
-  get(query) {
-    return this.model.findAll(query);
+  get(query = {}) {
+    return this.model.findAll({ where: query });
   }
 
   create(data) {
