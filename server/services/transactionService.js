@@ -1,5 +1,6 @@
-import models, { sequelize } from '../models';
+import { sequelize } from '../models';
 import AbstractCrudService from './abstractCrudService';
+import Transaction from '../models/Transaction';
 import TransactionCashFlow from '../lib/strategies/transactions/transactionCashFlow';
 import TransactionAccountToAccountFx from '../lib/strategies/transactions/transactionAccountToAccountFx';
 import TransactionAccountToAccount from '../lib/strategies/transactions/transactionAccountToAccount';
@@ -8,7 +9,7 @@ import Logger from '../globals/logger';
 export default class TransactionService extends AbstractCrudService {
 
   constructor() {
-    super(models.Transaction);
+    super(Transaction);
     this.logger = new Logger();
   }
 
@@ -25,7 +26,7 @@ export default class TransactionService extends AbstractCrudService {
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
     return sequelize.transaction( t => {
-        return models.Transaction.bulkCreate(transactions, { transaction: t });
+        return this.model.bulkCreate(transactions, { transaction: t });
     }).then( result => {
       this.logger.info(result, 'Transactions created successfully');
       return result;

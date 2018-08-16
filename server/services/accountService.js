@@ -1,8 +1,8 @@
 import AbstractCrudService from './abstractCrudService';
-import models from '../models';
+import Account from '../models/Account';
 
 export default class AccountService extends AbstractCrudService {
   constructor() {
-    super(models.Account);
+    super(Account);
   }
 }

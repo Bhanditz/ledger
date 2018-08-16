@@ -1,8 +1,8 @@
 import AbstractCrudService from './abstractCrudService';
-import models from '../models';
+import Wallet from '../models/Wallet';
 
 export default class WalletService extends AbstractCrudService {
   constructor() {
-    super(models.Wallet);
+    super(Wallet);
   }
 }
