@@ -16,6 +16,7 @@
     "dev": "nodemon server/index.js -x babel-node . -e js,hbs",
     "start": "npm run build && node ./dist/server/index.js",
     "test": "npm run clean-test && npm run build-config-test && npm run build-server-test && npm run build-test && mocha ./test/output/test",
+    "migrate-test": "NODE_ENV=test npm run db:migrate && npm run test",
     "build-config-test": "babel config -d ./test/output/config",
     "build-server-test": "babel server -d ./test/output/server",
     "build-test": "babel test -d ./test/output/test",
