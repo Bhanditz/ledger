@@ -1,9 +1,9 @@
-import models from '../models';
+import Account from '../models/Account';
 
 export default class AccountUtil {
 
   async getDefaultCashWalletId(accountId, field) {
-    const account = await models.Account.findById(accountId);
+    const account = await Account.findById(accountId);
     if (!account) {
       throw Error(`Account id ${accountId} not found in database`);
     }
