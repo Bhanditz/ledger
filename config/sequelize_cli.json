@@ -6,6 +6,13 @@
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
+  "test": {
+    "database": "opencollective_ledger_test",
+    "username": "opencollective",
+    "password": "",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
   "circleci": {
     "database": "circle_ledger_test",
     "username": "ubuntu",
