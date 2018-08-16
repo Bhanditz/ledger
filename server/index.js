@@ -1,30 +1,33 @@
+import './globals/setEnvironment';
 import express from 'express';
 import { Router } from './routes';
 import os from 'os';
-import config from '../config/config';
-import models from './models';
+import Database, { models } from './models';
 import pino from 'express-pino-logger';
-import path from 'path';
 import Logger from './globals/logger';
+export let app = null;
 
-// Default environment is development to prevent "accidents"
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+export default class Index {
+  constructor() {
+    this.database = new Database();
+    this.logger = new Logger();
+    app = express();
+    app.use(express.json());
+    app.use(pino());
+    app.routers = new Router(app);
+    app.models = models;
+    this.startServer();
+  }
 
-//loading ENV vars
-require('dotenv').config({ path: path.resolve(__dirname, `../${process.env.NODE_ENV}.env`) });
+  startServer() {
+    /**
+     * Start server
+     */
+    const server = app.listen(process.env.PORT, process.env.HOST, () => {
+      const host = os.hostname();
+      this.logger.info(`Open Collective API listening at http://${host}:${server.address().port} in ${app.set('env')} environment.\n`);
+    });
+  }
+}
 
-const logger  = new Logger();
-const app = express();
-app.use(express.json());
-app.use(pino());
-app.routers = new Router(app);
-app.models = models;
-/**
- * Start server
- */
-const server = app.listen(config.port, config.host, () => {
-  const host = os.hostname();
-  logger.info(`Open Collective API listening at http://${host}:${server.address().port} in ${app.set('env')} environment.\n`);
-});
-
-export default app;
+new Index();
