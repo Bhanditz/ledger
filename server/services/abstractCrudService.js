@@ -1,6 +1,9 @@
+import Database from '../models';
+
 export default class AbstractCrudService {
 
   constructor(model) {
+    this.database = new Database();
     this.model = model;
   }
 
@@ -8,11 +11,11 @@ export default class AbstractCrudService {
     return this.model.findAll({ where: query });
   }
 
-  create(data) {
+  insert(data) {
     return this.model.create(data);
   }
 
-  put(data, query) {
+  update(data, query) {
     return this.model.update(data,{ where: query });
   }
 
