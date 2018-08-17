@@ -3,3 +3,4 @@ database/
 coverage/
 dist/
 api-doc/
+test/output/
