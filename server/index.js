@@ -2,7 +2,7 @@ import './globals/setEnvironment';
 import express from 'express';
 import { Router } from './routes';
 import os from 'os';
-import Database, { models } from './models';
+import Database from './models';
 import pino from 'express-pino-logger';
 import Logger from './globals/logger';
 export let app = null;
@@ -15,7 +15,7 @@ export default class Index {
     app.use(express.json());
     app.use(pino());
     app.routers = new Router(app);
-    app.models = models;
+    app.models = this.database.models;
     this.startServer();
   }
 
