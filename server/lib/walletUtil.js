@@ -1,13 +1,16 @@
-import { sequelize } from '../models';
+import Database from '../models';
 import Transaction from '../models/Transaction';
 
 export default class WalletUtil {
-
+  constructor() {
+    this.database = new Database();
+    this.sequelize = this.database.sequelize;
+  }
   getBalanceFromWalletId(walletId) {
     return Transaction.findAll({
       attributes: [
         'currency',
-        [ sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('amount')), 0), 'balance'],
+        [ this.sequelize.fn('COALESCE', this.sequelize.fn('SUM', this.sequelize.col('amount')), 0), 'balance'],
       ],
       group: ['currency'],
       where: {
