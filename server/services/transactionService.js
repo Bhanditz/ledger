@@ -1,4 +1,3 @@
-import { sequelize } from '../models';
 import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
 import TransactionCashFlow from '../lib/strategies/transactions/transactionCashFlow';
@@ -18,14 +17,13 @@ export default class TransactionService extends AbstractCrudService {
   * @param {Object} incomingTransaction - transaction
   * @return {Array} containing the original incoming transaction + its double entry equivalent.
   */
-  async create(data) {
+  async insert(data) {
     // the strategy will return an array of transactions already formatted for the db
     const strategy = this._defineTransactionStrategy(data);
     const transactions = await strategy.getTransactions();
-
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
-    return sequelize.transaction( t => {
+    return this.database.sequelize.transaction( t => {
         return this.model.bulkCreate(transactions, { transaction: t });
     }).then( result => {
       this.logger.info(result, 'Transactions created successfully');
