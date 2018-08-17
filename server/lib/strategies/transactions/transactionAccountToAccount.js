@@ -6,9 +6,11 @@ import TransactionCashFlow from './transactionCashFlow';
 export default class TransactionAccountToAccount extends AbstractTransactionStrategy {
 
   constructor(incomingTransaction) {
+    const transactionUtil = new TransactionUtil();
+    transactionUtil.validateTransaction(incomingTransaction);
     super(incomingTransaction);
     this.walletUtil = new WalletUtil();
-    this.transactionUtil = new TransactionUtil();
+    this.transactionUtil = transactionUtil;
   }
 
   async getTransactions (){
@@ -22,6 +24,7 @@ export default class TransactionAccountToAccount extends AbstractTransactionStra
         FromWalletId: null, // Setting up as null will make it look for the default Cash In Wallet 
         ToWalletId: this.incomingTransaction.FromWalletId,
         amount: this.incomingTransaction.amount - fromWalletBalance, // topup the remaning amount to complete tx
+        currency: this.incomingTransaction.currency,
         transactionGroupId: this.incomingTransaction.transactionGroupId,
         transactionGroupSequence: this.incomingTransaction.transactionGroupSequence,
       };
