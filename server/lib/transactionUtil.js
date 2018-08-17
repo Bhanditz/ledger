@@ -46,7 +46,7 @@ export default class TransactionUtil {
 
   /** Validates if transaction has all necessary field to proceed
   * @param {Object} transaction - transaction
-  * @return {void} 
+  * @return {void}
   */
   validateTransaction(transaction) {
     if (!transaction.FromAccountId) throw Error(fieldError('FromAccountId'));

@@ -21,7 +21,7 @@ export default class TransactionAccountToAccount extends AbstractTransactionStra
       const cashInTransaction = {
         FromAccountId: this.incomingTransaction.FromAccountId,
         ToAccountId: this.incomingTransaction.FromAccountId,
-        FromWalletId: null, // Setting up as null will make it look for the default Cash In Wallet 
+        FromWalletId: null, // Setting up as null will make it look for the default Cash In Wallet
         ToWalletId: this.incomingTransaction.FromWalletId,
         amount: this.incomingTransaction.amount - fromWalletBalance, // topup the remaning amount to complete tx
         currency: this.incomingTransaction.currency,

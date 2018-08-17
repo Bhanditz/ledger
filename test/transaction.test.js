@@ -186,10 +186,10 @@ describe('TransactionService', () => {
       const account1wallet = await walletService.insert({ OwnerAccountId: account1.id, currency: 'USD', name: 'account1_USD' });
       // then creates wallet for account 2
       const account2wallet = await walletService.insert({ OwnerAccountId: account2.id, currency: 'USD', name: 'account2_USD' });
-      
+
       // then account1 creates a Cashin tranction to topup "account1wallet" from its default wallet "defaultAccount1wallet"
       await transactionService.insert({ FromAccountId: account1.id, ToAccountId: account1.id, ToWalletId: account1wallet.id, amount: 30, currency: 'USD' });
-      
+
       // then 2 transactions(1 credit 1 debit) should be generated
       let allTransactions = await transactionService.get();
       expect(allTransactions).to.have.lengthOf(2);
@@ -197,7 +197,7 @@ describe('TransactionService', () => {
       const walletUtil = new WalletUtil();
       let account1walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
       expect(account1walletBalance).to.be.equal(30);
-      
+
       // Then if Account 1 sends money from his wallet "account1wallet" that has already 30USD
       // it shouldn't need to "cash in" again
       await transactionService.insert({ FromAccountId: account1.id, ToAccountId: account2.id, FromWalletId: account1wallet.id, ToWalletId: account2wallet.id, amount: 30, currency: 'USD' });
@@ -215,8 +215,8 @@ describe('TransactionService', () => {
       // Then if Account 1 sends money from his wallet "account1wallet" that has 0USD
       // it will need to "cash in" this time
       await transactionService.insert({ FromAccountId: account1.id, ToAccountId: account2.id, FromWalletId: account1wallet.id, ToWalletId: account2wallet.id, amount: 30, currency: 'USD' });
-      
-      // Then now the total number of transactions must be 8: 
+
+      // Then now the total number of transactions must be 8:
       // 4 that were already existing
       // plus 4 generated after this last transaction (2 cashin and 2 send transactions)
       allTransactions = await transactionService.get();
