@@ -14,7 +14,7 @@ export default class AccountRouter extends AbstractRouter {
       if (!req.query.id) {
         throw Error('Account id undefined');
       }
-      this.service.put(req.body, { id: req.query.id } ).then( data => {
+      this.service.update(req.body, { id: req.query.id } ).then( data => {
         res.send({ updated: data });
       }).catch(error => {
         this.logger.error(error);

@@ -35,7 +35,7 @@ export default class AbstractRouter {
       if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
       }
-      this.service.create(req.body).then( data => {
+      this.service.insert(req.body).then( data => {
         res.send({ data: data });
       }).catch(error => {
         this.logger.error(error);
