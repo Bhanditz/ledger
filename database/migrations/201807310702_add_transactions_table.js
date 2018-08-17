@@ -14,28 +14,28 @@ module.exports = {
       FromAccountId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Accounts'},
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       ToAccountId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Accounts'},
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Wallets'},
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Wallets'},
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },

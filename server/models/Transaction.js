@@ -17,28 +17,28 @@ export default class Transaction extends Sequelize.Model {
       FromAccountId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Accounts' },
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
       ToAccountId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Accounts' },
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Wallets' },
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
         references: { key: 'id', model: 'Wallets' },
-        allowNull: true,
+        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
@@ -70,7 +70,10 @@ export default class Transaction extends Sequelize.Model {
       },
     }, { sequelize });
   }
-
+  /**
+   * responsible to associate the model relationships
+   * @param {*} models - sequelize models
+   */
   static associate(models) {
     this.belongsTo(models.Account, { foreignKey: 'FromAccountId', as: 'fromAccount' });
     this.belongsTo(models.Account, { foreignKey: 'ToAccountId', as: 'toAccount' });
