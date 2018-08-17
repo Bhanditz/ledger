@@ -13,6 +13,14 @@ module.exports = {
         allowNull: false,
         unique: true
       },
+      DefaultCashinWalletId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      DefaultCashoutWalletId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('NOW()')

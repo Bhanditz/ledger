@@ -12,16 +12,10 @@ export default class Account extends Sequelize.Model {
       DefaultCashinWalletId: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: { key: 'id', model: 'Wallets' },
-        onDelete: 'SET NULL',
-        onUpdate: 'CASCADE',
       },
       DefaultCashoutWalletId: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: { key: 'id', model: 'Wallets' },
-        onDelete: 'SET NULL',
-        onUpdate: 'CASCADE',
       },
       createdAt: {
         type: Sequelize.DATE,
