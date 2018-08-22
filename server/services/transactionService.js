@@ -1,5 +1,6 @@
 import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
+import Wallet from '../models/Wallet';
 import TransactionCashFlow from '../lib/strategies/transactions/transactionCashFlow';
 import TransactionAccountToAccountFx from '../lib/strategies/transactions/transactionAccountToAccountFx';
 import TransactionAccountToAccount from '../lib/strategies/transactions/transactionAccountToAccount';
@@ -39,16 +40,26 @@ export default class TransactionService extends AbstractCrudService {
   * @param {Object} incomingTransaction - transaction
   * @return {Object} strategy - Return defined Strategy Class Object
   */
-  _defineTransactionStrategy(transaction) {
+  async _defineTransactionStrategy(transaction) {
+    // find Wallets
+    const toWallet = await Wallet.findById(transaction.ToWalletId);
+    const fromWallet = await Wallet.findById(transaction.FromWalletId);
+    const isSameCurrency = toWallet.currency === fromWallet.currency;
+    
     // Cashin Or Cashout have the same Account(From and To)
     if (transaction.FromAccountId === transaction.ToAccountId) {
-      return new TransactionCashFlow(transaction);
+      // Check if it is NOT a foreign exchange Transaction
+      if (isSameCurrency) {
+        return new TransactionCashFlow(transaction);
+      }
+      // TO DO Create FOREX version of TransactionCashFlow
+      // return new TransactionCashFlowForex(transaction);
     }
-    // If both toAmount and toCurrency are defined, it means it's an FX Transaction
-    if (transaction.toAmount && transaction.toCurrency) {
-      return new TransactionAccountToAccountFx(transaction);
+    // Defaults to Account to Account transactions...
+    // Check if it is NOT a foreign exchange Transaction
+    if (isSameCurrency) {
+      return new TransactionAccountToAccount(transaction);
     }
-    // Defaults to an Account to Account Transaction
-    return new TransactionAccountToAccount(transaction);
+    return new TransactionAccountToAccountFx(transaction);
   }
 }
