@@ -1,4 +1,4 @@
-import { check, oneOf } from 'express-validator/check';
+import { check } from 'express-validator/check';
 import AbstractValidator from './abstractValidator';
 
 export default class TransactionValidator extends AbstractValidator {
@@ -10,14 +10,10 @@ export default class TransactionValidator extends AbstractValidator {
     return [
       check('amount').isNumeric(),
       check('currency').isAlphanumeric().isLength({ min: 3, max: 4 }),
-      oneOf([
-        check('FromWalletId').isNumeric(),
-        check('ToWalletId').isNumeric(),
-      ]),
-      oneOf([
-        check('FromAccountId').isNumeric(),
-        check('ToAccountId').isNumeric(),
-      ]),
+      check('FromWalletId').isNumeric(),
+      check('ToWalletId').isNumeric(),
+      check('FromAccountId').isNumeric(),
+      check('ToAccountId').isNumeric(),
     ];
   }
 }
