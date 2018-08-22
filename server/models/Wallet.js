@@ -23,6 +23,14 @@ export default class Wallet extends Sequelize.Model {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      paymentMethodService: {
+        type: Sequelize.STRING,
+        // allowNull: false,
+      },
+      paymentMethodType: {
+        type: Sequelize.STRING,
+        // allowNull: false,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,

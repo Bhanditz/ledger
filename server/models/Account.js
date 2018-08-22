@@ -9,14 +9,6 @@ export default class Account extends Sequelize.Model {
         autoIncrement: true,
       },
       slug: Sequelize.STRING,
-      DefaultCashinWalletId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      DefaultCashoutWalletId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
