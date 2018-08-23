@@ -2,7 +2,8 @@ import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
 import Wallet from '../models/Wallet';
 import TransactionCashFlow from '../lib/strategies/transactions/transactionCashFlow';
-import TransactionAccountToAccountFx from '../lib/strategies/transactions/transactionAccountToAccountFx';
+import TransactionCashFlowForex from '../lib/strategies/transactions/transactionCashFlowForex';
+import TransactionAccountToAccountForex from '../lib/strategies/transactions/transactionAccountToAccountForex';
 import TransactionAccountToAccount from '../lib/strategies/transactions/transactionAccountToAccount';
 import Logger from '../globals/logger';
 
@@ -20,7 +21,7 @@ export default class TransactionService extends AbstractCrudService {
   */
   async insert(data) {
     // the strategy will return an array of transactions already formatted for the db
-    const strategy = this._defineTransactionStrategy(data);
+    const strategy = await this._defineTransactionStrategy(data);
     const transactions = await strategy.getTransactions();
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
@@ -45,7 +46,6 @@ export default class TransactionService extends AbstractCrudService {
     const toWallet = await Wallet.findById(transaction.ToWalletId);
     const fromWallet = await Wallet.findById(transaction.FromWalletId);
     const isSameCurrency = toWallet.currency === fromWallet.currency;
-    
     // Cashin Or Cashout have the same Account(From and To)
     if (transaction.FromAccountId === transaction.ToAccountId) {
       // Check if it is NOT a foreign exchange Transaction
@@ -53,13 +53,13 @@ export default class TransactionService extends AbstractCrudService {
         return new TransactionCashFlow(transaction);
       }
       // TO DO Create FOREX version of TransactionCashFlow
-      // return new TransactionCashFlowForex(transaction);
+      return new TransactionCashFlowForex(transaction);
     }
     // Defaults to Account to Account transactions...
     // Check if it is NOT a foreign exchange Transaction
     if (isSameCurrency) {
       return new TransactionAccountToAccount(transaction);
     }
-    return new TransactionAccountToAccountFx(transaction);
+    return new TransactionAccountToAccountForex(transaction);
   }
 }
