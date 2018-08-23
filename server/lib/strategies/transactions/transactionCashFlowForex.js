@@ -5,7 +5,7 @@ import { operationNotAllowed } from '../../../globals/errors';
 import Wallet from '../../../models/Wallet';
 import { paymentMethodServices } from '../../../globals/enums/paymentMethodServices';
 
-export default class TransactionCashFlow extends AbstractTransactionStrategy {
+export default class TransactionCashFlowForex extends AbstractTransactionStrategy {
 
   constructor(incomingTransaction) {
     super(incomingTransaction);

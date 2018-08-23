@@ -4,12 +4,12 @@
  * @module test/user/service
  */
 import { expect } from 'chai';
-import TransactionService from '../server/services/transactionService';
-import AccountService from '../server/services/accountService';
-import WalletService from '../server/services/walletService';
-import ResetDb from '../server/util/resetDb';
-import { transactionTypeEnum } from '../server/globals/enums/transactionTypeEnum';
-import WalletUtil from '../server/lib/walletUtil';
+import TransactionService from '../../../server/services/transactionService';
+import AccountService from '../../../server/services/accountService';
+import WalletService from '../../../server/services/walletService';
+import ResetDb from '../../../server/util/resetDb';
+import { transactionTypeEnum } from '../../../server/globals/enums/transactionTypeEnum';
+import WalletUtil from '../../../server/lib/walletUtil';
 
 describe('TransactionService', () => {
   const transactionService = new TransactionService();

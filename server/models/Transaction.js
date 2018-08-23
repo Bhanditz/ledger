@@ -49,6 +49,9 @@ export default class Transaction extends Sequelize.Model {
         type: Sequelize.UUID,
         allowNull: false,
       },
+      transactionGroupSequence: {
+        type: Sequelize.INTEGER,
+      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,

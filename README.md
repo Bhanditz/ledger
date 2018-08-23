@@ -20,8 +20,16 @@ After having the database created, run :
 
 ## Tests
 
+You'll need to have Postgres as well as the test db create with the name `opencollective_ledger_test`. You can use the npm script `npm run recreate-test-db`
+
 - `npm install`
-- `npm run test`
+- `npm run migrate-test` OR `npm run recreate-test-db && NODE_ENV=test npm run test`
+
+If you want to run just a specific test file, you can use this command:
+
+- `npm run pretest && mocha --recursive --exit ./test/output/test/PATH_TO_YOUR_FILE_INSIDE_TEST FOLDER`
+    - example: I want to test the file wallets.test.js with path test/wallets/wallets.test.js, so i'd run:
+      - `npm run pretest && mocha --recursive --exit ./test/output/test/wallets/wallets.test.js`
 
 ## Documentation(REST)
 
