@@ -23,11 +23,11 @@ module.exports = {
       },
       paymentMethodService: {
         type: Sequelize.STRING,
-        // allowNull: false,
+        allowNull: false,
       },
       paymentMethodType: {
         type: Sequelize.STRING,
-        // allowNull: false,
+        allowNull: false,
       },
       createdAt: {
         type: Sequelize.DATE,
