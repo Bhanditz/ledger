@@ -46,6 +46,9 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
       },
+      transactionGroupSequence: {
+        type: Sequelize.INTEGER,
+      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
