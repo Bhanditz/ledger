@@ -8,7 +8,11 @@ export default class Account extends Sequelize.Model {
         primaryKey: true,
         autoIncrement: true,
       },
-      slug: Sequelize.STRING,
+      slug: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
