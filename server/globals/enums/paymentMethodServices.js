@@ -1,23 +1,23 @@
 export const paymentMethodServices = Object.freeze({
   opencollective: {
     name: 'OPENCOLLECTIVE',
-    types: [
-      'COLLECTIVE',
-      'GIFTCARD',
-      'PREPAID',
-    ],
+    types: {
+      COLLECTIVE: 'COLLECTIVE',
+      GIFTCARD: 'GIFTCARD',
+      PREPAID: 'PREPAID',
+    },
   },
   paypal: {
     name: 'PAYPAL',
-    types: [
-      'ADAPTIVE',
-      'PAYMENT',
-    ],
-  },
+    types: {
+      ADAPTIVE: 'ADAPTIVE',
+      PAYMENT: 'PAYMENT',
+    },
+  },  
   stripe: {
     name: 'STRIPE',
-    types: [
-      'CREDITCARD',
-    ],
+    types: {
+      CREDITCARD: 'CREDITCARD',
+    },
   },
 });
