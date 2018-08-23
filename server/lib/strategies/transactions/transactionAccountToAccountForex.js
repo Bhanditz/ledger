@@ -1,6 +1,6 @@
 import AbstractTransactionStrategy from './abstractTransactionStrategy';
 
-export default class TransactionAccountToAccountFx extends AbstractTransactionStrategy {
+export default class TransactionAccountToAccountForex extends AbstractTransactionStrategy {
 
   constructor(incomingTransaction) {
     super(incomingTransaction);
