@@ -40,15 +40,15 @@ describe('Wallets CRUD', () => {
           OwnerAccountId: account.id,
           currency: walletCurrency,
           name: walletName,
-          paymentMethodService: 'NOT_EXISTING_SERVICE',
-          paymentMethodType: paymentMethodServices.opencollective.types.COLLECTIVE,
+          service: 'NOT_EXISTING_SERVICE',
+          type: paymentMethodServices.opencollective.types.COLLECTIVE,
         });
         throw Error('Should Not Get here');  
       } catch (error) {
         expect(error).to.exist;
         expect(error.errors).to.have.length.above(0);
         expect(error.errors[0]).to.have.property('message');
-        expect(error.errors[0].message).to.be.equal('Validation isIn on paymentMethodService failed');
+        expect(error.errors[0].message).to.be.equal('Validation isIn on service failed');
       }
     }); /** End of "should fail to Create a Wallet that has Service that does not Exist in the paymentMethodsServices List" */
 
@@ -60,15 +60,15 @@ describe('Wallets CRUD', () => {
           OwnerAccountId: account.id,
           currency: walletCurrency,
           name: walletName,
-          paymentMethodService: paymentMethodServices.opencollective.name,
-          paymentMethodType: 'NOT_EXISTING_TYPE',
+          service: paymentMethodServices.opencollective.name,
+          type: 'NOT_EXISTING_TYPE',
         });
         throw Error('Should Not Get here');  
       } catch (error) {
         expect(error).to.exist;
         expect(error.errors).to.have.length.above(0);
         expect(error.errors[0]).to.have.property('message');
-        expect(error.errors[0].message).to.be.equal('Validation isIn on paymentMethodType failed');
+        expect(error.errors[0].message).to.be.equal('Validation isIn on type failed');
       }
       
     }); /** End of "should fail to Create a Wallet that has Type that does not Exist in the globals/enums/paymentMethodServices List" */
@@ -81,8 +81,8 @@ describe('Wallets CRUD', () => {
           OwnerAccountId: account.id,
           currency: 'USD',
           name: 'account1_USD',
-          paymentMethodService: walletPaymentMethodService,
-          paymentMethodType: walletPaymentMethodType,
+          service: walletPaymentMethodService,
+          type: walletPaymentMethodType,
         });  
       } catch (error) {
         expect(error).to.exist;
@@ -98,8 +98,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.opencollective.name,
-        paymentMethodType: paymentMethodServices.opencollective.types.COLLECTIVE,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.COLLECTIVE,
       });
 
       expect(wallet).to.have.property('OwnerAccountId');
@@ -108,8 +108,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.opencollective.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.opencollective.types.COLLECTIVE);
+      expect(wallet.service).to.be.equal(paymentMethodServices.opencollective.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.opencollective.types.COLLECTIVE);
     }); /** End of "Creates a Wallet that has Service OPENCOLLECTIVE and Type COLLECTIVE" */
 
     it('Creates a Wallet that has Service OPENCOLLECTIVE and Type GIFTCARD', async () => {
@@ -119,8 +119,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.opencollective.name,
-        paymentMethodType: paymentMethodServices.opencollective.types.GIFTCARD,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.GIFTCARD,
       });
       expect(wallet).to.have.property('OwnerAccountId');
       expect(wallet).to.have.property('currency');
@@ -128,8 +128,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.opencollective.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.opencollective.types.GIFTCARD);
+      expect(wallet.service).to.be.equal(paymentMethodServices.opencollective.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.opencollective.types.GIFTCARD);
     }); /** End of "Creates a Wallet that has Service OPENCOLLECTIVE and Type GIFTCARD" */
 
     it('Creates a Wallet that has Service OPENCOLLECTIVE and Type PREPAID', async () => {
@@ -139,8 +139,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.opencollective.name,
-        paymentMethodType: paymentMethodServices.opencollective.types.PREPAID,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.PREPAID,
       });
       expect(wallet).to.have.property('OwnerAccountId');
       expect(wallet).to.have.property('currency');
@@ -148,8 +148,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.opencollective.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.opencollective.types.PREPAID);
+      expect(wallet.service).to.be.equal(paymentMethodServices.opencollective.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.opencollective.types.PREPAID);
     }); /** End of "Creates a Wallet that has Service OPENCOLLECTIVE and Type PREPAID" */
 
     it('Creates a Wallet that has Service PAYPAL and Type ADAPTIVE', async () => {
@@ -159,8 +159,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.paypal.name,
-        paymentMethodType: paymentMethodServices.paypal.types.ADAPTIVE,
+        service: paymentMethodServices.paypal.name,
+        type: paymentMethodServices.paypal.types.ADAPTIVE,
       });
       expect(wallet).to.have.property('OwnerAccountId');
       expect(wallet).to.have.property('currency');
@@ -168,8 +168,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.paypal.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.paypal.types.ADAPTIVE);
+      expect(wallet.service).to.be.equal(paymentMethodServices.paypal.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.paypal.types.ADAPTIVE);
     }); /** End of "Creates a Wallet that has Service PAYPAL and Type ADAPTIVE" */
 
     it('Creates a Wallet that has Service PAYPAL and Type PAYMENT', async () => {
@@ -179,8 +179,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.paypal.name,
-        paymentMethodType: paymentMethodServices.paypal.types.PAYMENT,
+        service: paymentMethodServices.paypal.name,
+        type: paymentMethodServices.paypal.types.PAYMENT,
       });
       expect(wallet).to.have.property('OwnerAccountId');
       expect(wallet).to.have.property('currency');
@@ -188,8 +188,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.paypal.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.paypal.types.PAYMENT);
+      expect(wallet.service).to.be.equal(paymentMethodServices.paypal.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.paypal.types.PAYMENT);
     }); /** End of "Creates a Wallet that has Service STRIPE and Type PAYMENT" */
 
     it('Creates a Wallet that has Service STRIPE and Type CREDITCARD', async () => {
@@ -199,8 +199,8 @@ describe('Wallets CRUD', () => {
         OwnerAccountId: account.id,
         currency: walletCurrency,
         name: walletName,
-        paymentMethodService: paymentMethodServices.stripe.name,
-        paymentMethodType: paymentMethodServices.stripe.types.CREDITCARD,
+        service: paymentMethodServices.stripe.name,
+        type: paymentMethodServices.stripe.types.CREDITCARD,
       });
       expect(wallet).to.have.property('OwnerAccountId');
       expect(wallet).to.have.property('currency');
@@ -208,8 +208,8 @@ describe('Wallets CRUD', () => {
       expect(wallet.OwnerAccountId).to.be.equal(account.id);
       expect(wallet.currency).to.be.equal(walletCurrency);
       expect(wallet.name).to.be.equal(walletName);
-      expect(wallet.paymentMethodService).to.be.equal(paymentMethodServices.stripe.name);
-      expect(wallet.paymentMethodType).to.be.equal(paymentMethodServices.stripe.types.CREDITCARD);
+      expect(wallet.service).to.be.equal(paymentMethodServices.stripe.name);
+      expect(wallet.type).to.be.equal(paymentMethodServices.stripe.types.CREDITCARD);
     }); /** End of "Creates a Wallet that has Service STRIPE and Type CREDITCARD" */
 
   }); /** End of "Wallets Creation" */

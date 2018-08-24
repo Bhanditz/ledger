@@ -9,7 +9,7 @@
 // import WalletService from '../server/services/walletService';
 import ResetDb from '../../../server/util/resetDb';
 // import { transactionTypeEnum } from '../server/globals/enums/transactionTypeEnum';
-// import WalletUtil from '../server/lib/walletUtil';
+// import WalletLib from '../server/lib/walletLib';
 
 describe('wallet.stripe.creditcard', () => {
   // const transactionService = new TransactionService();

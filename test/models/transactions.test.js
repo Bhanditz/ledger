@@ -33,22 +33,22 @@ describe('Transactions CRUD', () => {
         OwnerAccountId: account1.id,
         currency: 'USD',
         name: 'account1_USD',
-        paymentMethodService: paymentMethodServices.opencollective.name,
-        paymentMethodType: paymentMethodServices.opencollective.types.COLLECTIVE,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.COLLECTIVE,
       });
       walletAccount1CC = await walletService.insert({
         OwnerAccountId: account1.id,
         currency: 'USD',
         name: 'account1_CC',
-        paymentMethodService: paymentMethodServices.stripe.name,
-        paymentMethodType: paymentMethodServices.stripe.types.CREDITCARD,
+        service: paymentMethodServices.stripe.name,
+        type: paymentMethodServices.stripe.types.CREDITCARD,
       });
       walletAccount2Usd = await walletService.insert({
         OwnerAccountId: account2.id,
         currency: 'USD',
         name: 'account2_USD',
-        paymentMethodService: paymentMethodServices.opencollective.name,
-        paymentMethodType: paymentMethodServices.opencollective.types.COLLECTIVE,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.COLLECTIVE,
       });
     });
 
@@ -61,7 +61,6 @@ describe('Transactions CRUD', () => {
       }
     }); /** End of "fails to create a transaction because Wallet does not have balance" */
 
-    
     it('Creates a Cashin Transaction', async () => {
       const amountTransaction = 15;
       const currencyTransaction = 'USD';
@@ -150,7 +149,6 @@ describe('Transactions CRUD', () => {
       expect(creditTransaction.currency).to.be.equal(currencyTransaction);
 
     }); /** End of "account1 Cashes 15USD in and send 15USD to account2" */
-
 
   }); /** End of "Transactions Creation" */
 

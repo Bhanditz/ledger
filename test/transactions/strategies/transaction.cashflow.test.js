@@ -9,7 +9,7 @@ import AccountService from '../../../server/services/accountService';
 import WalletService from '../../../server/services/walletService';
 import ResetDb from '../../../server/util/resetDb';
 import { transactionTypeEnum } from '../../../server/globals/enums/transactionTypeEnum';
-import WalletUtil from '../../../server/lib/walletUtil';
+import WalletLib from '../../../server/lib/walletLib';
 
 describe('TransactionService', () => {
   const transactionService = new TransactionService();
@@ -194,8 +194,8 @@ describe('TransactionService', () => {
       let allTransactions = await transactionService.get();
       expect(allTransactions).to.have.lengthOf(2);
       // Wallet "account1wallet" must have 30 USD in its Balance
-      const walletUtil = new WalletUtil();
-      let account1walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
+      const walletLib = new WalletLib();
+      let account1walletBalance = await walletLib.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
       expect(account1walletBalance).to.be.equal(30);
 
       // Then if Account 1 sends money from his wallet "account1wallet" that has already 30USD
@@ -207,8 +207,8 @@ describe('TransactionService', () => {
       expect(allTransactions).to.have.lengthOf(4);
 
       // Then account1Wallet balance is 0 and account2Wallet balance is 30 now
-      account1walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
-      let account2walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account2wallet.id);
+      account1walletBalance = await walletLib.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
+      let account2walletBalance = await walletLib.getCurrencyBalanceFromWalletId('USD', account2wallet.id);
       expect(account1walletBalance).to.be.equal(0);
       expect(account2walletBalance).to.be.equal(30);
 
@@ -223,8 +223,8 @@ describe('TransactionService', () => {
       expect(allTransactions).to.have.lengthOf(8);
 
       // Then account1Wallet balance is 0 and account2Wallet balance is 60 now
-      account1walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
-      account2walletBalance = await walletUtil.getCurrencyBalanceFromWalletId('USD', account2wallet.id);
+      account1walletBalance = await walletLib.getCurrencyBalanceFromWalletId('USD', account1wallet.id);
+      account2walletBalance = await walletLib.getCurrencyBalanceFromWalletId('USD', account2wallet.id);
       expect(account1walletBalance).to.be.equal(0);
       expect(account2walletBalance).to.be.equal(60);
     } catch (error) {
