@@ -46,8 +46,6 @@ We are using the library [apidoc](https://github.com/apidoc/apidoc) to generate 
 
 - `id`
 - `slug` - unique string identifier of the account
-- `DefaultCashinWalletId` - Default "CashIn" Wallet(if the user doesn't have money in the wallet he is trying to pay, the system will look for this default "cashin" wallet to topup him, if he doesn't have one, system will throw an error)
-- `DefaultCashoutWalletId` - Default "Cashout" Wallet similar to the Cashin concept, but for putting money out of the system through a wallet specified by the user
 
 ### Wallets
 
