@@ -2,7 +2,7 @@ import uuidv4 from 'uuid/v4';
 import { transactionTypeEnum } from '../globals/enums/transactionTypeEnum';
 import { fieldError, operationNotAllowed } from '../globals/errors';
 
-export default class TransactionUtil {
+export default class TransactionLib {
 
   /** Given a Transaction Returns Its Double Entry Equivalent Array(1 debit and 1 credit Transactions)
   * @param {Object} transaction
