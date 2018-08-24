@@ -21,11 +21,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      paymentMethodService: {
+      service: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      paymentMethodType: {
+      type: {
         type: Sequelize.STRING,
         allowNull: false,
       },
