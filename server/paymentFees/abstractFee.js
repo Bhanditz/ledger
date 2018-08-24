@@ -1,4 +1,4 @@
-import TransactionUtil from '../lib/transactionUtil';
+import TransactionLib from '../lib/transactionLib';
 
 export default class AbstractFee {
 
@@ -9,7 +9,7 @@ export default class AbstractFee {
     this.totalFee = fixedFee + (percentFee * transaction.amount);
     this.feeAccountId = feeAccountId;
     this.feeWalletId = feeWalletId;
-    this.util = new TransactionUtil();
+    this.util = new TransactionLib();
   }
 
   /** Given a Transaction Returns Its Double Entry Equivalent Array(1 debit and 1 credit Transactions)
