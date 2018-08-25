@@ -13,7 +13,7 @@ import { operationNotAllowed } from '../../server/globals/errors';
 describe('Wallets CRUD', () => {
   const accountService = new AccountService();
   const walletService = new WalletService();
-  
+
   after(async () => {
     await ResetDb.run();
   });
@@ -43,7 +43,7 @@ describe('Wallets CRUD', () => {
           service: 'NOT_EXISTING_SERVICE',
           type: paymentMethodServices.opencollective.types.COLLECTIVE,
         });
-        throw Error('Should Not Get here');  
+        throw Error('Should Not Get here');
       } catch (error) {
         expect(error).to.exist;
         expect(error.errors).to.have.length.above(0);
@@ -63,14 +63,14 @@ describe('Wallets CRUD', () => {
           service: paymentMethodServices.opencollective.name,
           type: 'NOT_EXISTING_TYPE',
         });
-        throw Error('Should Not Get here');  
+        throw Error('Should Not Get here');
       } catch (error) {
         expect(error).to.exist;
         expect(error.errors).to.have.length.above(0);
         expect(error.errors[0]).to.have.property('message');
         expect(error.errors[0].message).to.be.equal('Validation isIn on type failed');
       }
-      
+
     }); /** End of "should fail to Create a Wallet that has Type that does not Exist in the globals/enums/paymentMethodServices List" */
 
     it('should fail if payment method type does not belong to payment method service', async () => {
@@ -83,7 +83,7 @@ describe('Wallets CRUD', () => {
           name: 'account1_USD',
           service: walletPaymentMethodService,
           type: walletPaymentMethodType,
-        });  
+        });
       } catch (error) {
         expect(error).to.exist;
         expect(error.toString()).to.contain(operationNotAllowed(`Payment Method type ${walletPaymentMethodType} ` +
