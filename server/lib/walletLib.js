@@ -30,15 +30,15 @@ export default class WalletUtil {
   static IsPaymentMethodTypeInCorrectService(service, type) {
     switch (service) {
       case paymentMethodServices.opencollective.name:
-        if (Object.values(paymentMethodServices.opencollective.types).find(objType => objType === type)) 
+        if (Object.values(paymentMethodServices.opencollective.types).find(objType => objType === type))
           return true;
         break;
       case paymentMethodServices.paypal.name:
-        if (Object.values(paymentMethodServices.paypal.types).find(objType => objType === type)) 
+        if (Object.values(paymentMethodServices.paypal.types).find(objType => objType === type))
           return true;
         break;
       case paymentMethodServices.stripe.name:
-        if (Object.values(paymentMethodServices.stripe.types).find(objType => objType === type)) 
+        if (Object.values(paymentMethodServices.stripe.types).find(objType => objType === type))
           return true;
         break;
       default:

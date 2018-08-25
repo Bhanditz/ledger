@@ -22,7 +22,7 @@ export default class PaymentProviderFeeTransactions extends AbstractFeeTransacti
         break;
       case paymentMethodServices.stripe.name:
         this.feeAccountId = constants.PAYPAL_ACCOUNT_ID;
-        this.feeWalletId = constants.PAYPAL_WALLET_ID;  
+        this.feeWalletId = constants.PAYPAL_WALLET_ID;
         this.fee = await StripeLib.getFees(this.transaction);
         break;
       default:
