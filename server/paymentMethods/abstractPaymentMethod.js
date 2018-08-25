@@ -3,7 +3,7 @@ import { get } from 'lodash';
 import path from 'path';
 
 export default class AbstractPaymentMethod {
-  
+
   constructor(type, pmPath) {
     // Find all possible types for the payment method
     this.types = Object.assign({}, ...fs.readdirSync(pmPath)
@@ -14,11 +14,11 @@ export default class AbstractPaymentMethod {
       })
     );
     // Check whether the type param is allowed for this payment method
-    const matchingType = this.types.filter(pmType => (type instanceof pmType));  
-    if (matchingType.length <= 0) 
-      throw Error(`Payment method does not have type ${get(type, 'constructor.name')}`)
+    const matchingType = this.types.filter(pmType => (type instanceof pmType));
+    if (matchingType.length <= 0)
+      throw Error(`Payment method does not have type ${get(type, 'constructor.name')}`);
 
-    this.type = type;  
+    this.type = type;
   }
 
   processOrder(order) {

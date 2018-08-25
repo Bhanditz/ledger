@@ -16,7 +16,10 @@ export default class TransactionCashFlow extends AbstractTransactionStrategy {
   }
 
   async getTransactions() {
-    let transactions = [];
+    let transactions = this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
+    // incrementing transaction groupSequence according to the length of the array
+    this.incomingTransaction.transactionGroupSequence = transactions.length;
+    // finds the fromWallet
     const fromWallet = await Wallet.findById(this.incomingTransaction.FromWalletId);
     const fromWalletBalance = await this.walletLib.getCurrencyBalanceFromWalletId(this.incomingTransaction.currency, this.incomingTransaction.FromWalletId);
     // If there is no money in Account Wallet, then it needs to Cash In
@@ -30,19 +33,14 @@ export default class TransactionCashFlow extends AbstractTransactionStrategy {
       const platformFeeTransaction = new PlatformFeeTransactions(this.incomingTransaction);
       await platformFeeTransaction.setTransactionInfo();
       transactions = transactions.concat(platformFeeTransaction.getFeeDoubleEntryTransactions());
-      // incrementing transaction groupSequence according to the last transaction in the array
-      this.incomingTransaction.transactionGroupSequence =
-        transactions[transactions.length - 1].transactionGroupSequence + 1;
-
+      // once more incrementing transaction groupSequence according to the length of the array
+      this.incomingTransaction.transactionGroupSequence = transactions.length;
        // Adding Payment Providers Fees Transactions
       const paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
       await paymentProviderFeeTransactions.setTransactionInfo();
       transactions = transactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
-      // once more incrementing transaction groupSequence according to the last transaction in the array
-      this.incomingTransaction.transactionGroupSequence =
-        transactions[transactions.length - 1].transactionGroupSequence + 1;
+
     }
-    transactions = transactions.concat(this.transactionLib.getDoubleEntryArray(this.incomingTransaction));
     return transactions;
   }
 

@@ -13,7 +13,7 @@ export const paymentMethodServices = Object.freeze({
       ADAPTIVE: 'ADAPTIVE',
       PAYMENT: 'PAYMENT',
     },
-  },  
+  },
   stripe: {
     name: 'STRIPE',
     types: {

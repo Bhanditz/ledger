@@ -16,7 +16,7 @@ describe('Transactions CRUD', () => {
   const accountService = new AccountService();
   const walletService = new WalletService();
   const transactionService = new TransactionService();
-  
+
   after(async () => {
     await ResetDb.run();
   });
@@ -54,7 +54,7 @@ describe('Transactions CRUD', () => {
 
     it('fails to create a transaction because Wallet does not have balance', async () => {
       try {
-        await transactionService.insert({ FromAccountId: account1.id, ToAccountId: account2.id, FromWalletId: walletAccount1Usd.id, ToWalletId: walletAccount2Usd.id, amount: 15, currency: 'USD' });  
+        await transactionService.insert({ FromAccountId: account1.id, ToAccountId: account2.id, FromWalletId: walletAccount1Usd.id, ToWalletId: walletAccount2Usd.id, amount: 1500, currency: 'USD' });
       } catch (error) {
         expect(error).to.exist;
         expect(error.toString()).to.contain(operationNotAllowed(`Wallet(id ${walletAccount1Usd.id}) does not have enough balance to complete transaction`));
@@ -62,7 +62,7 @@ describe('Transactions CRUD', () => {
     }); /** End of "fails to create a transaction because Wallet does not have balance" */
 
     it('Creates a Cashin Transaction', async () => {
-      const amountTransaction = 15;
+      const amountTransaction = 1500;
       const currencyTransaction = 'USD';
       const cashinResult = await transactionService.insert({
         FromAccountId: account1.id,
@@ -88,11 +88,11 @@ describe('Transactions CRUD', () => {
       expect(creditTransaction.currency).to.be.equal(currencyTransaction);
       // FromWalletId and ToWalletId should be opposite in Debit and Credit transactions
       expect(debitTransaction.FromWalletId).to.be.equal(creditTransaction.ToWalletId);
-      expect(creditTransaction.FromWalletId).to.be.equal(debitTransaction.ToWalletId);      
+      expect(creditTransaction.FromWalletId).to.be.equal(debitTransaction.ToWalletId);
     }); /** End of "Creates a Cashin Transaction" */
 
     it('account1 Cashes 15USD in and send 15USD to account2', async () => {
-      const amountTransaction = 15;
+      const amountTransaction = 1500;
       const currencyTransaction = 'USD';
       const cashinResult = await transactionService.insert({
         FromAccountId: account1.id,
@@ -119,11 +119,11 @@ describe('Transactions CRUD', () => {
       // FromWalletId and ToWalletId should be opposite in Debit and Credit transactions
       expect(debitCashinTransaction.FromWalletId).to.be.equal(creditCashinTransaction.ToWalletId);
       expect(creditCashinTransaction.FromWalletId).to.be.equal(debitCashinTransaction.ToWalletId);
-      
+
       const transactionResult = await transactionService.insert({
         FromAccountId: account1.id,
         ToAccountId: account2.id,
-        FromWalletId: walletAccount1Usd.id, 
+        FromWalletId: walletAccount1Usd.id,
         ToWalletId:walletAccount1CC.id,
         amount: amountTransaction,
         currency: currencyTransaction,

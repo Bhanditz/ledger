@@ -9,7 +9,7 @@ import ResetDb from '../../server/util/resetDb';
 
 describe('Accounts CRUD', () => {
   const accountService = new AccountService();
-  
+
   after(async () => {
     await ResetDb.run();
   });
@@ -23,7 +23,7 @@ describe('Accounts CRUD', () => {
 
     it('should fail to create an Account without a slug', async () => {
       try {
-        await accountService.insert({});  
+        await accountService.insert({});
         throw Error('Should Not Get Here');
       } catch (error) {
         expect(error).to.exist;
@@ -31,7 +31,7 @@ describe('Accounts CRUD', () => {
         expect(error.errors[0]).to.have.property('message');
         expect(error.errors[0].message).to.be.equal('Account.slug cannot be null');
       }
-      
+
     }); /** End of "Creates an Account" */
 
     it('Creates an Account', async () => {

@@ -19,8 +19,8 @@ export default class AbstractTransactionStrategy {
   * @return {Object} same transaction with TransactionGroup and transactionGroupSequence
   */
   _checkAndInsertTransactionGroup(transaction) {
-    if (!transaction.TransactionGroup) {
-      transaction.TransactionGroup = uuidv4();
+    if (!transaction.transactionGroupId) {
+      transaction.transactionGroupId = uuidv4();
       transaction.transactionGroupSequence = 0;
     }
     return transaction;
