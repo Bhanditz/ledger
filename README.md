@@ -70,6 +70,7 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `currency` - The currency of the transaction
 - `doubleEntryGroupId` - The UUID of the double entry pair transaction(for any CREDIT transaction there is a DEBIT transaction, and we can "find" all the pairs through this field)
 - `transactionGroupId` - The UUID the transaction group -> When an account pays another account, there are several use cases and in all of them we will have more than one transaction at the very least. This field identify all transactions related to one "action of the system"
+- `transactionGroupSequence` - The sequence of the transaction regarding its transaction group
 
 
 ## API Endpoints
@@ -143,6 +144,24 @@ POST /transactions
 - rows number 7 and 8 : **User1** sends 45USD from his **User1_USD** Wallet to the **User2** **User2_USD** Wallet
 
 PS: TO DO in the code today...
+
+## Fees(Platform, Payment processors and wallets)
+
+ISSUE #10 is open regarding making sure the following is accurate: 
+
+To show where the Fees will apply, We will divide the transactions in 3 categories(*Coming* into the system, *Inside* the system, *Leaving* the system):
+
+    - *Coming Transactions*: 
+        - Platform fee: 5%
+        - Payment Processor fee(stripe, paypal): dynamic fee(we will send a request and wait for the total fees that apply)
+        - Wallet Fee: to be defined(Perhaps one more collection on the database to point the fixed host fees)
+    - *Inside Transactions*: 
+        - Platform fee: 0
+        - Payment Processor fee(stripe, paypal): If the transaction is between different wallets providers/hosts then the same fee(as above) apply
+        - Wallet/Host Fee: If the transaction is between different wallets providers/hosts then the same fee(as above) apply
+    - *Leaving Transactions*: 
+        - NO FEES
+                
 
 ## TO Do
 

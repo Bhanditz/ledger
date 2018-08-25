@@ -34,7 +34,10 @@ export default class AbstractFeeTransactions {
       ToAccountId: this.feeAccountId,
       FromWalletId: this.transaction.FromWalletId,
       ToWalletId: this.feeWalletId,
-      amount: this.fee,
+      amount: Math.round(this.fee),
+      currency: this.transaction.currency,
+      transactionGroupId: this.transaction.transactionGroupId,
+      transactionGroupSequence: this.transaction.transactionGroupSequence,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);
   }
