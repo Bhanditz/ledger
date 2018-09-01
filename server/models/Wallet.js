@@ -1,7 +1,4 @@
 import Sequelize from 'sequelize';
-import { paymentMethodServices } from '../globals/enums/paymentMethodServices';
-import WalletLib from '../lib/walletLib';
-import { operationNotAllowed } from '../globals/errors';
 
 export default class Wallet extends Sequelize.Model {
   static init(sequelize) {
@@ -10,6 +7,10 @@ export default class Wallet extends Sequelize.Model {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       currency: {
         type: Sequelize.STRING,
@@ -22,23 +23,12 @@ export default class Wallet extends Sequelize.Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      name: {
-        type: Sequelize.STRING,
+      ProviderId: {
+        type: Sequelize.INTEGER,
+        references: { key: 'id', model: 'Providers' },
         allowNull: false,
-      },
-      service: {
-        type: Sequelize.STRING,
-        validate: {
-          isIn: [Object.entries(paymentMethodServices).map(pm => pm[1].name)],
-        },
-        allowNull: false,
-      },
-      type: {
-        type: Sequelize.STRING,
-        validate: {
-          isIn: [[].concat([], ...Object.entries(paymentMethodServices).map(pm => Object.values(pm[1].types)))],
-        },
-        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -52,15 +42,6 @@ export default class Wallet extends Sequelize.Model {
         type: Sequelize.DATE,
       },
     }, {
-      hooks: {
-        beforeCreate: (wallet) => {
-          // Validate if Payment type is in the right service
-          if (!WalletLib.IsPaymentMethodTypeInCorrectService(wallet.service, wallet.type)) {
-              throw Error(operationNotAllowed(`Payment Method type ${wallet.type} ` +
-                `is not part of Service ${wallet.service}`));
-            }
-        },
-      },
       sequelize,
     });
   }
@@ -70,5 +51,6 @@ export default class Wallet extends Sequelize.Model {
    */
   static associate(models) {
     this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
+    this.belongsTo(models.Provider, { foreignKey: 'ProviderId', as: 'provider' });
   }
 }
