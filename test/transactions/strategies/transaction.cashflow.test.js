@@ -7,8 +7,9 @@ import { expect } from 'chai';
 import AccountService from '../../../server/services/accountService';
 import WalletService from '../../../server/services/walletService';
 import TransactionService from '../../../server/services/transactionService';
-import ResetDb from '../../../server/util/resetDb';
+import ResetDb from '../../resetDb';
 import { paymentMethodServices } from '../../../server/globals/enums/paymentMethodServices';
+import ProviderService from '../../../server/services/providerService';
 // import { operationNotAllowed } from '../../../server/globals/errors';
 // import { transactionTypeEnum } from '../../../server/globals/enums/transactionTypeEnum';
 
@@ -16,29 +17,42 @@ describe('TransactionCashFlow', () => {
   const accountService = new AccountService();
   const walletService = new WalletService();
   const transactionService = new TransactionService();
+  const providerService = new ProviderService();
 
   after(async () => {
     await ResetDb.run();
   });
 
   describe('<<<<TODO : BETTER NAMING HERE LATER>>>>>', () => {
-    let account, walletUsd, walletCreditCard;
+    let account, providerUsd, walletUsd, providerCreditCard, walletCreditCard;
 
     beforeEach(async () => {
       await ResetDb.run();
       // Creates 2 Accounts
       account = await accountService.insert({ slug: 'account1' });
+      providerUsd = await providerService.insert({
+        name: 'provider_USD',
+        fixedFee: 0,
+        percentFee: 0.05,
+      });
       walletUsd = await walletService.insert({
         OwnerAccountId: account.id,
         currency: 'USD',
         name: 'account1_USD',
+        ProviderId: providerUsd.id,
         service: paymentMethodServices.opencollective.name,
         type: paymentMethodServices.opencollective.types.COLLECTIVE,
+      });
+      providerCreditCard = await providerService.insert({
+        name: 'provider_USD',
+        fixedFee: 0,
+        percentFee: 0.05,
       });
       walletCreditCard = await walletService.insert({
         OwnerAccountId: account.id,
         currency: 'USD',
         name: 'account1_CC',
+        ProviderId: providerCreditCard.id,
         service: paymentMethodServices.stripe.name,
         type: paymentMethodServices.stripe.types.CREDITCARD,
       });

@@ -7,7 +7,7 @@
 // import TransactionService from '../server/services/transactionService';
 // import AccountService from '../server/services/accountService';
 // import WalletService from '../server/services/walletService';
-import ResetDb from '../../../server/util/resetDb';
+import ResetDb from '../../resetDb';
 // import { transactionTypeEnum } from '../server/globals/enums/transactionTypeEnum';
 // import WalletLib from '../server/lib/walletLib';
 
