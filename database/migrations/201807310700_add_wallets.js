@@ -6,6 +6,10 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true
       },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       currency: {
         type: Sequelize.STRING,
         defaultValue: 'USD'
@@ -17,17 +21,12 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      name: {
-        type: Sequelize.STRING,
+      ProviderId: {
+        type: Sequelize.INTEGER,
+        references: {key: 'id', model: 'Providers'},
         allowNull: false,
-      },
-      service: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      type: {
-        type: Sequelize.STRING,
-        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       createdAt: {
         type: Sequelize.DATE,
