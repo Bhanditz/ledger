@@ -45,6 +45,9 @@ export default class TransactionService extends AbstractCrudService {
     // find Wallets
     const toWallet = await Wallet.findById(transaction.ToWalletId);
     const fromWallet = await Wallet.findById(transaction.FromWalletId);
+    // Adding from and to Account ids according to wallets owners
+    transaction.ToAccountId = toWallet.OwnerAccountId;
+    transaction.FromAccountId = fromWallet.OwnerAccountId;
     const isSameCurrency = toWallet.currency === fromWallet.currency;
     // Cashin Or Cashout have the same Account(From and To)
     if (transaction.FromAccountId === transaction.ToAccountId) {
