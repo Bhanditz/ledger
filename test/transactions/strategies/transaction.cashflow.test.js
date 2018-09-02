@@ -34,27 +34,27 @@ describe('TransactionCashFlow', () => {
         name: 'provider_USD',
         fixedFee: 0,
         percentFee: 0.05,
+        service: paymentMethodServices.opencollective.name,
+        type: paymentMethodServices.opencollective.types.COLLECTIVE,
       });
       walletUsd = await walletService.insert({
         OwnerAccountId: account.id,
         currency: 'USD',
         name: 'account1_USD',
         ProviderId: providerUsd.id,
-        service: paymentMethodServices.opencollective.name,
-        type: paymentMethodServices.opencollective.types.COLLECTIVE,
       });
       providerCreditCard = await providerService.insert({
         name: 'provider_USD',
         fixedFee: 0,
         percentFee: 0.05,
+        service: paymentMethodServices.stripe.name,
+        type: paymentMethodServices.stripe.types.CREDITCARD,
       });
       walletCreditCard = await walletService.insert({
         OwnerAccountId: account.id,
         currency: 'USD',
         name: 'account1_CC',
         ProviderId: providerCreditCard.id,
-        service: paymentMethodServices.stripe.name,
-        type: paymentMethodServices.stripe.types.CREDITCARD,
       });
     });
 
@@ -62,15 +62,14 @@ describe('TransactionCashFlow', () => {
       const amountTransaction = 1500;
       const currencyTransaction = 'USD';
       const cashinResult = await transactionService.insert({
-        FromAccountId: account.id,
-        ToAccountId: account.id,
-        FromWalletId:walletCreditCard.id,
+        FromWalletId: walletCreditCard.id,
         ToWalletId: walletUsd.id,
         amount: amountTransaction,
         currency: currencyTransaction,
       });
       // check if initial Cashin transaction generates 2 transactions(DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
+      console.log(JSON.stringify(cashinResult, null, 2));
       expect(cashinResult).to.have.lengthOf(2);
       const debitTransaction = cashinResult[0];
       const creditTransaction = cashinResult[1];
