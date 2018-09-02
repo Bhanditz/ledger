@@ -10,6 +10,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      service: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       fixedFee: {
         type: Sequelize.FLOAT,
       },
