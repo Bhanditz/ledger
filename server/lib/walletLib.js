@@ -27,7 +27,7 @@ export default class WalletUtil {
     return balanceCurrency ? balanceCurrency : 0;
   }
 
-  static IsPaymentMethodTypeInCorrectService(service, type) {
+  static isPaymentMethodTypeInCorrectService(service, type) {
     switch (service) {
       case paymentMethodServices.opencollective.name:
         if (Object.values(paymentMethodServices.opencollective.types).find(objType => objType === type))
