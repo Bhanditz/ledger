@@ -24,7 +24,7 @@
     "build-test": "babel test -d ./test/output/test",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
-    "db:seed": "node_modules/.bin/sequelize db:seed",
+    "db:seed": "node_modules/.bin/sequelize db:seed:all",
     "doc": "node_modules/.bin/apidoc -i server/routes/ -o api-doc/ && open api-doc/index.html"
   },
   "repository": {

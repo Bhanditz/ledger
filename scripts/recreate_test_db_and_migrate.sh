@@ -10,4 +10,4 @@ dropdb -U postgres $DB_NAME
 createdb -U postgres $DB_NAME
 
 # creating db schema
-NODE_ENV=test npm run db:migrate
+NODE_ENV=test npm run db:migrate && npm run db:seed
