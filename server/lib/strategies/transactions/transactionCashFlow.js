@@ -15,46 +15,97 @@ export default class TransactionCashFlow extends AbstractTransactionStrategy {
     this.walletLib = new WalletLib();
   }
 
-  async getTransactions() {
-    let transactions = this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
-    // incrementing transaction groupSequence according to the length of the array
-    this.incomingTransaction.transactionGroupSequence = transactions.length;
-
-    // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
+  async setPaymentProviderFeeTransactions() {
+    let paymentProviderFeeTransactions = null;
     if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0 &&
-        this.incomingTransaction.paymentProviderWalletId && this.incomingTransaction.paymentProviderAccountId) {
+      this.incomingTransaction.paymentProviderWalletId) {
       // find Payment Provider wallet to generate transactions
       this.incomingTransaction.paymentProviderWallet = await Wallet.findById(this.incomingTransaction.paymentProviderWalletId);
-      const paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
+      paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
       await paymentProviderFeeTransactions.setTransactionInfo();
-      // Add Payment Provider Fee transactions to transactions array
-      transactions = transactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
-      // Increment transaction group sequence
-      this.incomingTransaction.transactionGroupSequence = transactions.length;
     }
-    // Plaftorm fee transactions -> Check whether Platform fee is > 0 
+    return paymentProviderFeeTransactions;
+  }
+
+  async setPlatformFeeTransactions() {
+    let platformFeeTransaction = null;
     if (this.incomingTransaction.platformFee || this.incomingTransaction.platformFee > 0) {
       // Generate platform fee transactions
-      const platformFeeTransaction = new PlatformFeeTransactions(this.incomingTransaction);
+      platformFeeTransaction = new PlatformFeeTransactions(this.incomingTransaction);
       await platformFeeTransaction.setTransactionInfo();
-      // Add Platform Fee transactions to transactions array
-      transactions = transactions.concat(platformFeeTransaction.getFeeDoubleEntryTransactions());
-      // Increment transaction group sequence
-      this.incomingTransaction.transactionGroupSequence = transactions.length;
     }
-    // if Wallet Provider has any fee, then create transactions
+    return platformFeeTransaction;
+  }
+
+  async setProviderFeeTransactions() {
+    let providerFeeTransaction = null;
     const fromWallet = await Wallet.findById(this.incomingTransaction.FromWalletId);
     const fromWalletProvider = await Provider.findById(fromWallet.ProviderId);
     if (fromWalletProvider.fixedFee || fromWalletProvider.percentFee) {
       // Generate Wallet Fees Transactions
       this.incomingTransaction.fromWalletProvider = fromWalletProvider;
       this.incomingTransaction.fromWallet = fromWallet;
-      const providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
+      providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
       await providerFeeTransaction.setTransactionInfo();
+    }
+    return providerFeeTransaction;
+  }
+
+  getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction) {
+    let netTransactionAmount = this.incomingTransaction.amount;
+    if (paymentProviderFeeTransactions) {
+      netTransactionAmount -= paymentProviderFeeTransactions.getTotalFee();
+    }
+    if (platformFeeTransaction) {
+      netTransactionAmount -= platformFeeTransaction.getTotalFee();
+    }
+    if (providerFeeTransaction) {
+      netTransactionAmount -= providerFeeTransaction.getTotalFee();
+    }
+    return netTransactionAmount;
+  }
+
+  async getAllTransactionsWithFee(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction) {
+    let transactions = this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
+    // incrementing transaction groupSequence according to the length of the array
+    this.incomingTransaction.transactionGroupSequence = transactions.length;
+    if (paymentProviderFeeTransactions) {
+      // Add Payment Provider Fee transactions to transactions array
+      transactions = transactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
+      // Increment transaction group sequence
+      this.incomingTransaction.transactionGroupSequence = transactions.length;
+    }
+    if (platformFeeTransaction) {
+      // Add Platform Fee transactions to transactions array
+      transactions = transactions.concat(platformFeeTransaction.getFeeDoubleEntryTransactions());
+      // Increment transaction group sequence
+      this.incomingTransaction.transactionGroupSequence = transactions.length;
+    }
+    if (providerFeeTransaction) {
       // Add Wallet Provider Fee transactions to transactions array
-      transactions = transactions.concat(providerFeeTransaction.getFeeDoubleEntryTransactions());
+    transactions = transactions.concat(providerFeeTransaction.getFeeDoubleEntryTransactions());
     }
     return transactions;
+  }
+
+  async getTransactions() {
+    // get balance through the field FromWalletId
+    const fromWalletBalance = await this.walletLib.getCurrencyBalanceFromWalletId(this.incomingTransaction.currency, this.incomingTransaction.FromWalletId);
+    // If the wallet balance has enough money to do the transaction, then creates just a zero-fee transaction
+    if ( fromWalletBalance >= this.incomingTransaction.amount) {
+      return this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
+    }
+    // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
+    const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions(); 
+    // Plaftorm fee transactions -> Check whether Platform fee is > 0 
+    const platformFeeTransaction = await this.setPlatformFeeTransactions();
+    // if Wallet Provider has any fee, then create transactions
+    const providerFeeTransaction = await this.setProviderFeeTransactions();
+
+    // calculating netAmount of the regular transaction
+    this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction);
+    // generate all Double Entry transactions
+    return this.getAllTransactionsWithFee(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction);
   }
 
 }
