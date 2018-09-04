@@ -27,6 +27,7 @@ export default class TransactionLib {
       currency: transaction.currency,
       transactionGroupId: transaction.transactionGroupId,
       transactionGroupSequence: transaction.transactionGroupSequence,
+      transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
       doubleEntryGroupId: doubleEntryGroupId,
     };
     const creditTransaction = {
@@ -39,6 +40,7 @@ export default class TransactionLib {
       currency: transaction.currency,
       transactionGroupId: transaction.transactionGroupId,
       transactionGroupSequence: transaction.transactionGroupSequence + 1,
+      transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
       doubleEntryGroupId: doubleEntryGroupId,
     };
     return [debitTransaction, creditTransaction];
