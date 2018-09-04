@@ -23,6 +23,10 @@ export default class AbstractFeeTransactions {
 
   setTransactionInfo() { }
 
+  getTotalFee() {
+    return Math.round(this.fee);
+  }
+
   /** Given a Transaction Returns Its Double Entry Equivalent Array(1 debit and 1 credit Transactions)
   * @param {Object} transaction
   * @return {Array} of transactions
@@ -34,10 +38,11 @@ export default class AbstractFeeTransactions {
       ToAccountId: this.feeAccountId,
       FromWalletId: this.transaction.FromWalletId,
       ToWalletId: this.feeWalletId,
-      amount: Math.round(this.fee),
+      amount: this.getTotalFee(),
       currency: this.transaction.currency,
       transactionGroupId: this.transaction.transactionGroupId,
       transactionGroupSequence: this.transaction.transactionGroupSequence,
+      transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);
   }
