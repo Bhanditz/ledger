@@ -24,18 +24,21 @@ describe('TransactionCashFlow', () => {
   });
 
   describe('<<<<TODO : BETTER NAMING HERE LATER>>>>>', () => {
-    let account, providerUsd, walletUsd, providerCreditCard, walletCreditCard;
+    let account, accountProviderUsd, accountProviderCC, providerUsd, walletUsd, providerCreditCard, walletCreditCard;
 
     beforeEach(async () => {
       await ResetDb.run();
       // Creates 2 Accounts
       account = await accountService.insert({ slug: 'account1' });
+      accountProviderUsd = await accountService.insert({ slug: 'provider_usd' });
+      accountProviderCC = await accountService.insert({ slug: 'provider_cc' });
       providerUsd = await providerService.insert({
         name: 'provider_USD',
         fixedFee: 0,
         percentFee: 0.05,
         service: paymentMethodServices.opencollective.name,
         type: paymentMethodServices.opencollective.types.COLLECTIVE,
+        OwnerAccountId: accountProviderUsd.id,
       });
       walletUsd = await walletService.insert({
         OwnerAccountId: account.id,
@@ -44,11 +47,12 @@ describe('TransactionCashFlow', () => {
         ProviderId: providerUsd.id,
       });
       providerCreditCard = await providerService.insert({
-        name: 'provider_USD',
-        fixedFee: 0,
-        percentFee: 0.05,
+        name: 'provider_CreditCard',
+        fixedFee: 10,
+        percentFee: 0.025,
         service: paymentMethodServices.stripe.name,
         type: paymentMethodServices.stripe.types.CREDITCARD,
+        OwnerAccountId: accountProviderCC.id,
       });
       walletCreditCard = await walletService.insert({
         OwnerAccountId: account.id,
@@ -69,7 +73,7 @@ describe('TransactionCashFlow', () => {
       });
       // check if initial Cashin transaction generates 2 transactions(DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
-      console.log(JSON.stringify(cashinResult, null, 2));
+      // console.log(JSON.stringify(cashinResult, null, 2));
       expect(cashinResult).to.have.lengthOf(2);
       const debitTransaction = cashinResult[0];
       const creditTransaction = cashinResult[1];
