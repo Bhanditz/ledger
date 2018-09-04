@@ -7,8 +7,8 @@ export default class PaymentProviderFeeTransactions extends AbstractFeeTransacti
   }
 
   setTransactionInfo() {
-    this.feeWalletId = this.transaction.paymentProviderWalletId;
-    this.feeAccountId = this.transaction.paymentProvider.OwnerAccountId;
+    this.feeWalletId = this.transaction.paymentProviderWallet.id;
+    this.feeAccountId = this.transaction.paymentProviderWallet.OwnerAccountId;
     this.fee = this.transaction.paymentProviderFee;
   }
 

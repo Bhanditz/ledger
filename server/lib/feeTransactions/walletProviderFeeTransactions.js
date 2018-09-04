@@ -1,18 +1,24 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import { constants } from '../../globals/constants';
+import ProviderLib from '../providerLib';
 
 export default class WalletProviderFeeTransactions extends AbstractFeeTransactions {
 
   constructor(transaction) {
     super(transaction);
+    this.providerLib = new ProviderLib();
   }
 
-  setTransactionInfo() {
-    this.feeAccountId = constants.PLATFORM_ACCOUNT_ID;
-    this.feeWalletId = constants.PLATFORM_WALLET_ID;
-    const fixedFee = this.transaction.fromWalletProvider.fixedFee ? this.transaction.fromWalletProvider.fixedFee : 0;
-    const percentFee = this.transaction.fromWalletProvider.percentFee ? this.transaction.fromWalletProvider.percentFee : 0;
-    this.fee = fixedFee + (this.transaction.amount * percentFee);
+  async setTransactionInfo() {
+    try {
+      this.feeAccountId = this.transaction.fromWalletProvider.OwnerAccountId;
+      const providerCurrencyWallet = await this.providerLib.findOrCreateWalletByCurrency(this.transaction.fromWalletProvider, this.transaction.currency);
+      this.feeWalletId = providerCurrencyWallet.id;
+      const fixedFee = this.transaction.fromWalletProvider.fixedFee ? this.transaction.fromWalletProvider.fixedFee : 0;
+      const percentFee = this.transaction.fromWalletProvider.percentFee ? this.transaction.fromWalletProvider.percentFee : 0;
+      this.fee = fixedFee + (this.transaction.amount * percentFee);
+    } catch (error) {
+      throw error;
+    }
   }
 
 }

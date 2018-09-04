@@ -11,10 +11,10 @@ export default class AbstractFeeTransactions {
 
   _validateFeeTransaction() {
     if (!this.feeAccountId) {
-      throw Error(operationNotAllowed('Fee transaction need to defined an AccountId'));
+      throw Error(operationNotAllowed('Fee transaction need to define an AccountId'));
     }
     if (!this.feeWalletId) {
-      throw Error(operationNotAllowed('Fee transaction need to defined a WalletId'));
+      throw Error(operationNotAllowed('Fee transaction need to define a WalletId'));
     }
     if (!this.fee) {
       throw Error(operationNotAllowed('Fees need to be established before creating a transaction'));

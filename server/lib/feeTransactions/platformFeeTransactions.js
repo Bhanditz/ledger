@@ -1,5 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import { constants } from '../../globals/constants';
+import PlatformInfo from '../../globals/platformInfo';
 
 export default class PlatformFeeTransactions extends AbstractFeeTransactions {
 
@@ -7,10 +7,14 @@ export default class PlatformFeeTransactions extends AbstractFeeTransactions {
     super(transaction);
   }
 
-  setTransactionInfo() {
-    this.feeAccountId = constants.PLATFORM_ACCOUNT_ID;
-    this.feeWalletId = constants.PLATFORM_WALLET_ID;
-    this.fee = this.transaction.platformFee;
+  async setTransactionInfo() {
+    try {
+      this.feeAccountId = await PlatformInfo.getAccount().id;
+      this.feeWalletId = await PlatformInfo.getWallet().id;
+      this.fee = this.transaction.platformFee;
+    } catch (error) {
+      throw error;
+    }
   }
 
 }
