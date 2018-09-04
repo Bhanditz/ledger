@@ -4,6 +4,7 @@ export default class AbstractTransactionStrategy {
 
   constructor(incomingTransaction) {
     this.incomingTransaction = this._checkAndInsertTransactionGroup(incomingTransaction);
+    this.incomingTransaction.transactionGroupTotalAmount = this.incomingTransaction.amount;
   }
 
   /** Return database formatted transaction extracted through this.incomingTransaction
