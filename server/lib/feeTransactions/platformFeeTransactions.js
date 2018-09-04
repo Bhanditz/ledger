@@ -9,8 +9,10 @@ export default class PlatformFeeTransactions extends AbstractFeeTransactions {
 
   async setTransactionInfo() {
     try {
-      this.feeAccountId = await PlatformInfo.getAccount().id;
-      this.feeWalletId = await PlatformInfo.getWallet().id;
+      const platformAccount = await PlatformInfo.getAccount();
+      const platformWallet = await PlatformInfo.getWallet();
+      this.feeAccountId = platformAccount.id;
+      this.feeWalletId = await platformWallet.id;
       this.fee = this.transaction.platformFee;
     } catch (error) {
       throw error;
