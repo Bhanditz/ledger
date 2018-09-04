@@ -1,6 +1,6 @@
 import Account from '../models/Account';
 
-export default class AccountUtil {
+export default class AccountLib {
 
   async getDefaultCashWalletId(accountId, field) {
     const account = await Account.findById(accountId);

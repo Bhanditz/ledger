@@ -2,7 +2,7 @@ import Database from '../models';
 import Transaction from '../models/Transaction';
 import { paymentMethodServices } from '../globals/enums/paymentMethodServices';
 
-export default class WalletUtil {
+export default class WalletLib {
 
   constructor() {
     this.database = new Database();
