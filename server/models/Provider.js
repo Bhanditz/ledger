@@ -35,6 +35,13 @@ export default class Provider extends Sequelize.Model {
       percentFee: {
         type: Sequelize.FLOAT,
       },
+      OwnerAccountId: {
+        type: Sequelize.INTEGER,
+        references: { key: 'id', model: 'Accounts' },
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
@@ -62,5 +69,12 @@ export default class Provider extends Sequelize.Model {
       },
       sequelize,
     });
+  }
+  /**
+   * responsible to associate the model relationships
+   * @param {*} models - sequelize models
+   */
+  static associate(models) {
+    this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
   }
 }

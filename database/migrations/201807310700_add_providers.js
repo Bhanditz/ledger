@@ -24,6 +24,13 @@ module.exports = {
       percentFee: {
         type: Sequelize.FLOAT,
       },
+      OwnerAccountId: {
+        type: Sequelize.INTEGER,
+        references: {key: 'id', model: 'Accounts'},
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('NOW()')

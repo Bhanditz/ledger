@@ -25,10 +25,10 @@ export default class Wallet extends Sequelize.Model {
       },
       ProviderId: {
         type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Providers' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
+        // references: { key: 'id', model: 'Providers' },
+        // allowNull: true,
+        // onDelete: 'CASCADE',
+        // onUpdate: 'CASCADE',
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -51,6 +51,12 @@ export default class Wallet extends Sequelize.Model {
    */
   static associate(models) {
     this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
-    this.belongsTo(models.Provider, { foreignKey: 'ProviderId', as: 'provider' });
+    // this.hasOne(models.Provider, { 
+    //   foreignKey: {
+    //     name: 'ProviderId',
+    //     allowNull: true,
+    //   },
+    //   as: 'provider',
+    // });
   }
 }

@@ -24,7 +24,6 @@ module.exports = {
       ProviderId: {
         type: Sequelize.INTEGER,
         references: {key: 'id', model: 'Providers'},
-        allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
