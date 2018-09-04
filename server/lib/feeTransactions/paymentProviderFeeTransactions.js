@@ -1,4 +1,6 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
+import Account from '../../models/Account';
+import Wallet from '../../models/Wallet';
 
 export default class PaymentProviderFeeTransactions extends AbstractFeeTransactions {
 
@@ -6,9 +8,11 @@ export default class PaymentProviderFeeTransactions extends AbstractFeeTransacti
     super(transaction);
   }
 
-  setTransactionInfo() {
-    this.feeWalletId = this.transaction.paymentProviderWallet.id;
-    this.feeAccountId = this.transaction.paymentProviderWallet.OwnerAccountId;
+  async setTransactionInfo() {
+    const wallet = await Wallet.findById(this.transaction.paymentProviderWalletId);
+    const account = await Account.findById(wallet.OwnerAccountId);
+    this.feeWalletId = this.transaction.paymentProviderWalletId;
+    this.feeAccountId = account.id;
     this.fee = this.transaction.paymentProviderFee;
   }
 
