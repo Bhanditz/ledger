@@ -43,16 +43,17 @@ export default class TransactionService extends AbstractCrudService {
   */
   async _defineTransactionStrategy(transaction) {
     // find Wallets
-    const toWallet = await Wallet.findById(transaction.ToWalletId);
-    const fromWallet = await Wallet.findById(transaction.FromWalletId);
+    transaction.toWallet = await Wallet.findById(transaction.ToWalletId);
+    transaction.fromWallet = await Wallet.findById(transaction.FromWalletId);
     // Adding from and to Account ids according to wallets owners
-    transaction.ToAccountId = toWallet.OwnerAccountId;
-    transaction.FromAccountId = fromWallet.OwnerAccountId;
-    const isSameCurrency = toWallet.currency === fromWallet.currency;
+    transaction.ToAccountId = transaction.toWallet.OwnerAccountId;
+    transaction.FromAccountId = transaction.fromWallet.OwnerAccountId;
+    const walletsHaveSameCurrency = transaction.toWallet.currency === transaction.fromWallet.currency;
+
     // Cashin Or Cashout have the same Account(From and To)
     if (transaction.FromAccountId === transaction.ToAccountId) {
       // Check if it is NOT a foreign exchange Transaction
-      if (isSameCurrency) {
+      if (walletsHaveSameCurrency) {
         return new TransactionCashFlow(transaction);
       }
       // TO DO Create FOREX version of TransactionCashFlow
@@ -60,7 +61,7 @@ export default class TransactionService extends AbstractCrudService {
     }
     // Defaults to Account to Account transactions...
     // Check if it is NOT a foreign exchange Transaction
-    if (isSameCurrency) {
+    if (walletsHaveSameCurrency) {
       return new TransactionAccountToAccount(transaction);
     }
     return new TransactionAccountToAccountForex(transaction);

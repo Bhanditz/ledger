@@ -39,12 +39,11 @@ export default class TransactionCashFlow extends AbstractTransactionStrategy {
 
   async setProviderFeeTransactions() {
     let providerFeeTransaction = null;
-    const fromWallet = await Wallet.findById(this.incomingTransaction.FromWalletId);
-    const fromWalletProvider = await Provider.findById(fromWallet.ProviderId);
+    const fromWalletProvider = await Provider.findById(this.incomingTransaction.fromWallet.ProviderId);
     if (fromWalletProvider.fixedFee || fromWalletProvider.percentFee) {
       // Generate Wallet Fees Transactions
       this.incomingTransaction.fromWalletProvider = fromWalletProvider;
-      this.incomingTransaction.fromWallet = fromWallet;
+      // this.incomingTransaction.fromWallet = fromWallet;
       providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
       await providerFeeTransaction.setTransactionInfo();
     }
