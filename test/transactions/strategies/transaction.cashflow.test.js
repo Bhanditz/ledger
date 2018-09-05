@@ -75,7 +75,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(4);
-    
+
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -127,7 +127,7 @@ describe('TransactionCashFlow', () => {
     // checking if total amount matches both amounts on credit transactions
     expect(normalCreditTransaction.amount + providerCreditTransaction.amount).to.be.equal(amountTransaction);
 
-  }); /** End of "Regular Account cashes in from its creditcard wallet to its USD wallet(Without Platform Payment Provider Fees) Should generate 4 transactions(2 Regarding Wallet Provider fees and 2 regarding the transaction itself )" */ 
+  }); /** End of "Regular Account cashes in from its creditcard wallet to its USD wallet(Without Platform Payment Provider Fees) Should generate 4 transactions(2 Regarding Wallet Provider fees and 2 regarding the transaction itself )" */
 
   it('Regular Account cashes in from One wallet to Another wallet With Platform Fees and No Payment provider Fee should generate 6 transactions(2 wallet provider, 2 platform fees and 2 regular transaction)', async () => {
     // defining total amount of transaction
@@ -145,7 +145,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(6);
-    
+
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -153,7 +153,7 @@ describe('TransactionCashFlow', () => {
     const platformCreditTransaction = cashinResult[3];
     const walletProviderDebitTransaction = cashinResult[4];
     const walletProviderCreditTransaction = cashinResult[5];
-    
+
     // Validating "Normal Transactions"
     // FromAccountID and ToAccountId should be the same in both transactions
     expect(normalDebitTransaction.FromAccountId).to.be.equal(normalDebitTransaction.ToAccountId);
@@ -164,7 +164,7 @@ describe('TransactionCashFlow', () => {
     // FromWalletId and ToWalletId should be opposite in Debit and Credit transactions
     expect(normalDebitTransaction.FromWalletId).to.be.equal(normalCreditTransaction.ToWalletId);
     expect(normalCreditTransaction.FromWalletId).to.be.equal(normalDebitTransaction.ToWalletId);
-    
+
     // Validating Platform Fees Transactions
     const platformAccount = await PlatformInfo.getAccount();
     const platformWallet = await PlatformInfo.getWallet();
@@ -250,7 +250,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(6);
-    
+
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -258,7 +258,7 @@ describe('TransactionCashFlow', () => {
     const paymentProviderCreditTransaction = cashinResult[3];
     const walletProviderDebitTransaction = cashinResult[4];
     const walletProviderCreditTransaction = cashinResult[5];
-    
+
     // Validating "Normal Transactions"
     // FromAccountID and ToAccountId should be the same in both transactions
     expect(normalDebitTransaction.FromAccountId).to.be.equal(normalDebitTransaction.ToAccountId);
@@ -269,7 +269,7 @@ describe('TransactionCashFlow', () => {
     // FromWalletId and ToWalletId should be opposite in Debit and Credit transactions
     expect(normalDebitTransaction.FromWalletId).to.be.equal(normalCreditTransaction.ToWalletId);
     expect(normalCreditTransaction.FromWalletId).to.be.equal(normalDebitTransaction.ToWalletId);
-    
+
     // Validating Payment Provider Fees Transactions
     // Platform Account should be FromAccountId on Debit and ToAccountId on Credit transactions
     expect(paymentProviderDebitTransaction.FromAccountId).to.be.equal(paymentProviderAccount.id);
@@ -355,7 +355,7 @@ describe('TransactionCashFlow', () => {
     });
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
-    
+
     expect(cashinResult).to.have.lengthOf(8);
 
     // Get all generated Transactions
@@ -367,7 +367,7 @@ describe('TransactionCashFlow', () => {
     const platformCreditTransaction = cashinResult[5];
     const walletProviderDebitTransaction = cashinResult[6];
     const walletProviderCreditTransaction = cashinResult[7];
-    
+
     // Validating "Normal Transactions"
     // FromAccountID and ToAccountId should be the same in both transactions
     expect(normalDebitTransaction.FromAccountId).to.be.equal(normalDebitTransaction.ToAccountId);
@@ -378,7 +378,7 @@ describe('TransactionCashFlow', () => {
     // FromWalletId and ToWalletId should be opposite in Debit and Credit transactions
     expect(normalDebitTransaction.FromWalletId).to.be.equal(normalCreditTransaction.ToWalletId);
     expect(normalCreditTransaction.FromWalletId).to.be.equal(normalDebitTransaction.ToWalletId);
-    
+
     // Validating Platform Fees Transactions
     const platformAccount = await PlatformInfo.getAccount();
     const platformWallet = await PlatformInfo.getWallet();
@@ -493,7 +493,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 2 transactions(normal DEBIT AND CREDIT transactions)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(2);
-    
+
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -537,7 +537,7 @@ describe('TransactionCashFlow', () => {
     const walletLib = new WalletLib();
     const walletUsdBalance = await walletLib.getCurrencyBalanceFromWalletId(currencyTransaction, walletUsd.id);
     expect(walletUsdBalance).to.be.equal(creditTransaction.amount);
-    
+
     // Then creates another transaction with an amount lower then walletUsdBalance
     amountTransaction = walletUsdBalance - Math.round(walletUsdBalance/2);
     cashinResult = await transactionService.insert({
@@ -548,7 +548,7 @@ describe('TransactionCashFlow', () => {
     });
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
-    
+
     expect(cashinResult).to.have.lengthOf(2);
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];

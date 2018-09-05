@@ -12,7 +12,7 @@ export default class TransactionValidator extends AbstractValidator {
       check('currency').isAlphanumeric().isLength({ min: 3, max: 4 }),
       check('FromWalletId').isNumeric(),
       check('ToWalletId').isNumeric(),
-      check('platformFee').isNumeric(), // Will have a default Wallet Id 
+      check('platformFee').isNumeric(), // Will have a default Wallet Id
       check('paymentProviderFee').isNumeric(),
       check('paymentProviderWalletId').isNumeric(),
     ];

@@ -1,5 +1,3 @@
-// import fs from 'fs';
-// import path from 'path';
 import Database from '../server/models';
 import PlatformInfo from '../server/globals/platformInfo';
 

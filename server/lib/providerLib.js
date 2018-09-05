@@ -34,7 +34,7 @@ export default class ProviderLib {
     } catch (error) {
       throw error;
     }
-    
+
   }
 
 }

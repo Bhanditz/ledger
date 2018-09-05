@@ -83,7 +83,7 @@ describe('TransactionAccountToAccount', () => {
       ProviderId: provider.id,
     });
 
-    // Using Credit card wallets from account1 and account2 to top up 
+    // Using Credit card wallets from account1 and account2 to top up
     // their first wallets with U$500
     const amountTransaction = 50000;
     const currencyTransaction = 'USD';
@@ -142,7 +142,7 @@ describe('TransactionAccountToAccount', () => {
     });
     // Should create 2 transactions(double entry DEBIT and CREDIT)
     expect(transactionResult).to.be.an('array');
-    expect(transactionResult).to.have.lengthOf(2);  
+    expect(transactionResult).to.have.lengthOf(2);
     // making sure fromWallet was decreased and toWallet was increased
     const fromWalletBalanceAfterTransaction = await walletLib.getCurrencyBalanceFromWalletId(currencyTransaction, fromWallet.id);
     const toWalletBalanceAfterTransaction = await walletLib.getCurrencyBalanceFromWalletId(currencyTransaction, toWallet.id);

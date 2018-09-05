@@ -95,8 +95,8 @@ export default class TransactionCashFlow extends AbstractTransactionStrategy {
       return this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
     }
     // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
-    const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions(); 
-    // Plaftorm fee transactions -> Check whether Platform fee is > 0 
+    const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions();
+    // Plaftorm fee transactions -> Check whether Platform fee is > 0
     const platformFeeTransaction = await this.setPlatformFeeTransactions();
     // if Wallet Provider has any fee, then create transactions
     const providerFeeTransaction = await this.setProviderFeeTransactions();
