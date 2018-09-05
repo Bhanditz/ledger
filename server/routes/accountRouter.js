@@ -15,8 +15,6 @@ export default class AccountRouter extends AbstractRouter {
    * @apiGroup Accounts
    *
    * @apiParam {String} [slug] currency of the amount field
-   * @apiParam {Number} [DefaultCashinWalletId] id of the default cashin wallet
-   * @apiParam {Number} [DefaultCashoutWalletId] id of the default cashout wallet
    * @apiParam {String} [createdAt] Date the account was created
    * @apiParam {String} [updatedAt] Date the account was updated
    */
@@ -40,8 +38,6 @@ export default class AccountRouter extends AbstractRouter {
    * @apiName put_accounts
    * @apiGroup Accounts
    * @apiParam {Number} [slug] unique string identifier of the account
-   * @apiParam {Number} [DefaultCashinWalletId] id of the default cashin wallet
-   * @apiParam {Number} [DefaultCashoutWalletId] id of the default cashout wallet
    */
   put() {
     this.app.put(this.path, (req, res) => {
