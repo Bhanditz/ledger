@@ -47,14 +47,28 @@ We are using the library [apidoc](https://github.com/apidoc/apidoc) to generate 
 - `id`
 - `slug` - unique string identifier of the account
 
+### Providers
+
+`Entities` That will identify the fees that can be applied to each Wallet
+
+- `id`
+- `name` - name of the provider
+- `service` - As of today : [`OPENCOLLECTIVE`, `STRIPE`, `PAYPAL`]
+- `type` - divisions of the services stated above
+- `fixedFee` - a fixed fee in cents
+- `percentFee` - a percentage
+- `OwnerAccountId` - the owner Account of the provider(reference to `Accounts` table)
+
 ### Wallets
 
 A Wallet will belong to a Collective(Account?) which a Collective may(and likely will) have more than one wallet.
 
 - `id`
 - `name` - name of the wallet
-- `currency` - currency of the wallet, we may define all possible currencies and also a "special" type `multi-currency`(A credit card wallet may be multi-currency). // To do: today this field is just a String, we need to define all possible types
-- `OwnerAccountId` - The account that this wallet belongs to
+- `currency` - currency of the wallet, we may define all possible currencies. // To do: today this field is just a String, we need to define all possible types
+- `OwnerAccountId` - The account that this wallet belongs to(reference to `Accounts` table)
+- `ProviderId` - The provider that this wallet has (reference to `Providers` table)
+
 
 ### Transactions
 
@@ -66,11 +80,12 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `ToAccountId`- The Account responsible for receiving the money in the transaction
 - `FromWalletId`- The Wallet of the Account responsible for sending the money in the transaction
 - `ToWalletId`- The Wallet of the Account responsible for Receiving the money in the transaction
-- `amount`- The amount of the transaction
+- `amount`- The NET amount of the transaction
 - `currency` - The currency of the transaction
 - `doubleEntryGroupId` - The UUID of the double entry pair transaction(for any CREDIT transaction there is a DEBIT transaction, and we can "find" all the pairs through this field)
 - `transactionGroupId` - The UUID the transaction group -> When an account pays another account, there are several use cases and in all of them we will have more than one transaction at the very least. This field identify all transactions related to one "action of the system"
 - `transactionGroupSequence` - The sequence of the transaction regarding its transaction group
+- `transactionGroupTotalAmount` - The Gross Amount of the transaction regarding a whole transaction group. Example: account1 pays 30USD to account2 and this transaction has a 10% of platform Fee. The system will generate 4 transactions, 2 regarding the "normal" transaction(from account1 to account2) with the `amount` field having `27`USD(95% where in the DEBIT it will be `-27USD` and Credit `27USD`) and 2 regarding the fees with the `amount` field having `3`USD(5% where in the DEBIT it will be `-3USD` and Credit `3USD`). in All 4 transactions the field `transactionGroupTotalAmount` will be `30USD`.
 
 
 ## API Endpoints
@@ -82,44 +97,152 @@ Run `npm run doc` to see most of the endpoint available and their requirements
 
 ## Transactions Example
 
-### Basic "Cashin" Transaction - Account 1 cashes in 30USD
+### Transaction with zero fees(Wallet Provider has No Fee)
 
-Account 1(called User1) has 2 wallets, its Credit Card Wallet(User1_CC) and its USD Wallet(User1_USD). The Credit card wallet is set as "default cash in"  by the account 1. When the user asks the system(through the website, graphql, rest api, etc) to create a "cashin":
+In Some cases, the system will no charge fees to transactions under certain conditions(for example, the accounts have already cashed in money to their wallets before thus already paid fees). Example: Account1(called User1) pays 30USD to Account2(called User2) without fees.
 
-1. He will define the `FromAccountId` and `ToAccountId` as his account(in the end he's sending money to himself through different wallets), 
-2. he will define the `ToWalletId` as the Wallet he wants to receive the money(in the example case `User1_USD`).
-3. If he has a `DefaultCashinWalletId` defined, he could but doesn't need to declare the `FromWalletId` then the system will look for his Default Wallet.
-4. Declare the amount and currency
-5. POST /transactions 
-    -  `{"FromAccountId":"User1", "ToAccountId":"User1", "ToWalletId":"User1_USD", "amount": 30, "currency": "USD"}`
+We would have the `POST /transactions` endpoint with the following payload:
 
-|# | type   |ToAccountId | FromAccountId | amount |currency |FromWalletId|  ToWalletId   |TransactioGroup| DoubleEntryId |
-|--|--------|------------|--------------|--------|----------|-------------|--------------|---------------| --------------|
-|1 | DEBIT  |   User1    |     User1    |  -30   |   USD    | User1_USD   |  User1_CC    | TG_GROUP_1    | DoubleEntry_1 |
-|2 | CREDIT |   User1    |     User1    |  30    |   USD    | User1_CC    |  User1_USD   | TG_GROUP_1    | DoubleEntry_1 |
+```javascript
+{
+  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
+  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  amount: 3000, 
+  currency: 'USD'
+}
+```    
 
-### Account 1 sends 30USD to Account 2 
+And the ledger table would be:
 
-Account 1(called User1) has 2 wallets, its Credit Card Wallet(User1_CC) and its USD Wallet(User1_USD). The Credit card wallet is set as "default cash in"  by the account 1. 
-Account 2 has 1 wallet(Not a Default) : User2_USD
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId|amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|----------|------|--------|---------------|--------------|---------------------------|
+|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
+|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
 
-As the Account 1 Wallet will have no 30USD in its balance, it will need to Cash in prior to send the value to the Account 2 which is goin to generate a total of 4 transactions
+PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
 
-When the user asks the system(through the website, graphql, rest api, etc) to create a "cashin":
+### Transaction with Platform fees(Wallet Provider has No Fee)
 
-1. He will define the `FromAccountId:User1` and `ToAccountId:User2` as his account(in the end he's sending money to himself through different wallets), 
-2. he will define one of his wallets to send the money: `FromWalletId:User1_USD`. AS this wallet won't have money, it will need to cash in(looking for his "Default Cashin Wallet").
-3. he will define the `ToWalletId:User2_USD`.
-4. Declare the amount and currency.
-5. POST /transactions 
-    -  `{"FromAccountId":"User1", "ToAccountId":"User2", "FromWalletId":"User1_USD", "ToWalletId":"User2_USD", "amount": 30, "currency": "USD"}`
+Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee. In this case we need to input the platformFee(the platform information like its account and wallets are already set and can be found by system)
 
-|# | type   |ToAccountId | FromAccountId | amount |currency |FromWalletId|  ToWalletId   |TransactioGroup| DoubleEntryId |
-|--|--------|------------|--------------|--------|----------|-------------|--------------|---------------| --------------|
-|1 | DEBIT  |   User1    |     User1    |  -30   |   USD    | User1_USD   |  User1_CC    | TG_GROUP_1    | DoubleEntry_1 |
-|2 | CREDIT |   User1    |     User1    |  30    |   USD    | User1_CC    |  User1_USD   | TG_GROUP_1    | DoubleEntry_1 |
-|3 | DEBIT  |   User1    |     User2    |  -30   |   USD    | User2_USD   |  User1_USD   | TG_GROUP_1    | DoubleEntry_2 |
-|4 | CREDIT |   User2    |     User1    |  30    |   USD    | User1_CC    |  User2_USD   | TG_GROUP_1    | DoubleEntry_2 |
+We would have the `POST /transactions` endpoint with the following payload:
+
+```javascript
+{
+  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
+  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  amount: 3000, 
+  currency: 'USD',
+  platformFee: 300,
+}
+```    
+
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the platform transaction(debit and credit)
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   | 2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD|  300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+
+PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+
+### Transaction with Payment Provider fees(Wallet Provider has No Fee)
+
+Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Payment Provider fee. In this case we need to input the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id( as the payment provider should have more than wallet this field is necessary so the system knows for sure it's depositing money on the right wallet). 
+
+We would have the `POST /transactions` endpoint with the following payload:
+
+```javascript
+{
+  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
+  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  amount: 3000, 
+  currency: 'USD',
+  paymentProviderFee: 300,
+  paymentProviderWalletId: PP_WALLET,
+}
+```    
+
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   |2700  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+
+PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+
+### Transaction with Platform and Payment Provider fees(Wallet Provider has No Fee)
+
+Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee and a 10% Payment Provider fee. In this case we need to input the Platform Fee(field `platformFee`), the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id. 
+
+We would have the `POST /transactions` endpoint with the following payload:
+
+```javascript
+{
+  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
+  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  amount: 3000, 
+  currency: 'USD',
+  platformFee: 300,
+  paymentProviderFee: 300,
+  paymentProviderWalletId: PP_WALLET,
+}
+```    
+
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2400 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   |2400  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD|300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|5 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|6 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   |300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+
+PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+
+### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees
+
+Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee and a 10% Payment Provider fee. In this case we need to input the Platform Fee(field `platformFee`), the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id. 
+The Wallet Provider can be found through the field `ProviderId` under the model `Wallet` which point ot the `Provider` model that contains its fees(`fixedFee` and `percentFee`).In this example we are supposing a `10%` Wallet Provider Fee(we will consider the Provider Account called `WP` and the Wallet Called `WP_WALLET`.
+
+We would have the `POST /transactions` endpoint with the following payload:
+
+```javascript
+{
+  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
+  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  amount: 30, 
+  currency: 'USD',
+  platformFee: 0.1,
+  paymentProviderFee: 0.1,
+  paymentProviderWalletId: PP_WALLET,
+}
+```    
+
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   | -2100|   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   | 2100 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD| 300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|5 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|6 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   | 300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|7 | DEBIT |      WP      |  WP_WALLET   |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+|8 | CREDIT|     User1    |  User1_USD   |   WP      |WP_WALLET   | 300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+
+
+## Multi-currency not implemented yet
+
+This needs to be discussed a little bit more but for now we'll keep the example below that was first discussed(We are ignoring the Fees transaction for simplicity's sake):
 
 ### MultiCurrency - Account 1 sends 30EUR to Account 2 Which wallet is an USD wallet
 
@@ -143,28 +266,9 @@ POST /transactions
 - from the row 3  to 6  : User1 exchanges 30EUR for 45USD: His  **User1_EUR** Send its 30EUR to his **User1_CC** Which then exchanges it(outside the system) and finally sends the converted 45USD to the User **User1_USD**
 - rows number 7 and 8 : **User1** sends 45USD from his **User1_USD** Wallet to the **User2** **User2_USD** Wallet
 
-PS: TO DO in the code today...
+## Fees(Platform, Payment providers and wallets)
 
-## Fees(Platform, Payment processors and wallets)
-
-ISSUE #10 is open regarding making sure the following is accurate: 
-
-To show where the Fees will apply, We will divide the transactions in 3 categories(*Coming* into the system, *Inside* the system, *Leaving* the system):
-
-    - *Coming Transactions*: 
-        - Platform fee: 5%
-        - Payment Processor fee(stripe, paypal): dynamic fee(we will send a request and wait for the total fees that apply)
-        - Wallet Fee: to be defined(Perhaps one more collection on the database to point the fixed host fees)
-    - *Inside Transactions*: 
-        - Platform fee: 0
-        - Payment Processor fee(stripe, paypal): If the transaction is between different wallets providers/hosts then the same fee(as above) apply
-        - Wallet/Host Fee: If the transaction is between different wallets providers/hosts then the same fee(as above) apply
-    - *Leaving Transactions*: 
-        - NO FEES
-                
+The platform and payment providers fees will be present in the `POST /transactions` input. The Wallets fee(old `Host` fees) will be found through the `Wallet Provider` defined in the `Wallet` model(field `ProviderId` that points to the `Providers` model). 
 
 ## TO Do
-
-- Hosts, Platform and Payment processors fees(50%)
-- Multi Currency Transaction(50%)
-- Add Host to database?
+- Multi Currency Transactions
