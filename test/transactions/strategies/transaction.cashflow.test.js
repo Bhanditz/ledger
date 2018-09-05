@@ -12,8 +12,6 @@ import { paymentMethodServices } from '../../../server/globals/enums/paymentMeth
 import ProviderService from '../../../server/services/providerService';
 import PlatformInfo from '../../../server/globals/platformInfo';
 import WalletLib from '../../../server/lib/walletLib';
-// import { operationNotAllowed } from '../../../server/globals/errors';
-// import { transactionTypeEnum } from '../../../server/globals/enums/transactionTypeEnum';
 
 describe('TransactionCashFlow', () => {
   const accountService = new AccountService();
@@ -77,7 +75,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(4);
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -147,7 +145,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(6);
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -252,7 +250,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(6);
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -357,7 +355,7 @@ describe('TransactionCashFlow', () => {
     });
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     expect(cashinResult).to.have.lengthOf(8);
 
     // Get all generated Transactions
@@ -495,7 +493,7 @@ describe('TransactionCashFlow', () => {
     // check if initial Cashin transaction generates 2 transactions(normal DEBIT AND CREDIT transactions)
     expect(cashinResult).to.be.an('array');
     expect(cashinResult).to.have.lengthOf(2);
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
     const normalCreditTransaction = cashinResult[1];
@@ -550,7 +548,7 @@ describe('TransactionCashFlow', () => {
     });
     // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
     expect(cashinResult).to.be.an('array');
-    // console.log(`CASHIN RESULT: ${JSON.stringify(cashinResult, null, 2)}`);
+    
     expect(cashinResult).to.have.lengthOf(2);
     // Get all generated Transactions
     const normalDebitTransaction = cashinResult[0];
