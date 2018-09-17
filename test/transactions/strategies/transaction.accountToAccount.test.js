@@ -1,5 +1,5 @@
 /**
- * Test around the @{TransactionService}
+ * Test around the @{TransactionAccountToAccount}
  *
  * @module test/user/service
  */
