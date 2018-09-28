@@ -1,5 +1,5 @@
 /**
- * Test around the @{TransactionCashFlow}
+ * Test around the @{TransactionForexStrategy}
  *
  * @module test/transactions/strategies
  */
@@ -13,7 +13,7 @@ import ProviderService from '../../../server/services/providerService';
 import PlatformInfo from '../../../server/globals/platformInfo';
 import WalletLib from '../../../server/lib/walletLib';
 
-describe('TransactionCashFlow', () => {
+describe('TransactionForexStrategy', () => {
   const accountService = new AccountService();
   const walletService = new WalletService();
   const transactionService = new TransactionService();
@@ -573,4 +573,4 @@ describe('TransactionCashFlow', () => {
     expect(normalDebitTransaction.transactionGroupTotalAmount).to.be.equal(-1 * normalDebitTransaction.amount);
   }); /** End of "Regular Account cashes in from its USD Wallet to its Credit Card wallet Should pay no fees because the money is already in its USD Account(Should only pay Wallet provider Fee if wallet has no balance)" */
 
-}); /** End of "TransactionCashflow" */
+}); /** End of "TransactionForexStrategy" */
