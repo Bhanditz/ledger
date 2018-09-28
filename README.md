@@ -268,7 +268,7 @@ The total payload would have the "regular" fields plus the "forex" fields, as th
 
 ### Forex Transaction Example
 
-Account **User1** wants to send **45EUR** to the **USD Wallet** of the Account **User2**.
+Account **User1** wants to send **30EUR**(that will be converted to **45USD**) to the **USD Wallet** of the Account **User2**.
 
 Payload:
 
