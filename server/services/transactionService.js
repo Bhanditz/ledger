@@ -1,10 +1,8 @@
 import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
 import Wallet from '../models/Wallet';
-import TransactionCashFlow from '../lib/strategies/transactions/transactionCashFlow';
-import TransactionCashFlowForex from '../lib/strategies/transactions/transactionCashFlowForex';
-import TransactionAccountToAccountForex from '../lib/strategies/transactions/transactionAccountToAccountForex';
-import TransactionAccountToAccount from '../lib/strategies/transactions/transactionAccountToAccount';
+import TransactionRegularStrategy from '../lib/strategies/transactions/transactionRegularStrategy';
+import TransactionForexStrategy from '../lib/strategies/transactions/transactionForexStrategy';
 import Logger from '../globals/logger';
 
 export default class TransactionService extends AbstractCrudService {
@@ -50,20 +48,10 @@ export default class TransactionService extends AbstractCrudService {
     transaction.FromAccountId = transaction.fromWallet.OwnerAccountId;
     const walletsHaveSameCurrency = transaction.toWallet.currency === transaction.fromWallet.currency;
 
-    // Cashin Or Cashout have the same Account(From and To)
-    if (transaction.FromAccountId === transaction.ToAccountId) {
-      // Check if it is NOT a foreign exchange Transaction
-      if (walletsHaveSameCurrency) {
-        return new TransactionCashFlow(transaction);
-      }
-      // TO DO Create FOREX version of TransactionCashFlow
-      return new TransactionCashFlowForex(transaction);
-    }
-    // Defaults to Account to Account transactions...
     // Check if it is NOT a foreign exchange Transaction
     if (walletsHaveSameCurrency) {
-      return new TransactionAccountToAccount(transaction);
+      return new TransactionRegularStrategy(transaction);
     }
-    return new TransactionAccountToAccountForex(transaction);
+    return new TransactionForexStrategy(transaction);
   }
 }
