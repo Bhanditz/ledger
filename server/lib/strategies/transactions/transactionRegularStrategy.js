@@ -7,7 +7,7 @@ import PlatformFeeTransactions from '../../feeTransactions/platformFeeTransactio
 import Provider from '../../../models/Provider';
 import WalletProviderFeeTransactions from '../../feeTransactions/walletProviderFeeTransactions';
 
-export default class TransactionCashFlow extends AbstractTransactionStrategy {
+export default class TransactionRegularStrategy extends AbstractTransactionStrategy {
 
   constructor(incomingTransaction) {
     super(incomingTransaction);

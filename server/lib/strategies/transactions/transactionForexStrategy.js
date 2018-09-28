@@ -1,11 +1,11 @@
-import AbstractTransactionStrategy from './abstractTransactionStrategy';
 import TransactionLib from '../../transactionLib';
 import WalletLib from '../../walletLib';
 import { operationNotAllowed } from '../../../globals/errors';
 import Wallet from '../../../models/Wallet';
 import { paymentMethodServices } from '../../../globals/enums/paymentMethodServices';
+import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 
-export default class TransactionCashFlowForex extends AbstractTransactionStrategy {
+export default class TransactionForexStrategy extends AbstractTransactionForexStrategy {
 
   constructor(incomingTransaction) {
     super(incomingTransaction);
