@@ -240,35 +240,74 @@ The total record generated on the ledger regarding this transaction will be 4 as
 |8 | CREDIT|     User1    |  User1_USD   |   WP      |WP_WALLET   | 300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
 
 
-## Multi-currency not implemented yet
+## Forex Transactions
 
-This needs to be discussed a little bit more but for now we'll keep the example below that was first discussed(We are ignoring the Fees transaction for simplicity's sake):
+For us to add transactions with different currencies we would need some extra fields in both the database table and the Endpoint Payload
 
-### MultiCurrency - Account 1 sends 30EUR to Account 2 Which wallet is an USD wallet
+### Database Fields:
+   
+- `transactionGroupTotalAmountInDestinationCurrency` in the `Transactions` model so we can know the amount currency in both currencies
 
-We are considering the Account 1 does not have 30EUR in his wallet so it will need to Cash in the 30EUR from his Default Cashin Wallet as well.
+### Endpoint Payload
 
-POST /transactions 
-  -  `{"FromAccountId":"User1", "ToAccountId":"User2", "FromWalletId":"User1_EUR", "ToWalletId":"User2_USD", "amount": 30, "currency": "EUR"}`
+For Forex transactions we need to define extra fields : `FromDestinationCurrencyWalletId`, `destinationAmount`, `destinationCurrency`, `paymentProviderDestinationCurrencyWalletId`.
 
-|# | type   | AccountId  | FromAccountId | amount |currency |WalletId  |FromWalletId  |TransactioGroup| DoubleEntryId       |
-|--|--------|------------|--------------|--------|---------|-----------|--------------|---------------| --------------|
-|1 | debit  |   User1    |     User1    |  -30   |   EUR   | User1_EUR |  User1_CC    | UUID_GROUP_1  | DoubleEntry_1 |
-|2 | credit |   User1    |     User1    |  30    |   EUR   | User1_CC  |  User1_EUR   | UUID_GROUP_1  | DoubleEntry_1 |
-|3 | debit  |   User1    |     User1    |  -30   |   EUR   | User1_CC  |  User1_EUR   | UUID_GROUP_1  | DoubleEntry_2 |
-|4 | credit |   User1    |     User1    |  30    |   EUR   | User1_EUR |  User1_CC    | UUID_GROUP_1  | DoubleEntry_2 |
-|5 | debit |    User1    |     User1    |  -45   |   USD   | User1_USD |  User1_CC    | UUID_GROUP_1  | DoubleEntry_3 |
-|6 | credit |   User1    |     User1    |  45    |   USD   | User1_CC  |  User1_USD   | UUID_GROUP_1  | DoubleEntry_3 |
-|7 | debit  |   User1    |     User2    | -45    |   USD   | User2_USD |  User1_USD   | UUID_GROUP_1  | DoubleEntry_4 |
-|8 | credit |   User2    |     User1    |  45    |   USD   | User2_USD |  User1_USD   | UUID_GROUP_1  | DoubleEntry_4 |
+The total payload would have the "regular" fields plus the "forex" fields, as the following:
 
-- rows number 1 and 2 : User1 cashes in from His Default Credit card Wallet **User1_CC** to his EUR Wallet **User1_EUR**
-- from the row 3  to 6  : User1 exchanges 30EUR for 45USD: His  **User1_EUR** Send its 30EUR to his **User1_CC** Which then exchanges it(outside the system) and finally sends the converted 45USD to the User **User1_USD**
-- rows number 7 and 8 : **User1** sends 45USD from his **User1_USD** Wallet to the **User2** **User2_USD** Wallet
+- `FromWalletId` - The WalletId where the money is being taken out 
+- `FromDestinationCurrencyWalletId` - The WalletId of the Account sending money with the same currency as the `destinationCurrency`
+- `ToWalletId` - The WalletId that identifies the Wallet that is going to receive the money
+- `amount` - The amount(same currency as defined in the "currency" field) to be sent
+- `currency` - The currency to be sent
+- `destinationAmount` - The amount to be received(same currency as defined in the "destinationCurrency" field)
+- `destinationCurrency` - The currency to be received
+- `platformFee` - if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
+- `paymentProviderFee` - if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
+- `paymentProviderWalletId` - The Wallet Id with the same currency as the `currency` field
+- `paymentProviderDestinationCurrencyWalletId` - In A forex Transaction we always consider the fees of the Payment Provider Destination Wallet
 
-## Fees(Platform, Payment providers and wallets)
+### Forex Transaction Example
 
-The platform and payment providers fees will be present in the `POST /transactions` input. The Wallets fee(old `Host` fees) will be found through the `Wallet Provider` defined in the `Wallet` model(field `ProviderId` that points to the `Providers` model). 
+Account **User1** wants to send **45EUR** to the **USD Wallet** of the Account **User2**.
 
-## TO Do
-- Multi Currency Transactions
+Payload:
+
+```javascript
+{
+  FromWalletId: User1_EUR, // The original WalletId where the money is going to be sent 
+  FromDestinationCurrencyWalletId: User1_USD, // The WalletId of the Account sending money
+  ToWalletId: User2_USD, // The Destination WalletId
+  amount: 3000, // The amount(same currency as defined in the "currency" field) to be sent
+  currency: 'EUR', // The currency to be sent
+  destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
+  destinationCurrency: 'USD', // The currency to be received
+  platformFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
+  paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
+  paymentProviderWalletId: PP_EUR,
+  paymentProviderDestinationCurrencyWalletId: PP_USD, // In A forex Transaction we always consider the fees of the Payment Provider Destination Wallet
+}
+```    
+
+This would generate a total of 12 transactions in the ledger table:
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupTotalAmountInDestinationCurrency|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|---------------------------|-----------------|
+|1 | DEBIT |   PP         |  PP_EUR      |   User1   |User1_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|2 | CREDIT|   User1      |  User1_EUR   |   PP      |PP_EUR      | 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|3 | DEBIT |   User1      |  User1_USD   |   PP      |PP_USD      | -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|4 | CREDIT|   PP         |  PP_USD      |   User1   |User1_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|5 | DEBIT |   User2      | User2_USD    |   User1   |User1_USD   | -4200|   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|6 | CREDIT|   User1      | User1_USD    |   User2   |User2_USD   | 4200 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|7 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|8 | CREDIT|   User1      |  User1_USD   | Platform  |Platform_USD| 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|9 | DEBIT |   PP         |  PP_USD      |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|10| CREDIT|   User1      |  User1_USD   |   PP      |PP_USD      | 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|11| DEBIT |   WP         |  WP_US_WALLET|   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+|12| CREDIT|   User1      |  User1_USD   |   WP      |WP_US_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+
+- rows #1 and #2 - **User1** sends 30EUR(the amount he wants to send to User2) to The Payment Provider(account **PP**, wallet **PP_EUR**) through its EUR Wallet(**User1_EUR**) so it can be "converted" to USD.
+- rows #3 and #4 - **User1**(wallet **User1_USD**) received 45USD from The Payment Provider(account **PP**, wallet **PP_USD**).
+- rows #5 and #6 - **User1**(wallet **User1_USD**) sends the money to **User2**(wallet **User2_USD**)
+- rows #7 and #8 - **User1**(wallet **User1_USD**) pays platform fee 
+- rows #9 and #10 - **User1**(wallet **User1_USD**) pays payment provider fee 
+- rows #11 and #12 - **User1**(wallet **User1_USD**) pays wallet provider(The wallet provider fee of the wallet **User1_USD**) fee
