@@ -52,6 +52,9 @@ module.exports = {
       transactionGroupTotalAmount: {
         type: Sequelize.FLOAT,
       },
+      transactionGroupTotalAmountInDestinationCurrency: {
+        type: Sequelize.FLOAT,
+      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,

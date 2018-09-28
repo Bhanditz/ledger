@@ -55,6 +55,9 @@ export default class Transaction extends Sequelize.Model {
       transactionGroupTotalAmount: {
         type: Sequelize.FLOAT,
       },
+      transactionGroupTotalAmountInDestinationCurrency: {
+        type: Sequelize.FLOAT,
+      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
