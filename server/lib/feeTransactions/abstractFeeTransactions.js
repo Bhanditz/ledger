@@ -43,6 +43,7 @@ export default class AbstractFeeTransactions {
       transactionGroupId: this.transaction.transactionGroupId,
       transactionGroupSequence: this.transaction.transactionGroupSequence,
       transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
+      transactionGroupTotalAmountInDestinationCurrency: this.transaction.transactionGroupTotalAmountInDestinationCurrency,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);
   }
