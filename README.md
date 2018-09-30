@@ -269,6 +269,7 @@ The total payload would have the "regular" fields plus the "forex" fields, as th
 ### Forex Transaction Example
 
 Account **User1** wants to send **30EUR**(that will be converted to **45USD**) to the **USD Wallet** of the Account **User2**.
+We assume that All Payment Provider Wallets are "Multi currencies" wallets
 
 Payload:
 
@@ -283,8 +284,7 @@ Payload:
   destinationCurrency: 'USD', // The currency to be received
   platformFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
   paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-  paymentProviderWalletId: PP_EUR,
-  paymentProviderDestinationCurrencyWalletId: PP_USD, // In A forex Transaction we always consider the fees of the Payment Provider Destination Wallet
+  paymentProviderWalletId: PP_MULTI,
 }
 ```    
 
@@ -292,20 +292,20 @@ This would generate a total of 12 transactions in the ledger table:
 
 |# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupTotalAmountInDestinationCurrency|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|---------------------------|-----------------|
-|1 | DEBIT |   PP         |  PP_EUR      |   User1   |User1_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
-|2 | CREDIT|   User1      |  User1_EUR   |   PP      |PP_EUR      | 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
-|3 | DEBIT |   User1      |  User1_USD   |   PP      |PP_USD      | -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
-|4 | CREDIT|   PP         |  PP_USD      |   User1   |User1_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|1 | DEBIT |   PP         |  PP_MULTI    |   User1   |User1_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|2 | CREDIT|   User1      |  User1_EUR   |   PP      |PP_MULTI    | 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|3 | DEBIT |   User1      |  User1_USD   |   PP      |PP_MULTI    | -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|4 | CREDIT|   PP         |  PP_MULTI    |   User1   |User1_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
 |5 | DEBIT |   User2      | User2_USD    |   User1   |User1_USD   | -4200|   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
 |6 | CREDIT|   User1      | User1_USD    |   User2   |User2_USD   | 4200 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
 |7 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
 |8 | CREDIT|   User1      |  User1_USD   | Platform  |Platform_USD| 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
-|9 | DEBIT |   PP         |  PP_USD      |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
-|10| CREDIT|   User1      |  User1_USD   |   PP      |PP_USD      | 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|9 | DEBIT |   PP         |  PP_MULTI    |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|10| CREDIT|   User1      |  User1_USD   |   PP      |PP_MULTI    | 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
 |11| DEBIT |   WP         |  WP_US_WALLET|   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
 |12| CREDIT|   User1      |  User1_USD   |   WP      |WP_US_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
 
-- rows #1 and #2 - **User1** sends 30EUR(the amount he wants to send to User2) to The Payment Provider(account **PP**, wallet **PP_EUR**) through its EUR Wallet(**User1_EUR**) so it can be "converted" to USD.
+- rows #1 and #2 - **User1** sends 30EUR(the amount he wants to send to User2) to The Payment Providerthrough its EUR Wallet(**User1_EUR**) so it can be "converted" to USD.
 - rows #3 and #4 - **User1**(wallet **User1_USD**) received 45USD from The Payment Provider(account **PP**, wallet **PP_USD**).
 - rows #5 and #6 - **User1**(wallet **User1_USD**) sends the money to **User2**(wallet **User2_USD**)
 - rows #7 and #8 - **User1**(wallet **User1_USD**) pays platform fee 
