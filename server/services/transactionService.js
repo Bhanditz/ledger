@@ -1,8 +1,8 @@
 import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
 import Wallet from '../models/Wallet';
-import TransactionRegularStrategy from '../lib/strategies/transactions/transactionRegularStrategy';
-import TransactionForexStrategy from '../lib/strategies/transactions/transactionForexStrategy';
+import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
+import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import Logger from '../globals/logger';
 
 export default class TransactionService extends AbstractCrudService {

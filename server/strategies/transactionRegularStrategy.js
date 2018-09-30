@@ -1,11 +1,11 @@
 import AbstractTransactionStrategy from './abstractTransactionStrategy';
-import TransactionLib from '../../transactionLib';
-import WalletLib from '../../walletLib';
-import Wallet from '../../../models/Wallet';
-import PaymentProviderFeeTransactions from '../../feeTransactions/paymentProviderFeeTransactions';
-import PlatformFeeTransactions from '../../feeTransactions/platformFeeTransactions';
-import Provider from '../../../models/Provider';
-import WalletProviderFeeTransactions from '../../feeTransactions/walletProviderFeeTransactions';
+import TransactionLib from '../lib/transactionLib';
+import WalletLib from '../lib/walletLib';
+import Wallet from '../models/Wallet';
+import PaymentProviderFeeTransactions from '../feeTransactions/paymentProviderFeeTransactions';
+import PlatformFeeTransactions from '../feeTransactions/platformFeeTransactions';
+import Provider from '../models/Provider';
+import WalletProviderFeeTransactions from '../feeTransactions/walletProviderFeeTransactions';
 
 export default class TransactionRegularStrategy extends AbstractTransactionStrategy {
 

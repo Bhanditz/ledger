@@ -1,5 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import PlatformInfo from '../../globals/platformInfo';
+import PlatformInfo from '../globals/platformInfo';
 
 export default class PlatformFeeTransactions extends AbstractFeeTransactions {
 
