@@ -31,6 +31,10 @@ export default class Wallet extends Sequelize.Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
+      temporary: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
