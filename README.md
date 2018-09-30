@@ -86,6 +86,7 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `transactionGroupId` - The UUID the transaction group -> When an account pays another account, there are several use cases and in all of them we will have more than one transaction at the very least. This field identify all transactions related to one "action of the system"
 - `transactionGroupSequence` - The sequence of the transaction regarding its transaction group
 - `transactionGroupTotalAmount` - The Gross Amount of the transaction regarding a whole transaction group. Example: account1 pays 30USD to account2 and this transaction has a 10% of platform Fee. The system will generate 4 transactions, 2 regarding the "normal" transaction(from account1 to account2) with the `amount` field having `27`USD(95% where in the DEBIT it will be `-27USD` and Credit `27USD`) and 2 regarding the fees with the `amount` field having `3`USD(5% where in the DEBIT it will be `-3USD` and Credit `3USD`). in All 4 transactions the field `transactionGroupTotalAmount` will be `30USD`.
+- `transactionGroupTotalAmountInDestinationCurrency` - this field only applies for FOREX transactions: The Gross Amount in the "destination currency"(example: account1 sends 30EUR to account2 that has usd wallet, that will be converted to 45USD, and the value of `transactionGroupTotalAmountInDestinationCurrency` will be `45USD`) of the transaction regarding a whole transaction group
 
 
 ## API Endpoints
