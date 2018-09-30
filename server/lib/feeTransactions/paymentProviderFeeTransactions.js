@@ -1,6 +1,6 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import Account from '../models/Account';
-import Wallet from '../models/Wallet';
+import Account from '../../models/Account';
+import Wallet from '../../models/Wallet';
 
 export default class PaymentProviderFeeTransactions extends AbstractFeeTransactions {
 

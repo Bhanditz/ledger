@@ -1,5 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import ProviderLib from '../lib/providerLib';
+import ProviderLib from '../providerLib';
 
 export default class WalletProviderFeeTransactions extends AbstractFeeTransactions {
 

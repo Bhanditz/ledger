@@ -1,5 +1,5 @@
-import TransactionLib from '../lib/transactionLib';
-import { operationNotAllowed } from '../globals/errors';
+import TransactionLib from '../../lib/transactionLib';
+import { operationNotAllowed } from '../../globals/errors';
 
 export default class AbstractFeeTransactions {
 
