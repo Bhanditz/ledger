@@ -68,6 +68,7 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `currency` - currency of the wallet, we may define all possible currencies. // To do: today this field is just a String, we need to define all possible types
 - `OwnerAccountId` - The account that this wallet belongs to(reference to `Accounts` table)
 - `ProviderId` - The provider that this wallet has (reference to `Providers` table)
+- `temporary` - flag to identify if the Wallet is a "temporary" wallet(which means the wallet is supposed to always act as intermediary on forex transactions)
 
 
 ### Transactions
@@ -277,7 +278,6 @@ Payload:
 ```javascript
 {
   FromWalletId: User1_EUR, // The original WalletId where the money is going to be sent 
-  FromDestinationCurrencyWalletId: User1_USD, // The WalletId of the Account sending money
   ToWalletId: User2_USD, // The Destination WalletId
   amount: 3000, // The amount(same currency as defined in the "currency" field) to be sent
   currency: 'EUR', // The currency to be sent
@@ -287,7 +287,7 @@ Payload:
   paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
   paymentProviderWalletId: PP_MULTI,
 }
-```    
+```
 
 This would generate a total of 12 transactions in the ledger table:
 
