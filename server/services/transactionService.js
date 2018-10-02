@@ -4,6 +4,7 @@ import Wallet from '../models/Wallet';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import Logger from '../globals/logger';
+import { operationNotAllowed } from '../globals/errors';
 
 export default class TransactionService extends AbstractCrudService {
 
@@ -52,6 +53,11 @@ export default class TransactionService extends AbstractCrudService {
     if (walletsHaveSameCurrency) {
       return new TransactionRegularStrategy(transaction);
     }
+    // field paymentProviderWalletId is required for forex transactions
+    if (!this.transaction.paymentProviderWalletId) {
+      throw Error(operationNotAllowed('field paymentProviderWalletId missing'));
+    }
+    transaction.paymentProvider = await Wallet.findById(transaction.paymentProviderWalletId);
     return new TransactionForexStrategy(transaction);
   }
 }
