@@ -1,7 +1,6 @@
-import TransactionLib from '../transactionLib';
-import { operationNotAllowed } from '../../globals/errors';
+import TransactionLib from './transactionLib';
 
-export default class ForexSourceCurencyConversionTransactions {
+export default class ForexConversionTransactions {
 
   constructor(transaction){
     this.transaction = transaction;
@@ -27,7 +26,7 @@ export default class ForexSourceCurencyConversionTransactions {
 
   _getDestinationCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
-      this.transaction.paymentProvider.OwnerAccountId, this.transaction.paymentProviderWalletId, 
+      this.transaction.paymentProvider.OwnerAccountId, this.transaction.paymentProviderWalletId,
       this.transaction.FromAccountId, this.transaction.FromWalletId,
       this.transaction.destinationAmount, this.transaction.destinationCurrency
     );
