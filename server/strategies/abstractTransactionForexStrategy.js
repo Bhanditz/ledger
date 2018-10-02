@@ -5,18 +5,31 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
 
   constructor(incomingTransaction) {
     super(incomingTransaction);
-    if (!this.hasRequiredForexFields()) {
-      throw Error(operationNotAllowed('Missing forex fields'));
-    }
+    this._validateForexTransaction();
     this.incomingTransaction.transactionGroupTotalAmountInDestinationCurrency = this.incomingTransaction.destinationAmount;
   }
 
-  hasRequiredForexFields() {
-    if (this.incomingTransaction.FromDestinationCurrencyWalletId && this.incomingTransaction.destinationAmount &&
-        this.incomingTransaction.destinationCurrency && this.incomingTransaction.paymentProviderDestinationCurrencyWalletId) {
-      return true;
+  getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction) {
+    let netTransactionAmount = this.incomingTransaction.destinationAmount;
+    if (paymentProviderFeeTransactions) {
+      netTransactionAmount -= paymentProviderFeeTransactions.getTotalFee();
     }
-    return false;
+    if (platformFeeTransaction) {
+      netTransactionAmount -= platformFeeTransaction.getTotalFee();
+    }
+    if (providerFeeTransaction) {
+      netTransactionAmount -= providerFeeTransaction.getTotalFee();
+    }
+    return netTransactionAmount;
+  }
+
+  _validateForexTransaction() {
+    if (!this.incomingTransaction.destinationAmount) {
+      throw Error(operationNotAllowed('field destinationAmount missing'));
+    }
+    if (!this.incomingTransaction.destinationCurrency) {
+      throw Error(operationNotAllowed('field destinationCurrency missing'));
+    }
   }
 
 }
