@@ -15,7 +15,9 @@ export default class WalletProviderFeeTransactions extends AbstractFeeTransactio
       this.feeWalletId = providerCurrencyWallet.id;
       const fixedFee = this.transaction.fromWalletProvider.fixedFee ? this.transaction.fromWalletProvider.fixedFee : 0;
       const percentFee = this.transaction.fromWalletProvider.percentFee ? this.transaction.fromWalletProvider.percentFee : 0;
-      this.fee = fixedFee + (this.transaction.amount * percentFee);
+      // check if it's a forex or regular transaction
+      const amount = this.transaction.destinationAmount ||  this.transaction.amount;
+      this.fee = fixedFee + (amount * percentFee);
     } catch (error) {
       throw error;
     }

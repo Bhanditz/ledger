@@ -33,13 +33,18 @@ export default class AbstractFeeTransactions {
   */
   getFeeDoubleEntryTransactions (){
     this._validateFeeTransaction();
+    // in forex transactions, the fees will always apply to the "destination" currency
+    const fromWalletId = this.transaction.fromWalletDestinationCurrency ?
+      this.transaction.fromWalletDestinationCurrency :
+      this.transaction.FromWalletId;
+    const currency = this.transaction.destinationCurrency || this.transaction.currency;
     const feeTransaction = {
       FromAccountId: this.transaction.FromAccountId,
       ToAccountId: this.feeAccountId,
-      FromWalletId: this.transaction.FromWalletId,
+      FromWalletId: fromWalletId,
       ToWalletId: this.feeWalletId,
       amount: this.getTotalFee(),
-      currency: this.transaction.currency,
+      currency: currency,
       transactionGroupId: this.transaction.transactionGroupId,
       transactionGroupSequence: this.transaction.transactionGroupSequence,
       transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
