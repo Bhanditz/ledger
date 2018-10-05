@@ -27,7 +27,7 @@ export default class ProviderLib {
       const wallet = await Wallet.create({
         OwnerAccountId: ownerAccount.id,
         currency: currency,
-        name: `${ownerAccount.slug}_${currency}`,
+        name: `provider_${ownerAccount.slug}_${currency}`,
         ProviderId: null,
       });
       return wallet;
