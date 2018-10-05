@@ -59,19 +59,13 @@ export default class AbstractTransactionStrategy {
 
   getAllTransactionsWithFee(initialTransactions, paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction) {
     let transactions = initialTransactions;
-    // incrementing transaction groupSequence according to the length of the array
-    this.incomingTransaction.transactionGroupSequence = transactions.length;
     if (paymentProviderFeeTransactions) {
       // Add Payment Provider Fee transactions to transactions array
       transactions = transactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
-      // Increment transaction group sequence
-      this.incomingTransaction.transactionGroupSequence = transactions.length;
     }
     if (platformFeeTransaction) {
       // Add Platform Fee transactions to transactions array
       transactions = transactions.concat(platformFeeTransaction.getFeeDoubleEntryTransactions());
-      // Increment transaction group sequence
-      this.incomingTransaction.transactionGroupSequence = transactions.length;
     }
     if (providerFeeTransaction) {
       // Add Wallet Provider Fee transactions to transactions array
@@ -104,15 +98,14 @@ export default class AbstractTransactionStrategy {
     return [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions];
   }
 
-  /** Given a transaction, check whether it has a TransactionGroup and a transactionGroupSequence
+  /** Given a transaction, check whether it has a TransactionGroup
   **  if it doesn't have, insert them
   * @param {Object} incomingTransaction - transaction
-  * @return {Object} same transaction with TransactionGroup and transactionGroupSequence
+  * @return {Object} same transaction with TransactionGroup
   */
   _checkAndInsertTransactionGroup(transaction) {
     if (!transaction.transactionGroupId) {
       transaction.transactionGroupId = uuidv4();
-      transaction.transactionGroupSequence = 0;
     }
     return transaction;
   }
