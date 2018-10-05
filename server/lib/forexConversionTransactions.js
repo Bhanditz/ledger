@@ -12,9 +12,8 @@ export default class ForexConversionTransactions {
   */
   getForexDoubleEntryTransactions (){
     const sourceCurrencyTransactions = this._getSourceCurrencyDoubleEntryTransactions();
-    this.transaction.transactionGroupSequence++;
     const destinationCurrencyTransactions = this._getDestinationCurrencyDoubleEntryTransactions();
-    return [...sourceCurrencyTransactions, destinationCurrencyTransactions];
+    return [...sourceCurrencyTransactions, ...destinationCurrencyTransactions];
   }
 
   _getSourceCurrencyDoubleEntryTransactions (){
@@ -27,7 +26,7 @@ export default class ForexConversionTransactions {
   _getDestinationCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
       this.transaction.paymentProvider.OwnerAccountId, this.transaction.paymentProviderWalletId,
-      this.transaction.FromAccountId, this.transaction.FromWalletId,
+      this.transaction.FromAccountId, this.transaction.fromWalletDestinationCurrency.id,
       this.transaction.destinationAmount, this.transaction.destinationCurrency
     );
   }
@@ -41,7 +40,6 @@ export default class ForexConversionTransactions {
       amount: amount,
       currency: currency,
       transactionGroupId: this.transaction.transactionGroupId,
-      transactionGroupSequence: this.transaction.transactionGroupSequence,
       transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
       transactionGroupTotalAmountInDestinationCurrency: this.transaction.transactionGroupTotalAmountInDestinationCurrency,
     };
