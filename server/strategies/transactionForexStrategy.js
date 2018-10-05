@@ -2,6 +2,7 @@ import Wallet from '../models/Wallet';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 import ForexConversionTransactions from '../lib/forexConversionTransactions';
 import { transactionCategoryEnum } from '../globals/enums/transactionCategoryEnum';
+import WalletLib from '../lib/walletLib';
 
 export default class TransactionForexStrategy extends AbstractTransactionForexStrategy {
 
@@ -9,24 +10,11 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
     super(incomingTransaction);
   }
 
-  async _getDestinationCurrencyFromWalletTransactions(fromWallet) {
-    // findOrCreate returns an array, we should always only get the first.
-    return Wallet.findOrCreate({
-      where: {
-        temporary: true,
-        currency: this.incomingTransaction.destinationCurrency,
-        OwnerAccountId: fromWallet.OwnerAccountId,
-        name: `temp_${this.incomingTransaction.destinationCurrency}_${fromWallet.OwnerAccountId}`,
-      },
-    }).spread((result) => {
-      // console.log(`temp wallet: ${JSON.stringify(result, null, 2)}`);
-      return result;
-    });
-  }
-
   async getTransactions() {
     const fromWallet = await Wallet.findById(this.incomingTransaction.FromWalletId);
-    this.incomingTransaction.fromWalletDestinationCurrency = await this._getDestinationCurrencyFromWalletTransactions(fromWallet);
+    const walletLib = new WalletLib();
+    this.incomingTransaction.fromWalletDestinationCurrency = await walletLib
+      .findOrCreateTemporaryCurrencyWallet( this.incomingTransaction.destinationCurrency, fromWallet.OwnerAccountId);
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
     const conversionTransactionsManager = new ForexConversionTransactions(this.incomingTransaction);
     const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
