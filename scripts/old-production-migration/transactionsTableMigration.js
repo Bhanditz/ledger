@@ -11,7 +11,7 @@ const client = new Client({
 client.connect();
 
 client.query('SELECT * FROM "Collectives" limit 10', (err, res) => {
-  console.log(err, res);
+  console.error(err, res);
   client.end();
 });
 
