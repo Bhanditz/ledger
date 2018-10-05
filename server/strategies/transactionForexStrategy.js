@@ -1,6 +1,7 @@
 import Wallet from '../models/Wallet';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 import ForexConversionTransactions from '../lib/forexConversionTransactions';
+import { transactionCategoryEnum } from '../globals/enums/transactionCategoryEnum';
 
 export default class TransactionForexStrategy extends AbstractTransactionForexStrategy {
 
@@ -9,28 +10,18 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
   }
 
   async _getDestinationCurrencyFromWalletTransactions(fromWallet) {
+    // findOrCreate returns an array, we should always only get the first.
     return Wallet.findOrCreate({
-      temporary: true,
-      currency: this.incomingTransaction.destinationCurrency,
-      OwnerAccountId: fromWallet.OwnerAccountId,
-      name: `temp_${this.incomingTransaction.destinationCurrency}_${fromWallet.OwnerAccountId}`,
+      where: {
+        temporary: true,
+        currency: this.incomingTransaction.destinationCurrency,
+        OwnerAccountId: fromWallet.OwnerAccountId,
+        name: `temp_${this.incomingTransaction.destinationCurrency}_${fromWallet.OwnerAccountId}`,
+      },
+    }).spread((result) => {
+      // console.log(`temp wallet: ${JSON.stringify(result, null, 2)}`);
+      return result;
     });
-  }
-
-  async getTransactionsRegular() {
-    // get balance through the field FromWalletId
-    const fromWalletBalance = await this.walletLib.getCurrencyBalanceFromWalletId(this.incomingTransaction.currency, this.incomingTransaction.FromWalletId);
-    // If the wallet balance has enough money to do the transaction, then creates just a zero-fee transaction
-    if ( fromWalletBalance >= this.incomingTransaction.amount) {
-      return this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
-    }
-    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
-    // calculating netAmount of the regular transaction
-    this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
-    // create initial transactions after having a net amount(total amount - fees)
-    const initialTransactions = this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
-    // generate all Double Entry transactions
-    return this.getAllTransactionsWithFee(initialTransactions, paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
   }
 
   async getTransactions() {
@@ -38,16 +29,22 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
     this.incomingTransaction.fromWalletDestinationCurrency = await this._getDestinationCurrencyFromWalletTransactions(fromWallet);
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
     const conversionTransactionsManager = new ForexConversionTransactions(this.incomingTransaction);
-    const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions();
-    // Increment transaction group sequence
-    this.incomingTransaction.transactionGroupSequence = conversionTransactions.length;
+    const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
+    .map(transaction => {
+      transaction.category = transactionCategoryEnum.CURRENCY_CONVERSION;
+      return transaction;
+    });
     // calculating netAmount of the forex transaction
     this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
-    // modifyinf incomingTransaction so we can use the new information to generate the forex initial transaction
+    // modifying incomingTransaction so we can use the new information to generate the forex initial transaction
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWalletDestinationCurrency.id;
     this.incomingTransaction.currency = this.incomingTransaction.destinationCurrency;
     // setting initial destination currency transaction after having a net amount(total amount - fees)
-    const initialDestinationCurrencyTransactions =  this.transactionLib.getDoubleEntryArray(this.incomingTransaction);
+    const initialDestinationCurrencyTransactions = this.transactionLib.getDoubleEntryArray(this.incomingTransaction)
+    .map(transaction => {
+      transaction.category = transactionCategoryEnum.ACCOUNT;
+      return transaction;
+    });
     // generate all Double Entry transactions
     return this.getAllTransactionsWithFee([...conversionTransactions, ...initialDestinationCurrencyTransactions],
       paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
