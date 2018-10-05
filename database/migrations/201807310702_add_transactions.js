@@ -63,6 +63,9 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'USD'
       },
+      category: {
+        type: Sequelize.STRING,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('NOW()')

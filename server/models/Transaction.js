@@ -66,6 +66,9 @@ export default class Transaction extends Sequelize.Model {
         type: Sequelize.STRING,
         defaultValue: 'USD',
       },
+      category: {
+        type: Sequelize.STRING,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
