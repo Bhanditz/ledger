@@ -1,6 +1,7 @@
 import Database from '../models';
 import Transaction from '../models/Transaction';
 import { paymentMethodServices } from '../globals/enums/paymentMethodServices';
+import Wallet from '../models/Wallet';
 
 export default class WalletLib {
 
@@ -25,6 +26,19 @@ export default class WalletLib {
   async getCurrencyBalanceFromWalletId(currency, walletId) {
     const balanceCurrency = await Transaction.sum('amount', { where: { ToWalletId: walletId, currency: currency } });
     return balanceCurrency ? balanceCurrency : 0;
+  }
+
+  async findOrCreateTemporaryCurrencyWallet(currency, accountId){
+    return Wallet.findOrCreate({
+      where: {
+        temporary: true,
+        currency: currency,
+        OwnerAccountId: accountId,
+        name: `temp_${currency}_${accountId}`,
+      },
+    }).spread((result) => {
+      return result;
+    });
   }
 
   static isPaymentMethodTypeInCorrectService(service, type) {
