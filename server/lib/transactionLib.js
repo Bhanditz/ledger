@@ -25,8 +25,8 @@ export default class TransactionLib {
       ToWalletId: toWalletId,
       amount: (-1 * amount),
       currency: transaction.currency,
+      category: transaction.category,
       transactionGroupId: transaction.transactionGroupId,
-      transactionGroupSequence: transaction.transactionGroupSequence,
       transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
       doubleEntryGroupId: doubleEntryGroupId,
     };
@@ -38,8 +38,8 @@ export default class TransactionLib {
       ToWalletId: fromWalletId,
       amount: amount,
       currency: transaction.currency,
+      category: transaction.category,
       transactionGroupId: transaction.transactionGroupId,
-      transactionGroupSequence: transaction.transactionGroupSequence + 1,
       transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
       doubleEntryGroupId: doubleEntryGroupId,
     };
