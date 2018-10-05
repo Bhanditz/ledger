@@ -35,7 +35,7 @@ export default class AbstractFeeTransactions {
     this._validateFeeTransaction();
     // in forex transactions, the fees will always apply to the "destination" currency
     const fromWalletId = this.transaction.fromWalletDestinationCurrency ?
-      this.transaction.fromWalletDestinationCurrency :
+      this.transaction.fromWalletDestinationCurrency.id :
       this.transaction.FromWalletId;
     const currency = this.transaction.destinationCurrency || this.transaction.currency;
     const feeTransaction = {
@@ -45,8 +45,8 @@ export default class AbstractFeeTransactions {
       ToWalletId: this.feeWalletId,
       amount: this.getTotalFee(),
       currency: currency,
+      category: this.category,
       transactionGroupId: this.transaction.transactionGroupId,
-      transactionGroupSequence: this.transaction.transactionGroupSequence,
       transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
       transactionGroupTotalAmountInDestinationCurrency: this.transaction.transactionGroupTotalAmountInDestinationCurrency,
     };
