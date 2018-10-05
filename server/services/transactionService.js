@@ -22,6 +22,10 @@ export default class TransactionService extends AbstractCrudService {
     // the strategy will return an array of transactions already formatted for the db
     const strategy = await this._defineTransactionStrategy(data);
     const transactions = await strategy.getTransactions();
+    // adding transactionGroupSequence to the batch of transactions
+    for (const index in transactions) {
+    transactions[index].transactionGroupSequence = parseInt(index);
+    }
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
     return this.database.sequelize.transaction( t => {
@@ -54,7 +58,7 @@ export default class TransactionService extends AbstractCrudService {
       return new TransactionRegularStrategy(transaction);
     }
     // field paymentProviderWalletId is required for forex transactions
-    if (!this.transaction.paymentProviderWalletId) {
+    if (!transaction.paymentProviderWalletId) {
       throw Error(operationNotAllowed('field paymentProviderWalletId missing'));
     }
     transaction.paymentProvider = await Wallet.findById(transaction.paymentProviderWalletId);
