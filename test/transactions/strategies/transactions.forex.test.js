@@ -10,13 +10,19 @@ import TransactionService from '../../../server/services/transactionService';
 import ResetDb from '../../resetDb';
 import { paymentMethodServices } from '../../../server/globals/enums/paymentMethodServices';
 import ProviderService from '../../../server/services/providerService';
+import WalletLib from '../../../server/lib/walletLib';
+import ProviderLib from '../../../server/lib/providerLib';
+import Wallet from '../../../server/models/Wallet';
+import Account from '../../../server/models/Account';
 
 describe('Forex Transactions', () => {
   const accountService = new AccountService();
   const walletService = new WalletService();
   const transactionService = new TransactionService();
   const providerService = new ProviderService();
-
+  const walletLib = new WalletLib();
+  const providerLib = new ProviderLib();
+    
   let account1, account1WalletEUR, account2, account2WalletUSD, accountProvider, provider, walletProvider, paymentProviderAccount, paymentProviderWallet;
 
   beforeEach(async () => {
@@ -97,6 +103,16 @@ describe('Forex Transactions', () => {
       // paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
       paymentProviderWalletId: paymentProviderWallet.id,
     });
+    // console.log(`result of FOREX: ${JSON.stringify(result, null, 2)}`);
+    // find temp USD Wallet that was supposedly generated for the account1
+    const account1TempWalletUsd = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', account1.id);
+    // find already supposedly created wallet for the provider
+    const providerCurrencyWallet = await providerLib.findOrCreateWalletByCurrency(provider, 'USD');
+    
+    // fee: total in Destination currency times the provider fee
+    const transactionFeeAmount = Math.round(4500 * provider.percentFee);
+    // net amount of transaction
+    const transactionNetAmount = 4500 - transactionFeeAmount;
     // check if initial Cashin transaction generates 8 transactions
     // - 4 conversion transactons(2 * Credit and Debit transactions)
     //   - from EUR account1 to Payment provider
@@ -105,6 +121,87 @@ describe('Forex Transactions', () => {
     // - 2 Wallet Providers transactons( USD account1 to USD account2, DEBIT and CREDIT)
     expect(result).to.be.an('array');
     expect(result).to.have.lengthOf(8);
+
+    // result[0] and result[1] -> From account1 to payment provider in EUR, Credit and Debit
+    expect(result[1].type).to.be.equal('CREDIT');
+    expect(result[1].FromAccountId).to.be.equal(account1.id);
+    expect(result[1].ToAccountId).to.be.equal(paymentProviderWallet.OwnerAccountId);
+    expect(result[1].FromWalletId).to.be.equal(account1WalletEUR.id);
+    expect(result[1].ToWalletId).to.be.equal(paymentProviderWallet.id);
+    expect(result[1].amount).to.be.equal(3000);
+    expect(result[1].currency).to.be.equal('EUR');
+    // result[0] must be the "opposite" of result[1]
+    expect(result[0].type).to.be.equal('DEBIT');
+    expect(result[0].FromAccountId).to.be.equal(result[1].ToAccountId);
+    expect(result[0].ToAccountId).to.be.equal(result[1].FromAccountId);
+    expect(result[0].FromWalletId).to.be.equal(result[1].ToWalletId);
+    expect(result[0].ToWalletId).to.be.equal(result[1].FromWalletId);
+    expect(result[0].amount).to.be.equal(-3000);
+    expect(result[0].currency).to.be.equal('EUR');
+
+    // result[2] and result[3] -> From payment provider to account1 in USD, Credit and Debit
+    expect(result[3].type).to.be.equal('CREDIT');
+    expect(result[3].FromAccountId).to.be.equal(paymentProviderWallet.OwnerAccountId);
+    expect(result[3].ToAccountId).to.be.equal(account1.id);
+    expect(result[3].FromWalletId).to.be.equal(paymentProviderWallet.id);
+    expect(result[3].ToWalletId).to.be.equal(account1TempWalletUsd.id);
+    expect(result[3].amount).to.be.equal(4500);
+    expect(result[3].currency).to.be.equal('USD');
+    // result[2] must be the "opposite" of result[3]
+    expect(result[2].type).to.be.equal('DEBIT');
+    expect(result[2].FromAccountId).to.be.equal(result[3].ToAccountId);
+    expect(result[2].ToAccountId).to.be.equal(result[3].FromAccountId);
+    expect(result[2].FromWalletId).to.be.equal(result[3].ToWalletId);
+    expect(result[2].ToWalletId).to.be.equal(result[3].FromWalletId);
+    expect(result[2].amount).to.be.equal(-4500);
+    expect(result[2].currency).to.be.equal('USD');
+
+    // result[4] and result[5] -> From account1 to account2 in USD, Credit and Debit
+    expect(result[5].type).to.be.equal('CREDIT');
+    expect(result[5].FromAccountId).to.be.equal(account1.id);
+     // const wallets = await Wallet.findAll({
+    //   where: {
+    //     OwnerAccountId: provider.OwnerAccountId,
+    //     ProviderId: null,
+    //     currency: 'USD',
+    //   },
+    // });
+    // console.log(`wallets: ${JSON.stringify(wallets, null,2)}`);
+    // const toaccount = await Account.findById(result[5].ToAccountId);
+    // console.log(`toaccount: ${JSON.stringify(toaccount, null,2)}`);
+    // console.log(`account2: ${JSON.stringify(account2, null,2)}`);
+    expect(result[5].ToAccountId).to.be.equal(account2.id);
+    expect(result[5].FromWalletId).to.be.equal(account1TempWalletUsd.id);
+    // find temp USD Wallet that was supposedly generated for the account1
+    expect(result[5].ToWalletId).to.be.equal(account2WalletUSD.id);
+    expect(result[5].amount).to.be.equal(transactionNetAmount);
+    expect(result[5].currency).to.be.equal('USD');
+    // result[2] must be the "opposite" of result[3]
+    expect(result[4].type).to.be.equal('DEBIT');
+    expect(result[4].FromAccountId).to.be.equal(result[5].ToAccountId);
+    expect(result[4].ToAccountId).to.be.equal(result[5].FromAccountId);
+    expect(result[4].FromWalletId).to.be.equal(result[5].ToWalletId);
+    expect(result[4].ToWalletId).to.be.equal(result[5].FromWalletId);
+    expect(result[4].amount).to.be.equal(-1 * transactionNetAmount);
+    expect(result[4].currency).to.be.equal('USD');
+
+    // result[6] and result[7] -> Fee From account1 to wallet provider in USD, Credit and Debit
+    expect(result[7].type).to.be.equal('CREDIT');
+    expect(result[7].FromAccountId).to.be.equal(account1.id);
+    expect(result[7].ToAccountId).to.be.equal(accountProvider.id);
+    expect(result[7].FromWalletId).to.be.equal(account1TempWalletUsd.id);
+    // find temp USD Wallet that was supposedly generated for the account1
+    expect(result[7].ToWalletId).to.be.equal(providerCurrencyWallet.id);
+    expect(result[7].amount).to.be.equal(transactionFeeAmount);
+    expect(result[7].currency).to.be.equal('USD');
+    // result[2] must be the "opposite" of result[3]
+    expect(result[6].type).to.be.equal('DEBIT');
+    expect(result[6].FromAccountId).to.be.equal(result[7].ToAccountId);
+    expect(result[6].ToAccountId).to.be.equal(result[7].FromAccountId);
+    expect(result[6].FromWalletId).to.be.equal(result[7].ToWalletId);
+    expect(result[6].ToWalletId).to.be.equal(result[7].FromWalletId);
+    expect(result[6].amount).to.be.equal(-1 * transactionFeeAmount);
+    expect(result[6].currency).to.be.equal('USD');
 
   }); /** End of "account1 sends 30EUR(that will become 45USD) to account2 with wallet provider fees" */
 
@@ -158,6 +255,7 @@ describe('Forex Transactions', () => {
   it('account1 sends 30EUR(that will become 45USD) to account2 with all fees(payment providers, platform and wallet providers)', async () => {
     // console.log(JSON.stringify(account1WalletEUR, null, 2));
     // console.log(JSON.stringify(account2WalletUSD, null, 2));
+    // console.log(`result of FOREX: ${JSON.stringify(result, null, 2)}`);
     const result = await transactionService.insert({
       FromWalletId: account1WalletEUR.id, // The original WalletId where the money is going to be sent 
       ToWalletId: account2WalletUSD.id, // The Destination WalletId
