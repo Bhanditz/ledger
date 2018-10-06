@@ -10,7 +10,6 @@ export default class WalletProviderFeeTransactions extends AbstractFeeTransactio
 
   async setTransactionInfo() {
     try {
-      console.log(`this.transaction.fromWalletProvider: ${JSON.stringify(this.transaction.fromWalletProvider, null,2)}`);
       const providerLib = new ProviderLib();
       this.feeAccountId = this.transaction.fromWalletProvider.OwnerAccountId;
       const currency = this.transaction.destinationCurrency ||  this.transaction.currency;
