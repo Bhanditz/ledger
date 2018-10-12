@@ -36,9 +36,11 @@ export default class TransactionRouter extends AbstractRouter {
    * @apiParam {Number} ToWalletId Wallet of the Account stated ToAccountId
    * @apiParam {Number} amount Amount that's going to be taken from the FromAccount
    * @apiParam {String} currency currency of the amount field
-   * @apiParam {String} [platformFee] the platform fee in cents
-   * @apiParam {String} [paymentProviderFee] the payment provider fee in cents
-   * @apiParam {String} [paymentProviderWalletId] currency of the toAmount field
+   * @apiParam {Number}  [platformFee] the platform fee in cents
+   * @apiParam {Number}  [paymentProviderFee] the payment provider fee in cents
+   * @apiParam {Number}  [paymentProviderWalletId] the payment provider wallet id
+   * @apiParam {Number}  [walletProviderFee] the wallet provider fee in cents
+   * @apiParam {Boolean} [senderPayFees] boolean indicating whether the sender will pay fees
    */
   post() {
     super.post();
