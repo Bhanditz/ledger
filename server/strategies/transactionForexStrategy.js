@@ -22,8 +22,13 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
       transaction.category = transactionCategoryEnum.CURRENCY_CONVERSION;
       return transaction;
     });
-    // calculating netAmount of the forex transaction
-    this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
+    // if senderPayFees, he will discount the fees from the total amount to send the net amount to the receiver
+    // otherwise the sender will send the full amount and the receiver will pay the fees
+    this.incomingTransaction.amount = this.incomingTransaction.destinationAmount;
+    if (this.incomingTransaction.senderPayFees) {
+      // calculating netAmount of the regular transaction
+      this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
+    }
     // modifying incomingTransaction so we can use the new information to generate the forex initial transaction
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWalletDestinationCurrency.id;
     this.incomingTransaction.currency = this.incomingTransaction.destinationCurrency;

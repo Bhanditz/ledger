@@ -33,13 +33,19 @@ export default class AbstractFeeTransactions {
   */
   getFeeDoubleEntryTransactions (){
     this._validateFeeTransaction();
-    // in forex transactions, the fees will always apply to the "destination" currency
-    const fromWalletId = this.transaction.fromWalletDestinationCurrency ?
+    // If sender pays the fees, we check whether it's a forex transaction or not
+    // to determine the correct wallet. Otherwhise ToWallet will pay the fees by default
+    let fromWalletId = this.transaction.ToWalletId;
+    let fromAccountId = this.transaction.ToAccountId;
+    if (this.transaction.senderPayFees) {
+      fromAccountId = this.transaction.FromAccountId;
+      fromWalletId = this.transaction.fromWalletDestinationCurrency ?
       this.transaction.fromWalletDestinationCurrency.id :
       this.transaction.FromWalletId;
+    }
     const currency = this.transaction.destinationCurrency || this.transaction.currency;
     const feeTransaction = {
-      FromAccountId: this.transaction.FromAccountId,
+      FromAccountId: fromAccountId,
       ToAccountId: this.feeAccountId,
       FromWalletId: fromWalletId,
       ToWalletId: this.feeWalletId,
