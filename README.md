@@ -96,19 +96,32 @@ Run `npm run doc` to see most of the endpoint available and their requirements
 
 ### POST /transactions
 
+#### Endpoint Payload
+
+- `FromWalletId` - The Wallet Id of the account who's **sending** the money
+- `ToWalletId` - The Wallet Id of the account who's **receiving** the money
+- `amount` - The amount to be sent
+- `currency` - The currency to be sent
+- `destinationAmount` - *optional*(only for forex transactions): The amount in `destinationCurrency` which `receiver account` will get
+- `destinationCurrency` - *optional*(only for forex transactions): Only for forex transactions: The currency which `receiver account` will get
+- `walletProviderFee` - *optional* : the wallet provider fee to be charged
+- `platformFee` - *optional* : the platform fee to be charged
+- `paymentProviderFee` - *optional* : the payment provider fee to be charged
+- `paymentProviderWalletId` - The Wallet Id of the Payment Provider
+- `senderPayFees` - *optional* : flag indicating whether the sender will pay the fees(by default, the receiver pays the fees)
 
 ## Transactions Example
 
-### Transaction with zero fees(Wallet Provider has No Fee)
+### Transaction with zero fees
 
-In Some cases, the system will no charge fees to transactions under certain conditions(for example, the accounts have already cashed in money to their wallets before thus already paid fees). Example: Account1(called User1) pays 30USD to Account2(called User2) without fees.
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet. No fees.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
-  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  FromWalletId: Xavier_USD, 
+  ToWalletId: webpack_USD, 
   amount: 3000, 
   currency: 'USD'
 }
@@ -116,199 +129,248 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 And the ledger table would be:
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId|amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
-|--|-------|--------------|--------------|-----------|----------|------|--------|---------------|--------------|---------------------------|
-|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
-|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|-----------|------|--------|---------------|--------------|---------------------------|
+|1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
+|2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD|3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
 
-PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+### Transaction with Platform fees, Receiver Pays fees(default behaviour)
 
-### Transaction with Platform fees(Wallet Provider has No Fee)
-
-Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee. In this case we need to input the platformFee(the platform information like its account and wallets are already set and can be found by system)
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet.  Platform fee of 3USD.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
-  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  FromWalletId: Xavier_USD, 
+  ToWalletId: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
 }
 ```    
 
-The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the platform transaction(debit and credit)
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the platform transaction(debit and credit)
 
 |# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
-|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   | 2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD|  300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|1 | DEBIT |    webpack   |  webpack_USD |   Xavier  |Xavier_USD  |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD | 3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |    Platform  | Platform_USD |   webpack |webpack_USD | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|  webpack_USD |  webpack_USD | Platform  |Platform_USD|  300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
 
-PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+### Transaction with Payment Provider, Receiver Pays fees(default behaviour)
 
-### Transaction with Payment Provider fees(Wallet Provider has No Fee)
-
-Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Payment Provider fee. In this case we need to input the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id( as the payment provider should have more than wallet this field is necessary so the system knows for sure it's depositing money on the right wallet). 
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet. Stripe(the Payment Provider) fee of 3USD.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
-  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  FromWalletId: Xavier_USD, 
+  ToWalletId: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   paymentProviderFee: 300,
-  paymentProviderWalletId: PP_WALLET,
+  paymentProviderWalletId: Stripe_Wallet,
 }
 ```    
 
-The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
 |# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
-|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
-|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2700 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   |2700  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|3 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|4 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|     Xavier   |  Xavier_USD  |  webpack  |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |     Stripe   | Stripe_WALLET|  webpack  |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|     webpack  |  webpack_USD |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
 
-PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+### Transaction with Platform and Payment Provider fees, Receiver Pays fees(default behaviour)
 
-### Transaction with Platform and Payment Provider fees(Wallet Provider has No Fee)
-
-Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee and a 10% Payment Provider fee. In this case we need to input the Platform Fee(field `platformFee`), the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id. 
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
-  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
+  FromWalletId: Xavier_USD, 
+  ToWalletId: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
   paymentProviderFee: 300,
-  paymentProviderWalletId: PP_WALLET,
+  paymentProviderWalletId: Stripe_Wallet,
 }
 ```    
 
-The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+The total record generated on the ledger regarding this transaction will be 6 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
 |# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
-|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
-|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   |-2400 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   |2400  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD|300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|5 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
-|6 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   |300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |  webpack     |  webpack_USD | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|  Xavier      |  Xavier_USD  | webpack   |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |  Platform    | Platform_USD | webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|  webpack     |  webpack_USD | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|5 | DEBIT |  Stripe      | Stripe_WALLET| webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|6 | CREDIT|  webpack     |  webpack_USD |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
 
-PS.: We are supposing the FromWallet Provider has No Fee(For each Wallet there is a Provider that may have fees that apply)
+### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees, Receiver Pays fees(default behaviour)
 
-### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees
-
-Example: Account1(called User1) pays 30USD to Account2(called User2) when there is a 10% Platform fee and a 10% Payment Provider fee. In this case we need to input the Platform Fee(field `platformFee`), the Payment provider Fee(field `paymentProviderFee`) and the Payment provider wallet id. 
-The Wallet Provider can be found through the field `ProviderId` under the model `Wallet` which point ot the `Provider` model that contains its fees(`fixedFee` and `percentFee`).In this example we are supposing a `10%` Wallet Provider Fee(we will consider the Provider Account called `WP` and the Wallet Called `WP_WALLET`.
+Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: User1_USD, // We don't need to set the FromAccountId on the endpoint as we can get the account from the field `OwnerAccountId` present on the Wallet Model
-  ToWalletId: User2_USD, // We don't need to set the ToAccountId as well for the same reason stated above
-  amount: 30, 
+  FromWalletId: Xavier_USD, 
+  ToWalletId: wwcode_USD, 
+  amount: 3000, 
   currency: 'USD',
-  platformFee: 0.1,
-  paymentProviderFee: 0.1,
-  paymentProviderWalletId: PP_WALLET,
+  walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  platformFee: 300,
+  paymentProviderFee: 300,
+  paymentProviderWalletId: Stripe_Wallet,
 }
-```    
+```
 
-The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "normal" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
+The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
 
 |# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
-|1 | DEBIT |     User2    |  User2_USD   |   User1   |User1_USD   | -2100|   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|2 | CREDIT|     User1    |  User1_USD   |   User2   |User2_USD   | 2100 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
-|3 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|4 | CREDIT|     User1    |  User1_USD   | Platform  |Platform_USD| 300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
-|5 | DEBIT |      PP      |  PP_WALLET   |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
-|6 | CREDIT|     User1    |  User1_USD   |   PP      |PP_WALLET   | 300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
-|7 | DEBIT |      WP      |  WP_WALLET   |   User1   |User1_USD   | -300 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
-|8 | CREDIT|     User1    |  User1_USD   |   WP      |WP_WALLET   | 300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+|1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |  Platform    | Platform_USD |  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|  wwcode      |  wwcode_USD  | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|5 | DEBIT |  Stripe      | Stripe_WALLET|  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|6 | CREDIT|  wwcode      |  wwcode_USD  |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|7 | DEBIT |  WWCodeInc   |WWCodeInc_USD |  wwcode   |wwcode_USD   |-300 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+|8 | CREDIT|  wwcode      |  wwcode_USD  | WWCodeInc |WWCodeInc_USD|300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+
+### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees, Sender Pays fees
+
+Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
+
+We would have the `POST /transactions` endpoint with the following payload:
+
+```javascript
+{
+  FromWalletId: Xavier_USD, 
+  ToWalletId: wwcode_USD, 
+  amount: 3000, 
+  currency: 'USD',
+  walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  platformFee: 300,
+  paymentProviderFee: 300,
+  paymentProviderWalletId: Stripe_Wallet,
+  senderPayFees: true // flag to indicate the sender will be paying the fees
+}
+```
+
+The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
+|1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-2100 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |2100  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
+|3 | DEBIT |  Platform    | Platform_USD | Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|4 | CREDIT|  Xavier      |  Xavier_USD  | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000      |
+|5 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|6 | CREDIT|  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000      |
+|7 | DEBIT |  WWCodeInc   |WWCodeInc_USD | Xavier    |Xavier_USD   |-300 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
+|8 | CREDIT|  Xavier      |  Xavier_USD  | WWCodeInc |WWCodeInc_USD|300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000      |
 
 
-## Forex Transactions
+### Forex Transaction
 
-For us to add transactions with different currencies we would need some extra fields in both the database table and the Endpoint Payload
+#### Xavier Contributes €30(through his EUR Wallet) to WWCode(USD Collective), Receiver Pay Fees(default behaviour)
 
-### Database Fields:
-   
-- `transactionGroupTotalAmountInDestinationCurrency` in the `Transactions` model so we can know the amount currency in both currencies
-
-### Endpoint Payload
-
-For Forex transactions we need to define extra fields : `FromDestinationCurrencyWalletId`, `destinationAmount`, `destinationCurrency`, `paymentProviderDestinationCurrencyWalletId`.
-
-The total payload would have the "regular" fields plus the "forex" fields, as the following:
-
-- `FromWalletId` - The WalletId where the money is being taken out 
-- `FromDestinationCurrencyWalletId` - The WalletId of the Account sending money with the same currency as the `destinationCurrency`
-- `ToWalletId` - The WalletId that identifies the Wallet that is going to receive the money
-- `amount` - The amount(same currency as defined in the "currency" field) to be sent
-- `currency` - The currency to be sent
-- `destinationAmount` - The amount to be received(same currency as defined in the "destinationCurrency" field)
-- `destinationCurrency` - The currency to be received
-- `platformFee` - if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-- `paymentProviderFee` - if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-- `paymentProviderWalletId` - The Wallet Id with the same currency as the `currency` field
-- `paymentProviderDestinationCurrencyWalletId` - In A forex Transaction we always consider the fees of the Payment Provider Destination Wallet
-
-### Forex Transaction Example
-
-Account **User1** wants to send **30EUR**(that will be converted to **45USD**) to the **USD Wallet** of the Account **User2**.
-We assume that All Payment Provider Wallets are "Multi currencies" wallets
+Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. Platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
 
 Payload:
 
 ```javascript
 {
-  FromWalletId: User1_EUR, // The original WalletId where the money is going to be sent 
-  ToWalletId: User2_USD, // The Destination WalletId
-  amount: 3000, // The amount(same currency as defined in the "currency" field) to be sent
-  currency: 'EUR', // The currency to be sent
+  FromWalletId: Xavier_EUR, 
+  ToWalletId: wwcode_USD, 
+  amount: 3000, 
+  currency: 'EUR', 
   destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
   destinationCurrency: 'USD', // The currency to be received
-  platformFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-  paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-  paymentProviderWalletId: PP_MULTI,
+  walletProviderFee: 100, 
+  platformFee: 100, 
+  paymentProviderFee: 100, 
+  paymentProviderWalletId: Stripe_WALLET,
 }
 ```
 
 This would generate a total of 12 transactions in the ledger table:
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupTotalAmountInDestinationCurrency|
-|--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|---------------------------|-----------------|
-|1 | DEBIT |   PP         |  PP_MULTI    |   User1   |User1_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
-|2 | CREDIT|   User1      |  User1_EUR   |   PP      |PP_MULTI    | 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
-|3 | DEBIT |   User1      |  User1_USD   |   PP      |PP_MULTI    | -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
-|4 | CREDIT|   PP         |  PP_MULTI    |   User1   |User1_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
-|5 | DEBIT |   User2      | User2_USD    |   User1   |User1_USD   | -4200|   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
-|6 | CREDIT|   User1      | User1_USD    |   User2   |User2_USD   | 4200 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
-|7 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
-|8 | CREDIT|   User1      |  User1_USD   | Platform  |Platform_USD| 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
-|9 | DEBIT |   PP         |  PP_MULTI    |   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
-|10| CREDIT|   User1      |  User1_USD   |   PP      |PP_MULTI    | 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
-|11| DEBIT |   WP         |  WP_US_WALLET|   User1   |User1_USD   | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
-|12| CREDIT|   User1      |  User1_USD   |   WP      |WP_US_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
+|--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|---------------------------|-----------------|
+|1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|3 | DEBIT |  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET| -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|4 | CREDIT|  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|5 | DEBIT |   wwcode     | wwcode_USD   |   User1   |User1_USD    | -4500|   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|6 | CREDIT|  Xavier      |  Xavier_USD  |   wwcode  | wwcode_USD  | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|7 | DEBIT |   Platform   | Platform_USD |   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|8 | CREDIT|   wwcode     | wwcode_USD   | Platform  |Platform_USD | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|9 | DEBIT |  Stripe      | Stripe_WALLET|   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|10| CREDIT|   wwcode     | wwcode_USD   |  Stripe   |Stripe_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|11| DEBIT |  WWCodeInc   |WWCodeInc_USD |   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+|12| CREDIT|   wwcode     | wwcode_USD   |WWCodeInc  |WWCodeInc_USD| 100  |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
 
-- rows #1 and #2 - **User1** sends 30EUR(the amount he wants to send to User2) to The Payment Providerthrough its EUR Wallet(**User1_EUR**) so it can be "converted" to USD.
-- rows #3 and #4 - **User1**(wallet **User1_USD**) received 45USD from The Payment Provider(account **PP**, wallet **PP_USD**).
-- rows #5 and #6 - **User1**(wallet **User1_USD**) sends the money to **User2**(wallet **User2_USD**)
-- rows #7 and #8 - **User1**(wallet **User1_USD**) pays platform fee 
-- rows #9 and #10 - **User1**(wallet **User1_USD**) pays payment provider fee 
-- rows #11 and #12 - **User1**(wallet **User1_USD**) pays wallet provider(The wallet provider fee of the wallet **User1_USD**) fee
+- rows #1 and #2 - **Xavier** sends 30EUR to Stripe.
+- rows #3 and #4 - **Stripe** sends 45USD(conversion from the 30EUR) to **Xavier**
+- rows #5 and #6 - **Xavier** sends 45USD to **wwcode**
+- rows #7 and #8 - **wwcode** pays 1USD of platform fee
+- rows #9 and #10 - **wwcode** pays 1USD of payment provider fee 
+- rows #11 and #12 - **wwcode** pays 1USD of wallet provider fee
+
+#### Xavier Contributes €30(through his EUR Wallet) to WWCodeAtlanta(who's a USD Collective), Sender Pay Fees
+
+Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. Platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
+
+Payload:
+
+```javascript
+{
+  FromWalletId: Xavier_EUR, 
+  ToWalletId: wwcode_USD, 
+  amount: 3000, 
+  currency: 'EUR', 
+  destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
+  destinationCurrency: 'USD', // The currency to be received
+  walletProviderFee: 100, 
+  platformFee: 100, 
+  paymentProviderFee: 100, 
+  paymentProviderWalletId: Stripe_WALLET,
+  senderPayFees: true // flag to indicate the sender will be paying the fees
+}
+```
+
+This would generate a total of 12 transactions in the ledger table:
+
+|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
+|--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|---------------------------|-----------------|
+|1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
+|3 | DEBIT |  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET| -4500|   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|4 | CREDIT|  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |       3000                |       4500      |
+|5 | DEBIT |   wwcode     | wwcode_USD   |   User1   |User1_USD    | -4200|   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|6 | CREDIT|  Xavier      |  Xavier_USD  |   wwcode  | wwcode_USD  | 4200 |   USD  | TG_GROUP_1    |DoubleEntry_3 |       3000                |       4500      |
+|7 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|8 | CREDIT|  Xavier      |  Xavier_USD  | Platform  |Platform_USD | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |       3000                |       4500      |
+|9 | DEBIT |  Stripe      | Stripe_WALLET|   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|10| CREDIT|  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |       3000                |       4500      |
+|11| DEBIT |  WWCodeInc   |WWCodeInc_USD |   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+|12| CREDIT|  Xavier      |  Xavier_USD  |WWCodeInc  |WWCodeInc_USD| 100  |   USD  | TG_GROUP_1    |DoubleEntry_6 |       3000                |       4500      |
+
+- rows #1 and #2 - **Xavier** sends 30EUR to Stripe.
+- rows #3 and #4 - **Stripe** sends 45USD(conversion from the 30EUR) to **Xavier**
+- rows #5 and #6 - **Xavier** sends 42USD to **wwcode**
+- rows #7 and #8 - **Xavier** pays 1USD of platform fee
+- rows #9 and #10 - **Xavier** pays 1USD of payment provider fee 
+- rows #11 and #12 - **Xavier** pays 1USD of wallet provider fee
+
+#### Xavier Contributes €30(through his EUR Wallet) to WWCodeBerlin(who's a EUR Collective) to its "WWCode 501c3" USD Wallet
