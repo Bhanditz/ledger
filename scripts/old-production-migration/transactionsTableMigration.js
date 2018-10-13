@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 
 const client = new Client({
-  user: 'marco',
+  user: 'apple',
   host: 'localhost',
   database: 'opencollective_prod_snapshot',
   // password: 'secretpassword',
@@ -10,7 +10,7 @@ const client = new Client({
 
 client.connect();
 
-client.query('SELECT * FROM "Collectives" limit 10', (err, res) => {
+client.query('SELECT * FROM "Transactions" where type=\'CREDIT\' limit 10', (err, res) => {
   console.error(err, res);
   client.end();
 });
