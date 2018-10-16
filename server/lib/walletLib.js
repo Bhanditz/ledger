@@ -1,6 +1,5 @@
 import Database from '../models';
 import Transaction from '../models/Transaction';
-import { paymentMethodServices } from '../globals/enums/paymentMethodServices';
 import Wallet from '../models/Wallet';
 
 export default class WalletLib {
@@ -39,25 +38,6 @@ export default class WalletLib {
     }).spread((result) => {
       return result;
     });
-  }
-
-  static isPaymentMethodTypeInCorrectService(service, type) {
-    switch (service) {
-      case paymentMethodServices.opencollective.name:
-        if (Object.values(paymentMethodServices.opencollective.types).find(objType => objType === type))
-          return true;
-        break;
-      case paymentMethodServices.paypal.name:
-        if (Object.values(paymentMethodServices.paypal.types).find(objType => objType === type))
-          return true;
-        break;
-      case paymentMethodServices.stripe.name:
-        if (Object.values(paymentMethodServices.stripe.types).find(objType => objType === type))
-          return true;
-        break;
-      default:
-        return false;
-    }
   }
 
 }
