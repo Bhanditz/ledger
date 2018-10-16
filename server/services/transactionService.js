@@ -1,6 +1,5 @@
 import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
-import Wallet from '../models/Wallet';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import Logger from '../globals/logger';
@@ -45,23 +44,14 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Object} strategy - Return defined Strategy Class Object
   */
   async _defineTransactionStrategy(transaction) {
-    // find Wallets
-    transaction.toWallet = await Wallet.findById(transaction.ToWalletId);
-    transaction.fromWallet = await Wallet.findById(transaction.FromWalletId);
-    // Adding from and to Account ids according to wallets owners
-    transaction.ToAccountId = transaction.toWallet.OwnerAccountId;
-    transaction.FromAccountId = transaction.fromWallet.OwnerAccountId;
-    const walletsHaveSameCurrency = transaction.toWallet.currency === transaction.fromWallet.currency;
-
     // Check if it is NOT a foreign exchange Transaction
-    if (walletsHaveSameCurrency) {
+    if (!transaction.destinationCurrency) {
       return new TransactionRegularStrategy(transaction);
     }
     // field paymentProviderWalletId is required for forex transactions
     if (!transaction.paymentProviderWalletId) {
       throw Error(operationNotAllowed('field paymentProviderWalletId missing'));
     }
-    transaction.paymentProvider = await Wallet.findById(transaction.paymentProviderWalletId);
     return new TransactionForexStrategy(transaction);
   }
 }
