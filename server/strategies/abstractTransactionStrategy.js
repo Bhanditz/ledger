@@ -1,11 +1,8 @@
 import uuidv4 from 'uuid/v4';
-import Wallet from '../models/Wallet';
 import PaymentProviderFeeTransactions from '../lib/feeTransactions/paymentProviderFeeTransactions';
 import PlatformFeeTransactions from '../lib/feeTransactions/platformFeeTransactions';
-import Provider from '../models/Provider';
 import WalletProviderFeeTransactions from '../lib/feeTransactions/walletProviderFeeTransactions';
 import TransactionLib from '../lib/transactionLib';
-import WalletLib from '../lib/walletLib';
 
 export default class AbstractTransactionStrategy {
 
@@ -13,7 +10,6 @@ export default class AbstractTransactionStrategy {
     this.incomingTransaction = this._checkAndInsertTransactionGroup(incomingTransaction);
     this.incomingTransaction.transactionGroupTotalAmount = this.incomingTransaction.amount;
     this.transactionLib = new TransactionLib();
-    this.walletLib = new WalletLib();
   }
 
   /** Return database formatted transaction extracted through this.incomingTransaction
@@ -22,37 +18,33 @@ export default class AbstractTransactionStrategy {
   */
   async getTransactions (){}
 
-  async setPaymentProviderFeeTransactions() {
+  setPaymentProviderFeeTransactions() {
     let paymentProviderFeeTransactions = null;
     if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0 &&
-      this.incomingTransaction.paymentProviderWalletId) {
+      this.incomingTransaction.paymentProviderAccountId && this.incomingTransaction.paymentProviderWalletId) {
       // find Payment Provider wallet to generate transactions
-      this.incomingTransaction.paymentProviderWallet = await Wallet.findById(this.incomingTransaction.paymentProviderWalletId);
       paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
-      await paymentProviderFeeTransactions.setTransactionInfo();
+      paymentProviderFeeTransactions.setTransactionInfo();
     }
     return paymentProviderFeeTransactions;
   }
 
-  async setPlatformFeeTransactions() {
+  setPlatformFeeTransactions() {
     let platformFeeTransaction = null;
-    if (this.incomingTransaction.platformFee || this.incomingTransaction.platformFee > 0) {
+    if (this.incomingTransaction.platformFee && this.incomingTransaction.platformFee > 0) {
       // Generate platform fee transactions
       platformFeeTransaction = new PlatformFeeTransactions(this.incomingTransaction);
-      await platformFeeTransaction.setTransactionInfo();
+      platformFeeTransaction.setTransactionInfo();
     }
     return platformFeeTransaction;
   }
 
-  async setProviderFeeTransactions() {
+  setProviderFeeTransactions() {
     let providerFeeTransaction = null;
-    const fromWalletProvider = await Provider.findById(this.incomingTransaction.fromWallet.ProviderId);
-    if (fromWalletProvider.fixedFee || fromWalletProvider.percentFee) {
-      // Generate Wallet Fees Transactions
-      this.incomingTransaction.fromWalletProvider = fromWalletProvider;
-      // this.incomingTransaction.fromWallet = fromWallet;
+    if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
+      this.incomingTransaction.walletProviderAccountId && this.incomingTransaction.walletProviderWalletId) {
       providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
-      await providerFeeTransaction.setTransactionInfo();
+      providerFeeTransaction.setTransactionInfo();
     }
     return providerFeeTransaction;
   }
@@ -90,11 +82,11 @@ export default class AbstractTransactionStrategy {
 
   async getFeeTransactions() {
     // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
-    const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions();
+    const paymentProviderFeeTransactions = this.setPaymentProviderFeeTransactions();
     // Plaftorm fee transactions -> Check whether Platform fee is > 0
-    const platformFeeTransactions = await this.setPlatformFeeTransactions();
+    const platformFeeTransactions = this.setPlatformFeeTransactions();
     // if Wallet Provider has any fee, then create transactions
-    const providerFeeTransactions = await this.setProviderFeeTransactions();
+    const providerFeeTransactions = this.setProviderFeeTransactions();
     return [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions];
   }
 
