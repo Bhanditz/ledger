@@ -16,17 +16,6 @@ export default class Transaction extends Sequelize.Model {
       },
       FromAccountId: {
         type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      },
-      ToAccountId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
@@ -34,6 +23,9 @@ export default class Transaction extends Sequelize.Model {
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+      },
+      ToAccountId: {
+        type: Sequelize.INTEGER,
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
@@ -52,12 +44,6 @@ export default class Transaction extends Sequelize.Model {
       transactionGroupSequence: {
         type: Sequelize.INTEGER,
       },
-      transactionGroupTotalAmount: {
-        type: Sequelize.FLOAT,
-      },
-      transactionGroupTotalAmountInDestinationCurrency: {
-        type: Sequelize.FLOAT,
-      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -68,6 +54,9 @@ export default class Transaction extends Sequelize.Model {
       },
       category: {
         type: Sequelize.STRING,
+      },
+      LegacyTransactionId: {
+        type: Sequelize.INTEGER,
       },
       createdAt: {
         type: Sequelize.DATE,

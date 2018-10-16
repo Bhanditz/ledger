@@ -13,28 +13,28 @@ module.exports = {
       },
       FromAccountId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      },
-      ToAccountId: {
-        type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
+        // references: { key: 'id', model: 'Accounts' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Wallets'},
+        references: { key: 'id', model: 'Wallets' },
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
+      ToAccountId: {
+        type: Sequelize.INTEGER,
+        // references: { key: 'id', model: 'Accounts' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Wallets'},
+        references: { key: 'id', model: 'Wallets' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
@@ -65,6 +65,9 @@ module.exports = {
       },
       category: {
         type: Sequelize.STRING,
+      },
+      LegacyTransactionId: {
+        type: Sequelize.INTEGER,
       },
       createdAt: {
         type: Sequelize.DATE,

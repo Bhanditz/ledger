@@ -16,7 +16,7 @@ module.exports = {
       },
       OwnerAccountId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
+        references: { key: 'id', model: 'Accounts' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
@@ -25,7 +25,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
         defaultValue: null,
-        references: {key: 'id', model: 'Providers'},
+        references: { key: 'id', model: 'Providers' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
