@@ -18,17 +18,6 @@ export default class AbstractTransactionStrategy {
   */
   async getTransactions (){}
 
-  setPaymentProviderFeeTransactions() {
-    let paymentProviderFeeTransactions = null;
-    if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0 &&
-      this.incomingTransaction.paymentProviderAccountId && this.incomingTransaction.paymentProviderWalletId) {
-      // find Payment Provider wallet to generate transactions
-      paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
-      paymentProviderFeeTransactions.setTransactionInfo();
-    }
-    return paymentProviderFeeTransactions;
-  }
-
   setPlatformFeeTransactions() {
     let platformFeeTransaction = null;
     if (this.incomingTransaction.platformFee && this.incomingTransaction.platformFee > 0) {
@@ -39,10 +28,21 @@ export default class AbstractTransactionStrategy {
     return platformFeeTransaction;
   }
 
+  setPaymentProviderFeeTransactions() {
+    let paymentProviderFeeTransactions = null;
+    if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0 &&
+      this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.PaymentProviderWalletId) {
+      // find Payment Provider wallet to generate transactions
+      paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
+      paymentProviderFeeTransactions.setTransactionInfo();
+    }
+    return paymentProviderFeeTransactions;
+  }
+
   setProviderFeeTransactions() {
     let providerFeeTransaction = null;
     if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
-      this.incomingTransaction.walletProviderAccountId && this.incomingTransaction.walletProviderWalletId) {
+      this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.WalletProviderWalletId) {
       providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
       providerFeeTransaction.setTransactionInfo();
     }
@@ -80,7 +80,7 @@ export default class AbstractTransactionStrategy {
     return netTransactionAmount;
   }
 
-  async getFeeTransactions() {
+  getFeeTransactions() {
     // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
     const paymentProviderFeeTransactions = this.setPaymentProviderFeeTransactions();
     // Plaftorm fee transactions -> Check whether Platform fee is > 0

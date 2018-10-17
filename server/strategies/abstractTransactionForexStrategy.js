@@ -6,7 +6,6 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
   constructor(incomingTransaction) {
     super(incomingTransaction);
     this._validateForexTransaction();
-    this.incomingTransaction.transactionGroupTotalAmountInDestinationCurrency = this.incomingTransaction.destinationAmount;
   }
 
   getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransaction, providerFeeTransaction) {

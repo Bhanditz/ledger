@@ -1,7 +1,7 @@
 import Wallet from '../models/Wallet';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 import ForexConversionTransactions from '../lib/forexConversionTransactions';
-import { transactionCategoryEnum } from '../globals/enums/transactionCategoryEnum';
+import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 import WalletLib from '../lib/walletLib';
 
 export default class TransactionForexStrategy extends AbstractTransactionForexStrategy {
@@ -11,10 +11,25 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
   }
 
   async getTransactions() {
-    const fromWallet = await Wallet.findById(this.incomingTransaction.FromWalletId);
     const walletLib = new WalletLib();
-    this.incomingTransaction.fromWalletDestinationCurrency = await walletLib
-      .findOrCreateTemporaryCurrencyWallet( this.incomingTransaction.destinationCurrency, fromWallet.OwnerAccountId);
+    // finding or creating from and to Wallets
+    const fromWallet = await walletLib.findOrCreateCurrencyWallet(
+      this.incomingTransaction.FromWalletId,
+      this.incomingTransaction.currency,
+      this.incomingTransaction.FromAccountId
+    );
+    const toWallet = await walletLib.findOrCreateCurrencyWallet(
+      this.incomingTransaction.ToWalletId,
+      this.incomingTransaction.destinationCurrency,
+      this.incomingTransaction.ToAccountId
+    );
+    this.incomingTransaction.ToWalletId = toWallet.id;
+    this.incomingTransaction.FromWalletId = fromWallet.id;
+    this.incomingTransaction.fromWalletDestinationCurrency = await walletLib.findOrCreateTemporaryCurrencyWallet(
+      this.incomingTransaction.destinationCurrency,
+      fromWallet.OwnerAccountId,
+      true
+    );
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = this.getFeeTransactions();
     const conversionTransactionsManager = new ForexConversionTransactions(this.incomingTransaction);
     const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
