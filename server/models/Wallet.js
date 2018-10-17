@@ -9,8 +9,9 @@ export default class Wallet extends Sequelize.Model {
         autoIncrement: true,
       },
       name: {
-        type: Sequelize.STRING, 
+        type: Sequelize.STRING,
         allowNull: false,
+        unique: true,
       },
       currency: {
         type: Sequelize.STRING,
@@ -36,20 +37,6 @@ export default class Wallet extends Sequelize.Model {
       },
     }, {
       sequelize,
-    });
-  }
-  /**
-   * responsible to associate the model relationships
-   * @param {*} models - sequelize models
-   */
-  static associate(models) {
-    this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
-    this.hasOne(models.Provider, {
-      foreignKey: {
-        name: 'ProviderId',
-        allowNull: true,
-      },
-      as: 'provider',
     });
   }
 }

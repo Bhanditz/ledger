@@ -1,5 +1,5 @@
 import Sequelize from 'sequelize';
-import { transactionTypeEnum } from '../globals/enums/transactionTypeEnum';
+import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
 
 export default class Transaction extends Sequelize.Model {
   static init(sequelize) {
@@ -76,10 +76,7 @@ export default class Transaction extends Sequelize.Model {
    * @param {*} models - sequelize models
    */
   static associate(models) {
-    this.belongsTo(models.Account, { foreignKey: 'FromAccountId', as: 'fromAccount' });
-    this.belongsTo(models.Account, { foreignKey: 'ToAccountId', as: 'toAccount' });
     this.belongsTo(models.Wallet, { foreignKey: 'FromWalletId', as: 'fromWallet' });
     this.belongsTo(models.Wallet, { foreignKey: 'ToWalletId', as: 'toWallet' });
   }
-
 }

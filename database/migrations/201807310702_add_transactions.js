@@ -13,10 +13,6 @@ module.exports = {
       },
       FromAccountId: {
         type: Sequelize.INTEGER,
-        // references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
@@ -27,10 +23,6 @@ module.exports = {
       },
       ToAccountId: {
         type: Sequelize.INTEGER,
-        // references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
@@ -40,7 +32,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       amount: {
-        type: Sequelize.FLOAT,
+        type: Sequelize.INTEGER,
       },
       transactionGroupId: {
         type: Sequelize.UUID,
@@ -48,12 +40,6 @@ module.exports = {
       },
       transactionGroupSequence: {
         type: Sequelize.INTEGER,
-      },
-      transactionGroupTotalAmount: {
-        type: Sequelize.FLOAT,
-      },
-      transactionGroupTotalAmountInDestinationCurrency: {
-        type: Sequelize.FLOAT,
       },
       doubleEntryGroupId: {
         type: Sequelize.UUID,

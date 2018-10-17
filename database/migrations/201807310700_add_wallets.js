@@ -9,6 +9,7 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: true,
       },
       currency: {
         type: Sequelize.STRING,
@@ -16,18 +17,6 @@ module.exports = {
       },
       OwnerAccountId: {
         type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      },
-      ProviderId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        defaultValue: null,
-        references: { key: 'id', model: 'Providers' },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
       },
       temporary: {
         type: Sequelize.BOOLEAN,
