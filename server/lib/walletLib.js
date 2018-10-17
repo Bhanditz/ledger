@@ -27,17 +27,20 @@ export default class WalletLib {
     return balanceCurrency ? balanceCurrency : 0;
   }
 
-  async findOrCreateTemporaryCurrencyWallet(currency, accountId){
+  async findOrCreateCurrencyWallet(name, currency, accountId, temp){
     return Wallet.findOrCreate({
       where: {
-        temporary: true,
+        temporary: temp || false,
         currency: currency,
         OwnerAccountId: accountId,
-        name: `temp_${currency}_${accountId}`,
+        name: `${name}`,
       },
     }).spread((result) => {
       return result;
     });
   }
 
+  async findOrCreateTemporaryCurrencyWallet(currency, accountId){
+    return this.findOrCreateCurrencyWallet(`temp_${currency}_${accountId}`, currency, accountId, true);
+  }
 }
