@@ -1,4 +1,4 @@
-export const paymentMethodTypes = Object.freeze({
+const paymentMethodTypes = Object.freeze({
   COLLECTIVE: 'collective', // service: opencollective
   PREPAID: 'prepaid', // service: opencollective
   VIRTUALCARD: 'virtualcard', // service: opencollective
@@ -7,3 +7,4 @@ export const paymentMethodTypes = Object.freeze({
   CREDITCARD: 'creditcard', // service: stripe
   BITCOIN: 'bitcoin', // service: stripe
 });
+export default paymentMethodTypes;

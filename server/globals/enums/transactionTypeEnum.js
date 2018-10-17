@@ -1,4 +1,5 @@
-export const transactionTypeEnum = Object.freeze({
+const transactionTypeEnum = Object.freeze({
   CREDIT: 'CREDIT',
   DEBIT: 'DEBIT',
 });
+export default transactionTypeEnum;
