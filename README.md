@@ -107,7 +107,7 @@ Run `npm run doc` to see most of the endpoint available and their requirements
 - `walletProviderFee` - *optional* : the wallet provider fee to be charged
 - `platformFee` - *optional* : the platform fee to be charged
 - `paymentProviderFee` - *optional* : the payment provider fee to be charged
-- `paymentProviderWalletId` - The Wallet Id of the Payment Provider
+- `PaymentProviderWalletId` - The Wallet Id of the Payment Provider
 - `senderPayFees` - *optional* : flag indicating whether the sender will pay the fees(by default, the receiver pays the fees)
 
 ## Transactions Example
@@ -172,7 +172,7 @@ We would have the `POST /transactions` endpoint with the following payload:
   amount: 3000, 
   currency: 'USD',
   paymentProviderFee: 300,
-  paymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletId: Stripe_Wallet,
 }
 ```    
 
@@ -199,7 +199,7 @@ We would have the `POST /transactions` endpoint with the following payload:
   currency: 'USD',
   platformFee: 300,
   paymentProviderFee: 300,
-  paymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletId: Stripe_Wallet,
 }
 ```    
 
@@ -229,7 +229,7 @@ We would have the `POST /transactions` endpoint with the following payload:
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
   platformFee: 300,
   paymentProviderFee: 300,
-  paymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletId: Stripe_Wallet,
 }
 ```
 
@@ -261,7 +261,7 @@ We would have the `POST /transactions` endpoint with the following payload:
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
   platformFee: 300,
   paymentProviderFee: 300,
-  paymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletId: Stripe_Wallet,
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
@@ -299,7 +299,7 @@ Payload:
   walletProviderFee: 100, 
   platformFee: 100, 
   paymentProviderFee: 100, 
-  paymentProviderWalletId: Stripe_WALLET,
+  PaymentProviderWalletId: Stripe_WALLET,
 }
 ```
 
@@ -344,7 +344,7 @@ Payload:
   walletProviderFee: 100, 
   platformFee: 100, 
   paymentProviderFee: 100, 
-  paymentProviderWalletId: Stripe_WALLET,
+  PaymentProviderWalletId: Stripe_WALLET,
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
@@ -373,4 +373,122 @@ This would generate a total of 12 transactions in the ledger table:
 - rows #9 and #10 - **Xavier** pays 1USD of payment provider fee 
 - rows #11 and #12 - **Xavier** pays 1USD of wallet provider fee
 
-#### Xavier Contributes €30(through his EUR Wallet) to WWCodeBerlin(who's a EUR Collective) to its "WWCode 501c3" USD Wallet
+### 2018-10-19 simple Case Demo
+
+The focus of this demo is to have the Ledger working with a simple case:
+
+1. Choose a host: Open Source Collective 501c6 (Collective id 11004)
+2. Choose 2 collectives: Marco Barcellos(Collective id 18520) and MochaJS (Collective id 58)
+3. Migrate and Insert new data regarding them:
+  - Migrate transactions regarding only the host and the 2 collectives, and transactions of same currency) 
+   coming into the current api, after saving it also store on the ledger
+  - For every new transaction(regarding only the host and the 2 collectives, and transactions of same currency) 
+   coming into the current api, after saving it also store on the ledger.   
+
+```sql
+select * from "Collectives" where id in( 18520, 11004, 58); -- respectively marco(BACKER), Open Source Collective 501c6 (HOST) and MochaJS(Collective)
+select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."CollectiveId"=58 and t."FromCollectiveId"=18520 and t.type='CREDIT'; -- Marco sending money to MochaJs
+```
+
+### Mapping query
+
+
+L
+```sql
+-- finding forex tx
+select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE amount != "amountInHostCurrency" and "HostCollectiveId" is not null order by t.id DESC;
+
+-- choosing one of them through TransactionGroup Field
+select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT' and t."deletedAt" is null;
+
+-- Mapping
+ select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWalletId", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWalletId", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWalletId", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWalletId", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
+
+```
+
+## Current Production Migration cases
+
+This is going to be a list of problems, approaches and **real** use cases found along the migration.
+
+### Mapping
+
+If we Consider a simple query(that filters only CREDIT transactions) from the current production database:
+```sql
+select t.*, p.service as "pmService", p.type as "pmType" from "Transactions" t 
+left join "PaymentMethods" p on t."PaymentMethodId"=p.id
+WHERE t.type='CREDIT';
+```
+
+We can map this query to the following ledger transaction endpoint payload:
+
+```js
+{
+  FromAccountId: transaction.FromCollectiveId,
+  FromWalletId: transaction.PaymentMethodId,
+  ToAccountId: transaction.CollectiveId,
+  ToWalletId: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`, // We are going to create a pair (CollectiveId, HostCollectiveId)
+  amount: transaction.amountInHostCurrency,
+  currency: transaction.hostCurrency,
+  destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
+  destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
+  walletProviderFee: Math.round(-1 * transaction.hostFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
+  WalletProviderAccountId: transaction.HostCollectiveId,
+  WalletProviderWalletId: `${transaction.HostCollectiveId}`,
+  platformFee: Math.round(-1 * transaction.platformFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
+  paymentProviderFee: Math.round(-1 * transaction.paymentProcessorFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
+  PaymentProviderAccountId: transaction.pmService, // PaymentMethod.service
+  PaymentProviderWalletId: transaction.pmType, // PaymentMethod.type
+  LegacyTransactionId: transaction.id,
+}
+```
+
+Fields that deserve more attention:
+
+- `FromWalletId` - This will be set to the `PaymentMethodId` of the transaction
+- `ToWalletId` - All Collectives will have a Wallet that will have the id as the combination of the `CollectiveId` with the `HostCollectiveId` fields
+- `WalletProviderAccountId` - This will be set to the `HostCollectiveId` of the transaction
+- `WalletProviderWalletId` - This will be set with the same of the account of the wallet provider: `HostCollectiveId` of the transaction
+- `PaymentProviderAccountId` - this will be set as the service of the payment method `service` field(stripe, paypal, opencollective, etc...)
+- `PaymentProviderWalletId` - this will be set as the service of the payment method `type` field(creditcard, adaptive, collective, etc...)
+- `walletProviderFee`, `platformFee` and `paymentProviderFee`
+     - The fees are always paid according to the `hostCurrency` field, but the **collective**(from the `CollectiveId` field) will be responsible to pay those fees, so we will be sending the fees(in `hostCurrency`) divided by the `hostCurrencyFxRate` to then obtain the fees in the `currency` field to send to the ledger. 
+        - example 1: marco sends 30 USD to webpack(USD collective, USD host). `hostCurrency` is the same as `currency`, `hostCurrencyFxRate` is 1.
+        - example 2: marco sends 30 USD to weco(USD collective, EUR host). `hostCurrency`(EUR) is different than `currency`(USD), `hostCurrencyFxRate` will then convert the fees from **EUR** to **USD** to send to the ledger. 
+     - We will be looking only for CREDIT transactions(DEBIT is just the same transaction but represented as the opposite, due to the double entry system) and the fees are negatives, so we need to multiply by -1 to send values higher than zero. 
+ - `LegacyTransactionId` - current production `Transactions` table id, this will be a temporary field to support the migration period keeping a state of the records that were already saved
+
+### Use Case 1: Backer, Collective and Host are USD, but transaction hostCurrency is GBP
+
+The backer uses Payment method(id 8960) that has a currency as USD, the host of the collective is also USD. but in the following transaction it says the the hostCurrency is GBP, even with none of the entities(collectives and payment method) being in GBP. What I figured out is that the card that's stored on the User Stripe account is a GBP credit and then the transaction fees are paid in GBP.
+
+```sql
+	select * from "Collectives" where id in( 8974, 10506, 8975); -- respectively the backer, the collective and the host
+select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='9d7ad496-55c3-4934-8472-780c152ade88' and t.type='CREDIT';
+```
+
+The problem regarding the migration to the ledger in this case is that the fees are paid in GBP even with the Collective being USD and converting this money. Let's make an example:
+
+- The backer(collective id 8974) is James. The collective(collective id 10506) is weco. The host is finance(collective id 8975).
+- The action: James sends 10USD to Weco.
+
+we then have the following actions:
+
+- James try to send 10USD to weco through Stripe, but its card is GBP card so Stripe converts it to GBP at a rate of 0.751 so james actually sends 7.51GBP to weco. 
+- weco pays fees in GBP(platform fee 0.38GBP, host fee 0.38GBP, payment processor fee 0.31GBP). 
+- weco then has the netAmount 6.44GBP. 
+- But as weco is a USD collective, it will actually "see" as 6.44GBP divided by the fx Rate(0.751) to a total of 8.58USD.
+
+Approaching this situation on the ledger
+-
+
+the ledger is flexible enough to make either the sender or the receiver pay the fees, but the fees need to be in the "destinationCurrency"(in this case, USD).
+
+- James sends 7.51GBP to STRIPE.
+- Stripe sends 10USD to James.
+- James pays 10USD to weco.
+- weco pays 0.51USD( estimated conversion of 0.38GBP/0.751) to the platform
+- weco pays 0.51USD( estimated conversion of 0.38GBP/0.751) to the host
+- weco pays 0.41USD( estimated conversion of 0.38GBP/0.751) to stripe
+- weco has a net amount of 8.57USD(10-0.51-0.51-0.41)
+
+{"last4":"5233","fullName":"MR JH WEIR","expMonth":3,"expYear":2020,"brand":"Visa","country":"GB","funding":"debit","customerIdForHost":{"acct_1BQyUVIgk6cKOkUW":"cus_Bwxrcp4scdGXTp"}}
