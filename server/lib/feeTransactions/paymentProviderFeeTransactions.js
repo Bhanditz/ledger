@@ -1,5 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import { transactionCategoryEnum } from '../../globals/enums/transactionCategoryEnum';
+import transactionCategoryEnum from '../../globals/enums/transactionCategoryEnum';
 
 export default class PaymentProviderFeeTransactions extends AbstractFeeTransactions {
 
@@ -8,8 +8,8 @@ export default class PaymentProviderFeeTransactions extends AbstractFeeTransacti
   }
 
   setTransactionInfo() {
-    this.feeWalletId = this.transaction.paymentProviderWalletId;
-    this.feeAccountId = this.transaction.paymentProviderAccountId;
+    this.feeWalletId = this.transaction.PaymentProviderWalletId;
+    this.feeAccountId = this.transaction.PaymentProviderAccountId;
     this.fee = this.transaction.paymentProviderFee;
     this.category = transactionCategoryEnum.PAYMENT_PROVIDER;
   }

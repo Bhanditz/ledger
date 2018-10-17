@@ -1,5 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import { transactionCategoryEnum } from '../../globals/enums/transactionCategoryEnum';
+import transactionCategoryEnum from '../../globals/enums/transactionCategoryEnum';
 import { constants } from '../../globals/constants';
 
 export default class PlatformFeeTransactions extends AbstractFeeTransactions {
