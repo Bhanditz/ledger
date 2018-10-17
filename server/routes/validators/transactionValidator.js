@@ -16,7 +16,10 @@ export default class TransactionValidator extends AbstractValidator {
       check('ToWalletId').isNumeric(),
       check('platformFee').isNumeric(), // Will have a default Wallet Id
       check('paymentProviderFee').isNumeric(),
-      check('paymentProviderWalletId').isNumeric(),
+      check('PaymentProviderAccountId').isNumeric(),
+      check('PaymentProviderWalletId').isNumeric(),
+      check('WalletProviderAccountId').isNumeric(),
+      check('PaymentProviderWalletId').isNumeric(),
       check('walletProviderFee').isNumeric(),
       check('senderPayFees').isBoolean(), // default to false as receiver will pay fees by default
     ];

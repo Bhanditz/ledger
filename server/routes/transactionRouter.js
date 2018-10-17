@@ -38,7 +38,7 @@ export default class TransactionRouter extends AbstractRouter {
    * @apiParam {String} currency currency of the amount field
    * @apiParam {Number}  [platformFee] the platform fee in cents
    * @apiParam {Number}  [paymentProviderFee] the payment provider fee in cents
-   * @apiParam {Number}  [paymentProviderWalletId] the payment provider wallet id
+   * @apiParam {Number}  [PaymentProviderWalletId] the payment provider wallet id
    * @apiParam {Number}  [walletProviderFee] the wallet provider fee in cents
    * @apiParam {Boolean} [senderPayFees] boolean indicating whether the sender will pay fees
    */
