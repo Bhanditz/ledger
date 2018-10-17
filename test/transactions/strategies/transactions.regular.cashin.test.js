@@ -8,7 +8,7 @@ import AccountService from '../../../server/services/accountService';
 import WalletService from '../../../server/services/walletService';
 import TransactionService from '../../../server/services/transactionService';
 import ResetDb from '../../resetDb';
-import { paymentMethodServices } from '../../../server/globals/enums/paymentMethodServices';
+import paymentMethodServices from '../../../server/globals/enums/paymentMethodServices';
 import ProviderService from '../../../server/services/providerService';
 import PlatformInfo from '../../../server/globals/platformInfo';
 import WalletLib from '../../../server/lib/walletLib';
@@ -249,7 +249,7 @@ describe('TransactionRegularStrategy Cashin transactions', () => {
         amount: amountTransaction,
         currency: currencyTransaction,
         paymentProviderFee: paymentProviderFee,
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
@@ -350,7 +350,7 @@ describe('TransactionRegularStrategy Cashin transactions', () => {
         currency: currencyTransaction,
         platformFee: platformFee,
         paymentProviderFee: paymentProviderFee,
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
@@ -744,7 +744,7 @@ describe('TransactionRegularStrategy Cashin transactions', () => {
         amount: amountTransaction,
         currency: currencyTransaction,
         paymentProviderFee: paymentProviderFee,
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)
@@ -846,7 +846,7 @@ describe('TransactionRegularStrategy Cashin transactions', () => {
         currency: currencyTransaction,
         platformFee: platformFee,
         paymentProviderFee: paymentProviderFee,
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 4 transactions(normal and wallet provider fee transactions, DEBIT AND CREDIT)

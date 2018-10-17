@@ -8,7 +8,7 @@ import AccountService from '../../../server/services/accountService';
 import WalletService from '../../../server/services/walletService';
 import TransactionService from '../../../server/services/transactionService';
 import ResetDb from '../../resetDb';
-import { paymentMethodServices } from '../../../server/globals/enums/paymentMethodServices';
+import paymentMethodServices from '../../../server/globals/enums/paymentMethodServices';
 import ProviderService from '../../../server/services/providerService';
 
 describe('TransactionRegularStrategy Account to Account transactions', () => {

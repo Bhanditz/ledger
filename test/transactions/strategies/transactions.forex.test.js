@@ -8,7 +8,7 @@ import AccountService from '../../../server/services/accountService';
 import WalletService from '../../../server/services/walletService';
 import TransactionService from '../../../server/services/transactionService';
 import ResetDb from '../../resetDb';
-import { paymentMethodServices } from '../../../server/globals/enums/paymentMethodServices';
+import paymentMethodServices from '../../../server/globals/enums/paymentMethodServices';
 import ProviderService from '../../../server/services/providerService';
 import WalletLib from '../../../server/lib/walletLib';
 import ProviderLib from '../../../server/lib/providerLib';
@@ -89,7 +89,7 @@ describe('Forex Transactions', () => {
         });
       } catch (error) {
         expect(error).to.exist;
-        expect(error.toString()).to.contain('field paymentProviderWalletId missing');
+        expect(error.toString()).to.contain('field PaymentProviderWalletId missing');
       }
     }); /** End of "Regular Account cashes in from its creditcard wallet to its USD wallet(Without Platform Payment Provider Fees) Should generate 4 transactions(2 Regarding Wallet Provider fees and 2 regarding the transaction itself )" */
 
@@ -103,7 +103,7 @@ describe('Forex Transactions', () => {
         destinationCurrency: 'USD', // The currency to be received
         // platformFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
         // paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 8 transactions
@@ -205,7 +205,7 @@ describe('Forex Transactions', () => {
         destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
         destinationCurrency: 'USD', // The currency to be received
         paymentProviderFee: paymentProviderFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 10 transactions
@@ -325,7 +325,7 @@ describe('Forex Transactions', () => {
         destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
         destinationCurrency: 'USD', // The currency to be received
         platformFee: platformFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 10 transactions
@@ -449,7 +449,7 @@ describe('Forex Transactions', () => {
         destinationCurrency: 'USD', // The currency to be received
         platformFee: platformFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
         paymentProviderFee: paymentProviderFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
         senderPayFees: true,
       });
       // check if initial Cashin transaction generates 12 transactions
@@ -597,7 +597,7 @@ describe('Forex Transactions', () => {
         });
       } catch (error) {
         expect(error).to.exist;
-        expect(error.toString()).to.contain('field paymentProviderWalletId missing');
+        expect(error.toString()).to.contain('field PaymentProviderWalletId missing');
       }
     }); /** End of "Regular Account cashes in from its creditcard wallet to its USD wallet(Without Platform Payment Provider Fees) Should generate 4 transactions(2 Regarding Wallet Provider fees and 2 regarding the transaction itself )" */
 
@@ -613,7 +613,7 @@ describe('Forex Transactions', () => {
         destinationCurrency: 'USD', // The currency to be received
         // platformFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
         // paymentProviderFee: 100, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 8 transactions
       // - 4 conversion transactons(2 * Credit and Debit transactions)
@@ -698,10 +698,7 @@ describe('Forex Transactions', () => {
       expect(result[6].ToWalletId).to.be.equal(result[7].FromWalletId);
       expect(result[6].amount).to.be.equal(-1 * transactionFeeAmount);
       expect(result[6].currency).to.be.equal('USD');
-      // the transactionGroupTotalAmount must be equals the amount in each item of the transaction batch
-      expect(result.map(t => t.transactionGroupTotalAmount)).to.eql(result.map(() => amount));
-      // the transactionGroupTotalAmountInDestinationCurrency must be equals the destinationAmount in each item of the transaction batch
-      expect(result.map(t => t.transactionGroupTotalAmountInDestinationCurrency)).to.eql(result.map(() => destinationAmount));
+      
     }); /** End of "account1 sends 30EUR(that will become 45USD) to account2 with wallet provider fees" */
 
     it('account1 sends 30EUR(that will become 45USD) to account2 with payment providers and wallet providers fees', async () => {
@@ -716,7 +713,7 @@ describe('Forex Transactions', () => {
         destinationAmount: destinationAmount, // The amount to be received(same currency as defined in the "destinationCurrency" field)
         destinationCurrency: 'USD', // The currency to be received
         paymentProviderFee: paymentProviderFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 10 transactions
       // - 4 conversion transactons(2 * Credit and Debit transactions)
@@ -818,11 +815,6 @@ describe('Forex Transactions', () => {
       expect(result[8].ToWalletId).to.be.equal(result[9].FromWalletId);
       expect(result[8].amount).to.be.equal(-1 * transactionFeeAmount);
       expect(result[8].currency).to.be.equal('USD');
-
-      // the transactionGroupTotalAmount must be equals the amount in each item of the transaction batch
-      expect(result.map(t => t.transactionGroupTotalAmount)).to.eql(result.map(() => amount));
-      // the transactionGroupTotalAmountInDestinationCurrency must be equals the destinationAmount in each item of the transaction batch
-      expect(result.map(t => t.transactionGroupTotalAmountInDestinationCurrency)).to.eql(result.map(() => destinationAmount));
     }); /** End of "account1 sends 30EUR(that will become 45USD) to account2 with payment providers and wallet providers fees" */
 
     it('account1 sends 30EUR(that will become 45USD) to account2 with platform and wallet providers fees', async () => {
@@ -837,7 +829,7 @@ describe('Forex Transactions', () => {
         destinationAmount: destinationAmount, // The amount to be received(same currency as defined in the "destinationCurrency" field)
         destinationCurrency: 'USD', // The currency to be received
         platformFee: platformFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 10 transactions
       // - 4 conversion transactons(2 * Credit and Debit transactions)
@@ -960,7 +952,7 @@ describe('Forex Transactions', () => {
         destinationCurrency: 'USD', // The currency to be received
         platformFee: platformFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
         paymentProviderFee: paymentProviderFee, // if it's a forex Transaction the currency of all fees is by default the "destinationCurrency" field
-        paymentProviderWalletId: paymentProviderWallet.id,
+        PaymentProviderWalletId: paymentProviderWallet.id,
       });
       // check if initial Cashin transaction generates 12 transactions
       // - 4 conversion transactons(2 * Credit and Debit transactions)
