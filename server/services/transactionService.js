@@ -48,9 +48,9 @@ export default class TransactionService extends AbstractCrudService {
     if (!transaction.destinationCurrency) {
       return new TransactionRegularStrategy(transaction);
     }
-    // field paymentProviderWalletId is required for forex transactions
-    if (!transaction.paymentProviderWalletId) {
-      throw Error(operationNotAllowed('field paymentProviderWalletId missing'));
+    // field PaymentProviderWalletId is required for forex transactions
+    if (!transaction.PaymentProviderWalletId) {
+      throw Error(operationNotAllowed('field PaymentProviderWalletId missing'));
     }
     return new TransactionForexStrategy(transaction);
   }
