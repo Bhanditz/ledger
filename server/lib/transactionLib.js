@@ -1,5 +1,5 @@
 import uuidv4 from 'uuid/v4';
-import { transactionTypeEnum } from '../globals/enums/transactionTypeEnum';
+import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
 import { fieldError, operationNotAllowed } from '../globals/errors';
 
 export default class TransactionLib {
@@ -20,14 +20,13 @@ export default class TransactionLib {
     const debitTransaction = {
       type: transactionTypeEnum.DEBIT,
       FromAccountId: fromAccountId,
-      ToAccountId: toAccountId,
       FromWalletId: fromWalletId,
+      ToAccountId: toAccountId,
       ToWalletId: toWalletId,
       amount: (-1 * amount),
       currency: transaction.currency,
       category: transaction.category,
-      transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
-      transactionGroupTotalAmountInDestinationCurrency: transaction.transactionGroupTotalAmountInDestinationCurrency,
+      LegacyTransactionId: transaction.LegacyTransactionId,
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
     };
@@ -40,8 +39,7 @@ export default class TransactionLib {
       amount: amount,
       currency: transaction.currency,
       category: transaction.category,
-      transactionGroupTotalAmount: transaction.transactionGroupTotalAmount,
-      transactionGroupTotalAmountInDestinationCurrency: transaction.transactionGroupTotalAmountInDestinationCurrency,
+      LegacyTransactionId: transaction.LegacyTransactionId,
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
     };
