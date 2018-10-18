@@ -12,7 +12,7 @@
 
 select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWalletId", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_' t."CollectiveId" || '_' t."CollectiveId" as "ToWalletId", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWalletId", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWalletId", t."hostCurrencyFxRate" as "fxRate" t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='9d7ad496-55c3-4934-8472-780c152ade88' and t.type='CREDIT';
 
---  #. FromAccountId, FromWalletId, ToAccountId, ToWalletId, amount, currency,  category                               
+--  #. FromAccountId, FromWalletId, ToAccountId, ToWalletId, amount, currency,  category
 -- #1   10506          10506_8960.    stripe       stripe      751    GBP      Conversion
 -- #2   stripe          stripe        10506      10506_8960.   1000   USD      Conversion
 -- #3   10506          10506_8960.    8974        8974_Wallet  1000   USD      Acc2Acc

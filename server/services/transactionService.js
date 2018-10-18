@@ -3,7 +3,6 @@ import Transaction from '../models/Transaction';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import Logger from '../globals/logger';
-import { operationNotAllowed } from '../globals/errors';
 
 export default class TransactionService extends AbstractCrudService {
 

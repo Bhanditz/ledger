@@ -698,7 +698,7 @@ describe('Forex Transactions', () => {
       expect(result[6].ToWalletId).to.be.equal(result[7].FromWalletId);
       expect(result[6].amount).to.be.equal(-1 * transactionFeeAmount);
       expect(result[6].currency).to.be.equal('USD');
-      
+
     }); /** End of "account1 sends 30EUR(that will become 45USD) to account2 with wallet provider fees" */
 
     it('account1 sends 30EUR(that will become 45USD) to account2 with payment providers and wallet providers fees', async () => {

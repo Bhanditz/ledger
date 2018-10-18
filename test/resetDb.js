@@ -1,16 +1,13 @@
 import Database from '../server/models';
-import PlatformInfo from '../server/globals/platformInfo';
 
 export default class ResetDb {
   static async run() {
     const db = new Database();
     for (const model of Object.keys(db.models)) {
       if (model.toString() === 'Account') {
-        const account = await PlatformInfo.getAccount();
-        await db.sequelize.query(`DELETE FROM "Accounts" WHERE "id"!=${account.id};`);
+        await db.sequelize.query('DELETE FROM "Accounts";');
       } else if (model.toString() === 'Wallet') {
-        const wallet = await PlatformInfo.getWallet();
-        await db.sequelize.query(`DELETE FROM "Wallets" WHERE "id"!=${wallet.id};`);
+        await db.sequelize.query('DELETE FROM "Wallets";');
       } else {
         await db.models[model].sync({ force: true });
       }

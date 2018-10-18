@@ -7,7 +7,7 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
   constructor(incomingTransaction) {
     super(incomingTransaction);
   }
-  
+
   async getTransactions() {
     await this.findOrCreateAccountWallets();
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();

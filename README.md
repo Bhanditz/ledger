@@ -79,15 +79,14 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `type` - **Credit** or **Debit**
 - `FromAccountId`- The Account responsible for sending the money in the transaction
 - `ToAccountId`- The Account responsible for receiving the money in the transaction
-- `FromWalletId`- The Wallet of the Account responsible for sending the money in the transaction
-- `ToWalletId`- The Wallet of the Account responsible for Receiving the money in the transaction
+- `FromWalletName`- The Wallet of the Account responsible for sending the money in the transaction
+- `ToWalletName`- The Wallet of the Account responsible for Receiving the money in the transaction
 - `amount`- The NET amount of the transaction
 - `currency` - The currency of the transaction
 - `doubleEntryGroupId` - The UUID of the double entry pair transaction(for any CREDIT transaction there is a DEBIT transaction, and we can "find" all the pairs through this field)
 - `transactionGroupId` - The UUID the transaction group -> When an account pays another account, there are several use cases and in all of them we will have more than one transaction at the very least. This field identify all transactions related to one "action of the system"
 - `transactionGroupSequence` - The sequence of the transaction regarding its transaction group
 - `transactionGroupTotalAmount` - The Gross Amount of the transaction regarding a whole transaction group. Example: account1 pays 30USD to account2 and this transaction has a 10% of platform Fee. The system will generate 4 transactions, 2 regarding the "normal" transaction(from account1 to account2) with the `amount` field having `27`USD(95% where in the DEBIT it will be `-27USD` and Credit `27USD`) and 2 regarding the fees with the `amount` field having `3`USD(5% where in the DEBIT it will be `-3USD` and Credit `3USD`). in All 4 transactions the field `transactionGroupTotalAmount` will be `30USD`.
-- `transactionGroupTotalAmountInDestinationCurrency` - this field only applies for FOREX transactions: The Gross Amount in the "destination currency"(example: account1 sends 30EUR to account2 that has usd wallet, that will be converted to 45USD, and the value of `transactionGroupTotalAmountInDestinationCurrency` will be `45USD`) of the transaction regarding a whole transaction group
 
 
 ## API Endpoints
@@ -98,17 +97,22 @@ Run `npm run doc` to see most of the endpoint available and their requirements
 
 #### Endpoint Payload
 
-- `FromWalletId` - The Wallet Id of the account who's **sending** the money
-- `ToWalletId` - The Wallet Id of the account who's **receiving** the money
-- `amount` - The amount to be sent
-- `currency` - The currency to be sent
-- `destinationAmount` - *optional*(only for forex transactions): The amount in `destinationCurrency` which `receiver account` will get
-- `destinationCurrency` - *optional*(only for forex transactions): Only for forex transactions: The currency which `receiver account` will get
-- `walletProviderFee` - *optional* : the wallet provider fee to be charged
-- `platformFee` - *optional* : the platform fee to be charged
-- `paymentProviderFee` - *optional* : the payment provider fee to be charged
-- `PaymentProviderWalletId` - The Wallet Id of the Payment Provider
-- `senderPayFees` - *optional* : flag indicating whether the sender will pay the fees(by default, the receiver pays the fees)
+- `FromAccountId` - The identification of the Account that's sending money, *String*
+- `ToAccountId` - The identification of the Account that's receiving money, *String*
+- `FromWalletName` - Wallet of the FromAccount, *String*
+- `ToWalletName` - Wallet of the ToAccount, *String*
+- `amount` - Amount that's going to be taken from the FromWallet, *Number*
+- `currency` - currency of the amount field, *String*
+- `destinationAmount` - amount used in forex transactions, *Number*, *optional*
+- `destinationCurrency` - currency of the destinationAmount field, used in forex transactions, *String*, *optional*
+- `platformFee` - the platform fee in cents(if forex transaction, in destinationCurrency), *Number*, *optional*
+- `paymentProviderFee` - the payment provider fee in cents(if forex transaction, *Number*, *optional*
+- `PaymentProviderAccountId` - Account id of the payment provider, *String*, *optional*
+- `PaymentProviderWalletName` - Wallet of the payment provider, *String*, *optional*
+- `walletProviderFee` - the wallet provider fee in cents(if forex transaction), *Number*, *optional*
+- `WalletProviderAccountId` - Account id of the payment provider, *String*, *optional*
+- `WalletProviderWalletName` - Wallet of the payment provider, *String*, *optional*
+- `senderPayFees` - flag indicating whether the sender will pay fees, *Boolean*, *optional*
 
 ## Transactions Example
 
@@ -120,8 +124,8 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: webpack_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: webpack_USD, 
   amount: 3000, 
   currency: 'USD'
 }
@@ -129,7 +133,7 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 And the ledger table would be:
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|-----------|------|--------|---------------|--------------|---------------------------|
 |1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
 |2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD|3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |         3000              |
@@ -142,8 +146,8 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: webpack_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
@@ -152,7 +156,7 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the platform transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
 |1 | DEBIT |    webpack   |  webpack_USD |   Xavier  |Xavier_USD  |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
 |2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD | 3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
@@ -167,18 +171,18 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: webpack_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   paymentProviderFee: 300,
-  PaymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletName: Stripe_Wallet,
 }
 ```    
 
 The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|-----------------|
 |1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
 |2 | CREDIT|     Xavier   |  Xavier_USD  |  webpack  |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
@@ -193,19 +197,19 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: webpack_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: webpack_USD, 
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletName: Stripe_Wallet,
 }
 ```    
 
 The total record generated on the ledger regarding this transaction will be 6 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|-----------------|
 |1 | DEBIT |  webpack     |  webpack_USD | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
 |2 | CREDIT|  Xavier      |  Xavier_USD  | webpack   |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
@@ -222,20 +226,20 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: wwcode_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: wwcode_USD, 
   amount: 3000, 
   currency: 'USD',
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletName: Stripe_Wallet,
 }
 ```
 
 The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
 |1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
 |2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
@@ -254,21 +258,21 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_USD, 
-  ToWalletId: wwcode_USD, 
+  FromWalletName: Xavier_USD, 
+  ToWalletName: wwcode_USD, 
   amount: 3000, 
   currency: 'USD',
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletId: Stripe_Wallet,
+  PaymentProviderWalletName: Stripe_Wallet,
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
 
 The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|-----------------|
 |1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-2100 |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
 |2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |2100  |   USD  | TG_GROUP_1    |DoubleEntry_1 |       3000      |
@@ -290,8 +294,8 @@ Payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_EUR, 
-  ToWalletId: wwcode_USD, 
+  FromWalletName: Xavier_EUR, 
+  ToWalletName: wwcode_USD, 
   amount: 3000, 
   currency: 'EUR', 
   destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
@@ -299,13 +303,13 @@ Payload:
   walletProviderFee: 100, 
   platformFee: 100, 
   paymentProviderFee: 100, 
-  PaymentProviderWalletId: Stripe_WALLET,
+  PaymentProviderWalletName: Stripe_WALLET,
 }
 ```
 
 This would generate a total of 12 transactions in the ledger table:
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|---------------------------|-----------------|
 |1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
 |2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
@@ -335,8 +339,8 @@ Payload:
 
 ```javascript
 {
-  FromWalletId: Xavier_EUR, 
-  ToWalletId: wwcode_USD, 
+  FromWalletName: Xavier_EUR, 
+  ToWalletName: wwcode_USD, 
   amount: 3000, 
   currency: 'EUR', 
   destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
@@ -344,14 +348,14 @@ Payload:
   walletProviderFee: 100, 
   platformFee: 100, 
   paymentProviderFee: 100, 
-  PaymentProviderWalletId: Stripe_WALLET,
+  PaymentProviderWalletName: Stripe_WALLET,
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
 
 This would generate a total of 12 transactions in the ledger table:
 
-|# | type  | FromAccountId| FromWalletId |ToAccountId|ToWalletId   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
+|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName   |amount|currency|TransactioGroup|DoubleEntryId |transactionGroupTotalAmount|transactionGroupInDestinationCurrency|
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|---------------------------|-----------------|
 |1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
 |2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |       3000                |       4500      |
@@ -402,7 +406,7 @@ select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodI
 select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT' and t."deletedAt" is null;
 
 -- Mapping
- select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWalletId", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWalletId", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWalletId", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWalletId", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
+ select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWalletName", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWalletName", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWalletName", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWalletName", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
 
 ```
 
@@ -424,32 +428,32 @@ We can map this query to the following ledger transaction endpoint payload:
 ```js
 {
   FromAccountId: transaction.FromCollectiveId,
-  FromWalletId: transaction.PaymentMethodId,
+  FromWalletName: transaction.PaymentMethodId,
   ToAccountId: transaction.CollectiveId,
-  ToWalletId: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`, // We are going to create a pair (CollectiveId, HostCollectiveId)
+  ToWalletName: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`, // We are going to create a pair (CollectiveId, HostCollectiveId)
   amount: transaction.amountInHostCurrency,
   currency: transaction.hostCurrency,
   destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
   destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
   walletProviderFee: Math.round(-1 * transaction.hostFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
   WalletProviderAccountId: transaction.HostCollectiveId,
-  WalletProviderWalletId: `${transaction.HostCollectiveId}`,
+  WalletProviderWalletName: `${transaction.HostCollectiveId}`,
   platformFee: Math.round(-1 * transaction.platformFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
   paymentProviderFee: Math.round(-1 * transaction.paymentProcessorFeeInHostCurrency/transaction.hostCurrencyFxRate), // CREDIT txs have negative fees
   PaymentProviderAccountId: transaction.pmService, // PaymentMethod.service
-  PaymentProviderWalletId: transaction.pmType, // PaymentMethod.type
+  PaymentProviderWalletName: transaction.pmType, // PaymentMethod.type
   LegacyTransactionId: transaction.id,
 }
 ```
 
 Fields that deserve more attention:
 
-- `FromWalletId` - This will be set to the `PaymentMethodId` of the transaction
-- `ToWalletId` - All Collectives will have a Wallet that will have the id as the combination of the `CollectiveId` with the `HostCollectiveId` fields
+- `FromWalletName` - This will be set to the `PaymentMethodId` of the transaction
+- `ToWalletName` - All Collectives will have a Wallet that will have the id as the combination of the `CollectiveId` with the `HostCollectiveId` fields
 - `WalletProviderAccountId` - This will be set to the `HostCollectiveId` of the transaction
-- `WalletProviderWalletId` - This will be set with the same of the account of the wallet provider: `HostCollectiveId` of the transaction
+- `WalletProviderWalletName` - This will be set with the same of the account of the wallet provider: `HostCollectiveId` of the transaction
 - `PaymentProviderAccountId` - this will be set as the service of the payment method `service` field(stripe, paypal, opencollective, etc...)
-- `PaymentProviderWalletId` - this will be set as the service of the payment method `type` field(creditcard, adaptive, collective, etc...)
+- `PaymentProviderWalletName` - this will be set as the service of the payment method `type` field(creditcard, adaptive, collective, etc...)
 - `walletProviderFee`, `platformFee` and `paymentProviderFee`
      - The fees are always paid according to the `hostCurrency` field, but the **collective**(from the `CollectiveId` field) will be responsible to pay those fees, so we will be sending the fees(in `hostCurrency`) divided by the `hostCurrencyFxRate` to then obtain the fees in the `currency` field to send to the ledger. 
         - example 1: marco sends 30 USD to webpack(USD collective, USD host). `hostCurrency` is the same as `currency`, `hostCurrencyFxRate` is 1.

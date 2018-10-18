@@ -158,7 +158,7 @@ export default class AbstractTransactionStrategy {
     if (!transaction.ToWalletName) {
       throw Error(operationNotAllowed('field ToWalletName missing'));
     }
-    
+
   }
 
 }
