@@ -32,7 +32,7 @@ export default class WalletLib {
       where: {
         temporary: temp || false,
         currency: currency,
-        OwnerAccountId: accountId,
+        OwnerAccountId: `${accountId}`,
         name: `${name}`,
       },
     }).spread((result) => {
