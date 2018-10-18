@@ -1,6 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
 import transactionCategoryEnum from '../../globals/enums/transactionCategoryEnum';
-import { constants } from '../../globals/constants';
 
 export default class PlatformFeeTransactions extends AbstractFeeTransactions {
 
@@ -9,8 +8,8 @@ export default class PlatformFeeTransactions extends AbstractFeeTransactions {
   }
 
   async setTransactionInfo() {
-    this.feeAccountId = constants.PLATFORM_ACCOUNT_ID;
-    this.feeWalletId = constants.PLATFORM_WALLET_ID;
+    this.feeAccountId = this.transaction.PlatformAccountId;
+    this.feeWalletId = this.transaction.PlatformWalletId;
     this.fee = this.transaction.platformFee;
     this.category = transactionCategoryEnum.PLATFORM;
   }
