@@ -1,36 +1,16 @@
-import Wallet from '../models/Wallet';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 import ForexConversionTransactions from '../lib/forexConversionTransactions';
 import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
-import WalletLib from '../lib/walletLib';
 
 export default class TransactionForexStrategy extends AbstractTransactionForexStrategy {
 
   constructor(incomingTransaction) {
     super(incomingTransaction);
   }
-
+  
   async getTransactions() {
-    const walletLib = new WalletLib();
-    // finding or creating from and to Wallets
-    const fromWallet = await walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.FromWalletId,
-      this.incomingTransaction.currency,
-      this.incomingTransaction.FromAccountId
-    );
-    const toWallet = await walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.ToWalletId,
-      this.incomingTransaction.destinationCurrency,
-      this.incomingTransaction.ToAccountId
-    );
-    this.incomingTransaction.ToWalletId = toWallet.id;
-    this.incomingTransaction.FromWalletId = fromWallet.id;
-    this.incomingTransaction.fromWalletDestinationCurrency = await walletLib.findOrCreateTemporaryCurrencyWallet(
-      this.incomingTransaction.destinationCurrency,
-      fromWallet.OwnerAccountId,
-      true
-    );
-    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = this.getFeeTransactions();
+    await this.findOrCreateAccountWallets();
+    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
     const conversionTransactionsManager = new ForexConversionTransactions(this.incomingTransaction);
     const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
     .map(transaction => {
