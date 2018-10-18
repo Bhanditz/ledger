@@ -15,7 +15,7 @@ export default class Transaction extends Sequelize.Model {
         values: Object.values(transactionTypeEnum),
       },
       FromAccountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
@@ -25,7 +25,7 @@ export default class Transaction extends Sequelize.Model {
         onUpdate: 'CASCADE',
       },
       ToAccountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       ToWalletId: {
         type: Sequelize.INTEGER,

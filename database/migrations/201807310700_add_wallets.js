@@ -16,7 +16,7 @@ module.exports = {
         defaultValue: 'USD'
       },
       OwnerAccountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       temporary: {
         type: Sequelize.BOOLEAN,

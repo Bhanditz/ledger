@@ -12,7 +12,7 @@ module.exports = {
         values: ['CREDIT', 'DEBIT'],
       },
       FromAccountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
@@ -22,7 +22,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       ToAccountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       ToWalletId: {
         type: Sequelize.INTEGER,

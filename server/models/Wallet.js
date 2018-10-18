@@ -18,7 +18,7 @@ export default class Wallet extends Sequelize.Model {
         defaultValue: 'USD',
       },
       OwnerAccountId: {
-        type: Sequelize.INTEGER, // CollectiveId field(current prod "Collective" table that will be renamed to account)
+        type: Sequelize.STRING, // CollectiveId field(current prod "Collective" table that will be renamed to account)
       },
       temporary: {
         type: Sequelize.BOOLEAN,
