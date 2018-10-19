@@ -10,7 +10,7 @@ export default class WalletProviderFeeTransactions extends AbstractFeeTransactio
   setTransactionInfo() {
     this.feeAccountId = this.transaction.WalletProviderAccountId;
     this.feeWalletId = this.transaction.WalletProviderWalletId;
-    this.fee = this.transaction.platformFee;
+    this.fee = this.transaction.walletProviderFee;
     this.category = transactionCategoryEnum.WALLET_PROVIDER;
   }
 
