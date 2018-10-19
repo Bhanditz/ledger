@@ -8,9 +8,11 @@ Backward migration, starts inserting by looking at the max id of the current pro
 and then insert on the ledger(keeping state through the ledger's transaction field "LegacyTransactionId")
 Use Cases that migration is NOT working at the moment:
   1. PaymentMethodId is null
-  2. PaymentMethods table has service defined but does NOT have type defined
+  2. PaymentMethods table has service stripe defined but does NOT have type creditcard(NULL) defined
   3. FromCollectiveId is null(LegacyId 100784)
   4. HostCollectiveId is null and/or hostCurrency is null(LegacyId 99531)
+  5. WWcodeBerlin example: collective is EUR, host is USD, collective pays the fees
+     but collective pays it in USD even though it's a host
 */
 export class StatefulMigration {
 
