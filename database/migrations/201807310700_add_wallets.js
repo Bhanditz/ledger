@@ -9,7 +9,6 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true,
       },
       currency: {
         type: Sequelize.STRING,
@@ -33,7 +32,15 @@ module.exports = {
       deletedAt: {
         type: Sequelize.DATE
       },
-    }, { timestamps: true, });
+    }, {
+      timestamps: true,
+      indexes: [
+          {
+              unique: true,
+              fields: ['name', 'currency', 'OwnerAccountId'],
+          },
+      ],
+    });
   },
 
   down: (queryInterface) => {

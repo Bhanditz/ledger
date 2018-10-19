@@ -11,7 +11,6 @@ export default class Wallet extends Sequelize.Model {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true,
       },
       currency: {
         type: Sequelize.STRING,
@@ -35,8 +34,15 @@ export default class Wallet extends Sequelize.Model {
       deletedAt: {
         type: Sequelize.DATE,
       },
-    }, {
+    },
+    {
       sequelize,
+      indexes: [
+          {
+              unique: true,
+              fields: ['name', 'currency', 'OwnerAccountId'],
+          },
+      ],
     });
   }
 }
