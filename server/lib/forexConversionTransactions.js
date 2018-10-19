@@ -18,14 +18,14 @@ export default class ForexConversionTransactions {
 
   _getSourceCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
-      this.transaction.FromAccountId, this.transaction.FromWalletId, this.transaction.PaymentProviderAccountId,
-      this.transaction.PaymentProviderWalletId, this.transaction.amount, this.transaction.currency
+      this.transaction.FromAccountId, this.transaction.FromWalletId, this.transaction.paymentProviderWallet.OwnerAccountId,
+      this.transaction.paymentProviderWallet.id, this.transaction.amount, this.transaction.currency
     );
   }
 
   _getDestinationCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
-      this.transaction.PaymentProviderAccountId, this.transaction.PaymentProviderWalletId,
+      this.transaction.paymentProviderWallet.OwnerAccountId, this.transaction.paymentProviderWallet.id,
       this.transaction.FromAccountId, this.transaction.fromWalletDestinationCurrency.id,
       this.transaction.destinationAmount, this.transaction.destinationCurrency
     );
