@@ -18,14 +18,14 @@ export default class ForexConversionTransactions {
 
   _getSourceCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
-      this.transaction.FromAccountId, this.transaction.FromWalletId, this.transaction.paymentProvider.OwnerAccountId,
-      this.transaction.paymentProviderWalletId, this.transaction.amount, this.transaction.currency
+      this.transaction.FromAccountId, this.transaction.FromWalletId, this.transaction.paymentProviderWallet.OwnerAccountId,
+      this.transaction.paymentProviderWallet.id, this.transaction.amount, this.transaction.currency
     );
   }
 
   _getDestinationCurrencyDoubleEntryTransactions (){
     return this._getDoubleEntryTransactions(
-      this.transaction.paymentProvider.OwnerAccountId, this.transaction.paymentProviderWalletId,
+      this.transaction.paymentProviderWallet.OwnerAccountId, this.transaction.paymentProviderWallet.id,
       this.transaction.FromAccountId, this.transaction.fromWalletDestinationCurrency.id,
       this.transaction.destinationAmount, this.transaction.destinationCurrency
     );
@@ -40,8 +40,7 @@ export default class ForexConversionTransactions {
       amount: amount,
       currency: currency,
       transactionGroupId: this.transaction.transactionGroupId,
-      transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
-      transactionGroupTotalAmountInDestinationCurrency: this.transaction.transactionGroupTotalAmountInDestinationCurrency,
+      LegacyTransactionId: this.transaction.LegacyTransactionId,
     };
     return this.transactionLib.getDoubleEntryArray(conversionTransaction);
   }

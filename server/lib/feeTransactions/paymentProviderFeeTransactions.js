@@ -1,7 +1,5 @@
 import AbstractFeeTransactions from './abstractFeeTransactions';
-import Account from '../../models/Account';
-import Wallet from '../../models/Wallet';
-import { transactionCategoryEnum } from '../../globals/enums/transactionCategoryEnum';
+import transactionCategoryEnum from '../../globals/enums/transactionCategoryEnum';
 
 export default class PaymentProviderFeeTransactions extends AbstractFeeTransactions {
 
@@ -9,11 +7,9 @@ export default class PaymentProviderFeeTransactions extends AbstractFeeTransacti
     super(transaction);
   }
 
-  async setTransactionInfo() {
-    const wallet = await Wallet.findById(this.transaction.paymentProviderWalletId);
-    const account = await Account.findById(wallet.OwnerAccountId);
-    this.feeWalletId = this.transaction.paymentProviderWalletId;
-    this.feeAccountId = account.id;
+  setTransactionInfo() {
+    this.feeWalletId = this.transaction.PaymentProviderWalletId;
+    this.feeAccountId = this.transaction.PaymentProviderAccountId;
     this.fee = this.transaction.paymentProviderFee;
     this.category = transactionCategoryEnum.PAYMENT_PROVIDER;
   }

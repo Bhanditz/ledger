@@ -17,19 +17,7 @@ export default class Wallet extends Sequelize.Model {
         defaultValue: 'USD',
       },
       OwnerAccountId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      },
-      ProviderId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        defaultValue: null,
-        references: { key: 'id', model: 'Providers' },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
+        type: Sequelize.STRING, // CollectiveId field(current prod "Collective" table that will be renamed to account)
       },
       temporary: {
         type: Sequelize.BOOLEAN,
@@ -46,22 +34,15 @@ export default class Wallet extends Sequelize.Model {
       deletedAt: {
         type: Sequelize.DATE,
       },
-    }, {
+    },
+    {
       sequelize,
-    });
-  }
-  /**
-   * responsible to associate the model relationships
-   * @param {*} models - sequelize models
-   */
-  static associate(models) {
-    this.belongsTo(models.Account, { foreignKey: 'OwnerAccountId', as: 'ownerAccount' });
-    this.hasOne(models.Provider, {
-      foreignKey: {
-        name: 'ProviderId',
-        allowNull: true,
-      },
-      as: 'provider',
+      indexes: [
+          {
+              unique: true,
+              fields: ['name', 'currency', 'OwnerAccountId'],
+          },
+      ],
     });
   }
 }

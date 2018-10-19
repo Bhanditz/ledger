@@ -7,7 +7,7 @@ import pino from 'express-pino-logger';
 import Logger from './globals/logger';
 export let app = null;
 
-export default class Index {
+export default class App {
   constructor() {
     this.database = new Database();
     this.logger = new Logger();
@@ -30,4 +30,4 @@ export default class Index {
   }
 }
 
-new Index();
+new App();

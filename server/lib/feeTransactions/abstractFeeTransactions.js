@@ -46,15 +46,15 @@ export default class AbstractFeeTransactions {
     const currency = this.transaction.destinationCurrency || this.transaction.currency;
     const feeTransaction = {
       FromAccountId: fromAccountId,
-      ToAccountId: this.feeAccountId,
       FromWalletId: fromWalletId,
+      ToAccountId: this.feeAccountId,
       ToWalletId: this.feeWalletId,
       amount: this.getTotalFee(),
       currency: currency,
       category: this.category,
       transactionGroupId: this.transaction.transactionGroupId,
       transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
-      transactionGroupTotalAmountInDestinationCurrency: this.transaction.transactionGroupTotalAmountInDestinationCurrency,
+      LegacyTransactionId: this.transaction.LegacyTransactionId,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);
   }

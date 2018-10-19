@@ -15,8 +15,8 @@ export default class TransactionRouter extends AbstractRouter {
    *
    * @apiParam {Number} [FromAccountId] Account model
    * @apiParam {Number} [ToAccountId] Account model
-   * @apiParam {Number} [FromWalletId] Wallet of the Account stated FromAccountId
-   * @apiParam {Number} [ToWalletId] Wallet of the Account stated ToAccountId
+   * @apiParam {Number} [FromWalletName] Wallet of the Account stated FromAccountId
+   * @apiParam {Number} [ToWalletName] Wallet of the Account stated ToAccountId
    * @apiParam {Number} [amount] Amount of the transaction
    * @apiParam {String} [currency] currency of the amount field
    * @apiParam {String} [TransactionGroup] Group UUID of a transaction
@@ -32,14 +32,21 @@ export default class TransactionRouter extends AbstractRouter {
    * @apiName get_transactions
    * @apiGroup Transactions
    *
-   * @apiParam {Number} FromWalletId Wallet of the Account stated FromAccountId
-   * @apiParam {Number} ToWalletId Wallet of the Account stated ToAccountId
-   * @apiParam {Number} amount Amount that's going to be taken from the FromAccount
+   * @apiParam {String} FromAccountId The identification of the Account that's sending money
+   * @apiParam {String} ToAccountId The identification of the Account that's receiving money
+   * @apiParam {String} FromWalletName Wallet of the FromAccount
+   * @apiParam {String} ToWalletName Wallet of the ToAccount
+   * @apiParam {Number} amount Amount that's going to be taken from the FromWallet
    * @apiParam {String} currency currency of the amount field
-   * @apiParam {Number}  [platformFee] the platform fee in cents
-   * @apiParam {Number}  [paymentProviderFee] the payment provider fee in cents
-   * @apiParam {Number}  [paymentProviderWalletId] the payment provider wallet id
-   * @apiParam {Number}  [walletProviderFee] the wallet provider fee in cents
+   * @apiParam {Number} [destinationAmount] amount used in forex transactions
+   * @apiParam {String} [destinationCurrency] currency of the destinationAmount field, used in forex transactions
+   * @apiParam {Number}  [platformFee] the platform fee in cents(if forex transaction, in destinationCurrency)
+   * @apiParam {Number}  [paymentProviderFee] the payment provider fee in cents(if forex transaction, in destinationCurrency)
+   * @apiParam {String}  [PaymentProviderAccountId] Account id of the payment provider
+   * @apiParam {String}  [PaymentProviderWalletName] Wallet of the payment provider
+   * @apiParam {Number}  [walletProviderFee] the wallet provider fee in cents(if forex transaction, in destinationCurrency)
+   * @apiParam {String}  [WalletProviderAccountId] Account id of the payment provider
+   * @apiParam {String}  [WalletProviderWalletName] Wallet of the payment provider
    * @apiParam {Boolean} [senderPayFees] boolean indicating whether the sender will pay fees
    */
   post() {

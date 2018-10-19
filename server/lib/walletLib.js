@@ -1,6 +1,5 @@
 import Database from '../models';
 import Transaction from '../models/Transaction';
-import { paymentMethodServices } from '../globals/enums/paymentMethodServices';
 import Wallet from '../models/Wallet';
 
 export default class WalletLib {
@@ -28,36 +27,20 @@ export default class WalletLib {
     return balanceCurrency ? balanceCurrency : 0;
   }
 
-  async findOrCreateTemporaryCurrencyWallet(currency, accountId){
+  async findOrCreateCurrencyWallet(name, currency, accountId, temp){
     return Wallet.findOrCreate({
       where: {
-        temporary: true,
+        temporary: temp || false,
         currency: currency,
-        OwnerAccountId: accountId,
-        name: `temp_${currency}_${accountId}`,
+        OwnerAccountId: `${accountId}`,
+        name: `${name}`,
       },
     }).spread((result) => {
       return result;
     });
   }
 
-  static isPaymentMethodTypeInCorrectService(service, type) {
-    switch (service) {
-      case paymentMethodServices.opencollective.name:
-        if (Object.values(paymentMethodServices.opencollective.types).find(objType => objType === type))
-          return true;
-        break;
-      case paymentMethodServices.paypal.name:
-        if (Object.values(paymentMethodServices.paypal.types).find(objType => objType === type))
-          return true;
-        break;
-      case paymentMethodServices.stripe.name:
-        if (Object.values(paymentMethodServices.stripe.types).find(objType => objType === type))
-          return true;
-        break;
-      default:
-        return false;
-    }
+  async findOrCreateTemporaryCurrencyWallet(currency, accountId){
+    return this.findOrCreateCurrencyWallet(`temp_${currency}_${accountId}`, currency, accountId, true);
   }
-
 }

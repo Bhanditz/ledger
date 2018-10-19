@@ -15,19 +15,7 @@ module.exports = {
         defaultValue: 'USD'
       },
       OwnerAccountId: {
-        type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      },
-      ProviderId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        defaultValue: null,
-        references: {key: 'id', model: 'Providers'},
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        type: Sequelize.STRING,
       },
       temporary: {
         type: Sequelize.BOOLEAN,
@@ -44,7 +32,15 @@ module.exports = {
       deletedAt: {
         type: Sequelize.DATE
       },
-    }, { timestamps: true, });
+    }, {
+      timestamps: true,
+      indexes: [
+          {
+              unique: true,
+              fields: ['name', 'currency', 'OwnerAccountId'],
+          },
+      ],
+    });
   },
 
   down: (queryInterface) => {

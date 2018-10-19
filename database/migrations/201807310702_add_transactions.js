@@ -12,35 +12,27 @@ module.exports = {
         values: ['CREDIT', 'DEBIT'],
       },
       FromAccountId: {
+        type: Sequelize.STRING,
+      },
+      FromWalletId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
+        references: { key: 'id', model: 'Wallets' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       ToAccountId: {
-        type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Accounts'},
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      },
-      FromWalletId: {
-        type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Wallets'},
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        type: Sequelize.STRING,
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
-        references: {key: 'id', model: 'Wallets'},
+        references: { key: 'id', model: 'Wallets' },
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       amount: {
-        type: Sequelize.FLOAT,
+        type: Sequelize.INTEGER,
       },
       transactionGroupId: {
         type: Sequelize.UUID,
@@ -48,12 +40,6 @@ module.exports = {
       },
       transactionGroupSequence: {
         type: Sequelize.INTEGER,
-      },
-      transactionGroupTotalAmount: {
-        type: Sequelize.FLOAT,
-      },
-      transactionGroupTotalAmountInDestinationCurrency: {
-        type: Sequelize.FLOAT,
       },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
@@ -65,6 +51,9 @@ module.exports = {
       },
       category: {
         type: Sequelize.STRING,
+      },
+      LegacyTransactionId: {
+        type: Sequelize.INTEGER,
       },
       createdAt: {
         type: Sequelize.DATE,

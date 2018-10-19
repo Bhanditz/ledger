@@ -1,5 +1,5 @@
 import Sequelize from 'sequelize';
-import { transactionTypeEnum } from '../globals/enums/transactionTypeEnum';
+import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
 
 export default class Transaction extends Sequelize.Model {
   static init(sequelize) {
@@ -15,18 +15,7 @@ export default class Transaction extends Sequelize.Model {
         values: Object.values(transactionTypeEnum),
       },
       FromAccountId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      },
-      ToAccountId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'Accounts' },
-        allowNull: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
+        type: Sequelize.STRING,
       },
       FromWalletId: {
         type: Sequelize.INTEGER,
@@ -34,6 +23,9 @@ export default class Transaction extends Sequelize.Model {
         allowNull: false,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+      },
+      ToAccountId: {
+        type: Sequelize.STRING,
       },
       ToWalletId: {
         type: Sequelize.INTEGER,
@@ -52,12 +44,6 @@ export default class Transaction extends Sequelize.Model {
       transactionGroupSequence: {
         type: Sequelize.INTEGER,
       },
-      transactionGroupTotalAmount: {
-        type: Sequelize.FLOAT,
-      },
-      transactionGroupTotalAmountInDestinationCurrency: {
-        type: Sequelize.FLOAT,
-      },
       doubleEntryGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -68,6 +54,9 @@ export default class Transaction extends Sequelize.Model {
       },
       category: {
         type: Sequelize.STRING,
+      },
+      LegacyTransactionId: {
+        type: Sequelize.INTEGER,
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -87,10 +76,7 @@ export default class Transaction extends Sequelize.Model {
    * @param {*} models - sequelize models
    */
   static associate(models) {
-    this.belongsTo(models.Account, { foreignKey: 'FromAccountId', as: 'fromAccount' });
-    this.belongsTo(models.Account, { foreignKey: 'ToAccountId', as: 'toAccount' });
     this.belongsTo(models.Wallet, { foreignKey: 'FromWalletId', as: 'fromWallet' });
     this.belongsTo(models.Wallet, { foreignKey: 'ToWalletId', as: 'toWallet' });
   }
-
 }
