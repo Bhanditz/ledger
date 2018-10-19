@@ -2,13 +2,11 @@ import AbstractCrudService from './abstractCrudService';
 import Transaction from '../models/Transaction';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
-import Logger from '../globals/logger';
 
 export default class TransactionService extends AbstractCrudService {
 
   constructor() {
     super(Transaction);
-    this.logger = new Logger();
   }
 
   /** Given a transaction, identify which kind of transaction it will be and
