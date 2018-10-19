@@ -2,7 +2,7 @@
   "name": "ledger",
   "version": "0.0.1",
   "description": "Double Entry Core Ledger for the Open Collective platform",
-  "main": "dist/index.js",
+  "main": "dist/app.js",
   "engines": {
     "node": "10.7.0",
     "npm": "6.2.0"
@@ -12,8 +12,8 @@
     "build-config": "babel config -d ./dist/config",
     "build-server": "babel server -d ./dist/server",
     "build": "npm run clean && npm run build-config && npm run build-server",
-    "dev": "nodemon server/index.js -x babel-node . -e js,hbs",
-    "start": "npm run build && node ./dist/server/index.js",
+    "dev": "nodemon server/app.js -x babel-node . -e js,hbs",
+    "start": "npm run build && node ./dist/server/app.js",
     "test": "NODE_ENV=test mocha --recursive --exit --require babel-core/register test/**/*.test.js",
     "recreate-test-db": "sh scripts/recreate_test_db_and_migrate.sh",
     "migrate-test": "npm run recreate-test-db && npm run test",
@@ -42,6 +42,7 @@
     "npx": "^10.2.0",
     "path": "0.12.7",
     "pg": "^7.4.3",
+    "pg-async": "^3.1.0",
     "pg-format": "1.0.4",
     "pg-hstore": "2.3.2",
     "pino": "5.1.0",
