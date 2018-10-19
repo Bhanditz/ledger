@@ -57,19 +57,20 @@ export default class AbstractTransactionStrategy {
 
   async setPaymentProviderFeeTransactions() {
     let paymentProviderFeeTransactions = null;
-    if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0 &&
-      this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.PaymentProviderWalletName) {
-      // finding or creating platform Wallet
+    if (this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.PaymentProviderWalletName) {
+      // finding or creating Wallet
       this.incomingTransaction.paymentProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
         this.incomingTransaction.PaymentProviderWalletName,
         null,
         this.incomingTransaction.PaymentProviderAccountId
       );
-      this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
-      this.incomingTransaction.PaymentProviderAccountId = this.incomingTransaction.paymentProviderWallet.OwnerAccountId;
-      // find Payment Provider wallet to generate transactions
-      paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
-      paymentProviderFeeTransactions.setTransactionInfo();
+      if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0) {
+        this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
+        this.incomingTransaction.PaymentProviderAccountId = this.incomingTransaction.paymentProviderWallet.OwnerAccountId;
+        // find Payment Provider wallet to generate transactions
+        paymentProviderFeeTransactions = new PaymentProviderFeeTransactions(this.incomingTransaction);
+        paymentProviderFeeTransactions.setTransactionInfo();
+      }
     }
     return paymentProviderFeeTransactions;
   }
@@ -78,7 +79,7 @@ export default class AbstractTransactionStrategy {
     let providerFeeTransaction = null;
     if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
       this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.WalletProviderWalletName) {
-      // finding or creating platform Wallet
+      // finding or creating Wallet
       this.incomingTransaction.walletProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
         this.incomingTransaction.WalletProviderWalletName,
         null,
