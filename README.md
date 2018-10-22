@@ -46,7 +46,8 @@ A Wallet will belong to a Collective(Account?) which a Collective may(and likely
 - `id`
 - `name` - name of the wallet
 - `currency` - currency of the wallet, we may define all possible currencies. // To do: today this field is just a String, we need to define all possible types
-- `OwnerAccountId` - The account that this wallet belongs to(reference to `Accounts` table)
+- `AccountId` - The account that this wallet belongs to(reference to `Accounts` table which is the current `Collective` table in the `opencollective-api`)
+- `OwnerAccountId` - The account that is responsible to handle the wallet, similar to what the hosts represents in the `opencollective-api`(reference to `Accounts` table which is the current `Collective`)
 - `temporary` - flag to identify if the Wallet is a "temporary" wallet(which means the wallet is supposed to always act as intermediary on forex transactions)
 
 
@@ -75,10 +76,21 @@ Run `npm run doc` to see the available endpoints their requirements
 
 #### Endpoint Payload
 
+Current Payload
+-
+
 - `FromAccountId` - The identification of the Account that's sending money, *String*
+- `fromWallet` - Wallet of the FromAccount, *Object*
+  - *name* - name of the wallet
+  - *currency* - currency of the wallet
+  - *AccountId* - AccountId that this wallet belongs to(reference to the `Collective` model of `opencollective-api`)
+  - *OwnerAccountId* - AccountId responsible to manage this Wallet
 - `ToAccountId` - The identification of the Account that's receiving money, *String*
-- `FromWalletName` - Wallet of the FromAccount, *String*
-- `ToWalletName` - Wallet of the ToAccount, *String*
+- `toWallet` - Wallet of the ToAccount, *Object*
+  - *name* - name of the wallet
+  - *currency* - currency of the wallet
+  - *AccountId* - AccountId that this wallet belongs to(reference to the `Collective` model of `opencollective-api`)
+  - *OwnerAccountId* - AccountId responsible to manage this Wallet
 - `amount` - Amount that's going to be taken from the FromWallet, *Number*
 - `currency` - currency of the amount field, *String*
 - `destinationAmount` - amount used in forex transactions, *Number*, *optional*
@@ -86,11 +98,42 @@ Run `npm run doc` to see the available endpoints their requirements
 - `platformFee` - the platform fee in cents(if forex transaction, in destinationCurrency), *Number*, *optional*
 - `paymentProviderFee` - the payment provider fee in cents(if forex transaction, *Number*, *optional*
 - `PaymentProviderAccountId` - Account id of the payment provider, *String*, *optional*
-- `PaymentProviderWalletName` - Wallet of the payment provider, *String*, *optional*
+- `paymentProviderWallet` - Wallet of the payment provider, *Object*, *optional*
+  - *name* - name of the wallet
+  - *currency* - currency of the wallet
+  - *AccountId* - AccountId that this wallet belongs to(reference to the `Collective` model of `opencollective-api`)
+  - *OwnerAccountId* - AccountId responsible to manage this Wallet
 - `walletProviderFee` - the wallet provider fee in cents(if forex transaction), *Number*, *optional*
 - `WalletProviderAccountId` - Account id of the payment provider, *String*, *optional*
-- `WalletProviderWalletName` - Wallet of the payment provider, *String*, *optional*
+- `walletProviderWallet` - Wallet of the payment provider, *Object*, *optional*
+  - *name* - name of the wallet
+  - *currency* - currency of the wallet
+  - *AccountId* - AccountId that this wallet belongs to(reference to the `Collective` model of `opencollective-api`)
+  - *OwnerAccountId* - AccountId responsible to manage this Wallet
 - `senderPayFees` - flag indicating whether the sender will pay fees, *Boolean*, *optional*
+
+Ideal Payload
+-
+
+The ideal payload would be replacing the `prefix-Wallet`s Objects in the payload for simples `WalletId`s . That would make the Payload as the following:
+
+- `FromAccountId` - The identification of the Account that's sending money, *String*
+- `ToWalletId` - Wallet id of the sender Account, *Number*, *optional*
+- `ToAccountId` - The identification of the Account that's receiving money, *String*
+- `ToWalletId` - Wallet id of the receiver Account, *Number*, *optional*
+- `amount` - Amount that's going to be taken from the FromWallet, *Number*
+- `currency` - currency of the amount field, *String*
+- `destinationAmount` - amount used in forex transactions, *Number*, *optional*
+- `destinationCurrency` - currency of the destinationAmount field, used in forex transactions, *String*, *optional*
+- `platformFee` - the platform fee in cents(if forex transaction, in destinationCurrency), *Number*, *optional*
+- `paymentProviderFee` - the payment provider fee in cents(if forex transaction, *Number*, *optional*
+- `PaymentProviderAccountId` - Account id of the payment provider, *String*, *optional*
+- `PaymentProviderWalletId` - Wallet id of the payment provider, *Number*, *optional*
+- `walletProviderFee` - the wallet provider fee in cents(if forex transaction), *Number*, *optional*
+- `WalletProviderAccountId` - Account id of the payment provider, *String*, *optional*
+- `WalletProviderWalletId` - Wallet id of the wallet provider, *Number*, *optional*
+- `senderPayFees` - flag indicating whether the sender will pay fees, *Boolean*, *optional*
+
 
 ## Transactions Example
 
@@ -102,8 +145,18 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: webpack_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD'
 }
@@ -111,21 +164,31 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 And the ledger table would be:
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet     |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|-----------|------|--------|---------------|--------------|
 |1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD|3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 
-### Transaction with Platform fees, Receiver Pays fees(default behaviour)
+### Transaction with platform fees, Receiver Pays fees(default behaviour)
 
-Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet.  Platform fee of 3USD.
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet.  platform fee of 3USD.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: webpack_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
@@ -134,12 +197,12 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the platform transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet      |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|
 |1 | DEBIT |    webpack   |  webpack_USD |   Xavier  |Xavier_USD  |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|    Xavier    |  Xavier_USD  |   webpack |webpack_USD | 3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
-|3 | DEBIT |    Platform  | Platform_USD |   webpack |webpack_USD | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|4 | CREDIT|  webpack_USD |  webpack_USD | Platform  |Platform_USD|  300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|3 | DEBIT |    platform  | platform     |   webpack |webpack_USD | -300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|4 | CREDIT|  webpack_USD |  webpack_USD | platform  |platform    |  300 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
 
 ### Transaction with Payment Provider, Receiver Pays fees(default behaviour)
 
@@ -149,113 +212,179 @@ We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: webpack_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD',
   paymentProviderFee: 300,
-  PaymentProviderWalletName: Stripe_Wallet,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  }
 }
 ```    
 
 The total record generated on the ledger regarding this transaction will be 4 as we would have 2 regarding the "account to account" transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet      |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|
 |1 | DEBIT |     webpack  |  webpack_USD |   Xavier  |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|     Xavier   |  Xavier_USD  |  webpack  |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |
-|3 | DEBIT |     Stripe   | Stripe_WALLET|  webpack  |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|4 | CREDIT|     webpack  |  webpack_USD |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|3 | DEBIT |     Stripe   | creditcard   |  webpack  |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|4 | CREDIT|     webpack  |  webpack_USD |  Stripe   |creditcard   |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
 
-### Transaction with Platform and Payment Provider fees, Receiver Pays fees(default behaviour)
+### Transaction with platform and Payment Provider fees, Receiver Pays fees(default behaviour)
 
-Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD.
+Xavier(contributor) sends 30USD to webpack's(Collective) USD Wallet. platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD.
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: webpack_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD',
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletName: Stripe_Wallet,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  }
 }
 ```    
 
 The total record generated on the ledger regarding this transaction will be 6 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit) and 2 more regarding the payment provider transaction(debit and credit)
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet      |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|
 |1 | DEBIT |  webpack     |  webpack_USD | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|  Xavier      |  Xavier_USD  | webpack   |webpack_USD  |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |
-|3 | DEBIT |  Platform    | Platform_USD | webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|4 | CREDIT|  webpack     |  webpack_USD | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|5 | DEBIT |  Stripe      | Stripe_WALLET| webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |
-|6 | CREDIT|  webpack     |  webpack_USD |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |
+|3 | DEBIT |  platform    | platform     | webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|4 | CREDIT|  webpack     |  webpack_USD | platform  |platform     |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|5 | DEBIT |  Stripe      | creditcard   | webpack   |webpack_USD  |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |
+|6 | CREDIT|  webpack     |  webpack_USD |  Stripe   |creditcard   |300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |
 
-### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees, Receiver Pays fees(default behaviour)
+### Transaction with platform Fees,Payment Provider fees and Wallet Provider Fees, Receiver Pays fees(default behaviour)
 
-Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
+Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: wwcode_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD',
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  walletProviderWallet: {
+    name: collective,
+    AccountId: WWCodeInc, // The Account that this wallet will belong to
+    OwnerAccountId: wwcode_USD, // Represents the Host in the current opencollective-api
+  }
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletName: Stripe_Wallet,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  }
 }
 ```
 
 The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet      |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|----
 |1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-3000 |   USD  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |3000  |   USD  | TG_GROUP_1    |DoubleEntry_1 |
-|3 | DEBIT |  Platform    | Platform_USD |  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|4 | CREDIT|  wwcode      |  wwcode_USD  | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
-|5 | DEBIT |  Stripe      | Stripe_WALLET|  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |
-|6 | CREDIT|  wwcode      |  wwcode_USD  |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |
+|3 | DEBIT |  platform    | platform     |  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|4 | CREDIT|  wwcode      |  wwcode_USD  | platform  |platform     |300   |   USD  | TG_GROUP_1    |DoubleEntry_2 |
+|5 | DEBIT |  Stripe      | creditcard   |  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3 |
+|6 | CREDIT|  wwcode      |  wwcode_USD  |  Stripe   |creditcard   |300   |   USD  | TG_GROUP_1    |DoubleEntry_3 |
 |7 | DEBIT |  WWCodeInc   |WWCodeInc_USD |  wwcode   |wwcode_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_4 |
 |8 | CREDIT|  wwcode      |  wwcode_USD  | WWCodeInc |WWCodeInc_USD|300   |   USD  | TG_GROUP_1    |DoubleEntry_4 |
 
-### Transaction with Platform Fees,Payment Provider fees and Wallet Provider Fees, Sender Pays fees
+### Transaction with platform Fees,Payment Provider fees and Wallet Provider Fees, Sender Pays fees
 
-Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. Platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
+Xavier(contributor) sends 30USD to wwcode's(Collective) USD Wallet. platform fee of 3USD. Stripe(the Payment Provider) fee of 3USD. WWCodeInc(Wallet Provider) fee of 3USD. 
 
 We would have the `POST /transactions` endpoint with the following payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_USD, 
-  ToWalletName: wwcode_USD, 
+  fromWallet: {
+    name: Xavier_USD,
+    currency: USD,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: webpack_USD,
+    currency: USD,
+    AccountId: webpack, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'USD',
   walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  walletProviderWallet: {
+    name: collective,
+    AccountId: opencollective, // The Account that this wallet will belong to
+    OwnerAccountId: opencollective, // Represents the Host in the current opencollective-api
+  }
   platformFee: 300,
   paymentProviderFee: 300,
-  PaymentProviderWalletName: Stripe_Wallet,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  },
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
 
 The total record generated on the ledger regarding this transaction will be 8 as we would have 2 regarding the "account to account" transaction(debit and credit), 2 regarding the platform transaction(debit and credit), 2 regarding the payment provider transaction(debit and credit) and 2 more regarding the wallet provider transaction(debit and credit) 
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName  |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet      |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|------------|------|--------|---------------|--------------|
 |1 | DEBIT |  wwcode      |  wwcode_USD  | Xavier    |Xavier_USD   |-2100 |   USD  | TG_GROUP_1    |DoubleEntry_1|   
 |2 | CREDIT|  Xavier      |  Xavier_USD  |  wwcode   |wwcode_USD   |2100  |   USD  | TG_GROUP_1    |DoubleEntry_1|   
-|3 | DEBIT |  Platform    | Platform_USD | Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2|   
-|4 | CREDIT|  Xavier      |  Xavier_USD  | Platform  |Platform_USD |300   |   USD  | TG_GROUP_1    |DoubleEntry_2|   
+|3 | DEBIT |  platform    | platform     | Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_2|   
+|4 | CREDIT|  Xavier      |  Xavier_USD  | platform  |platform     |300   |   USD  | TG_GROUP_1    |DoubleEntry_2|   
 |5 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_3|   
 |6 | CREDIT|  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET|300   |   USD  | TG_GROUP_1    |DoubleEntry_3|   
 |7 | DEBIT |  WWCodeInc   |WWCodeInc_USD | Xavier    |Xavier_USD   |-300  |   USD  | TG_GROUP_1    |DoubleEntry_4|    
@@ -266,28 +395,47 @@ The total record generated on the ledger regarding this transaction will be 8 as
 
 #### Xavier Contributes €30(through his EUR Wallet) to WWCode(USD Collective), Receiver Pay Fees(default behaviour)
 
-Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. Platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
+Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
 
 Payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_EUR, 
-  ToWalletName: wwcode_USD, 
+  fromWallet: {
+    name: Xavier_EUR,
+    currency: EUR,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: wwcode_USD,
+    currency: USD,
+    AccountId: wwcode, // The Account that this wallet will belong to
+    OwnerAccountId: wwcode_Inc, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'EUR', 
   destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
   destinationCurrency: 'USD', // The currency to be received
-  walletProviderFee: 100, 
-  platformFee: 100, 
-  paymentProviderFee: 100, 
-  PaymentProviderWalletName: Stripe_WALLET,
+  walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  walletProviderWallet: {
+    name: collective,
+    AccountId: opencollective, // The Account that this wallet will belong to
+    OwnerAccountId: opencollective, // Represents the Host in the current opencollective-api
+  }
+  platformFee: 300,
+  paymentProviderFee: 300,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  },
 }
 ```
 
 This would generate a total of 12 transactions in the ledger table:
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName   |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet       |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|
 |1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |
@@ -295,8 +443,8 @@ This would generate a total of 12 transactions in the ledger table:
 |4 | CREDIT|  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
 |5 | DEBIT |   wwcode     | wwcode_USD   |   User1   |User1_USD    | -4500|   USD  | TG_GROUP_1    |DoubleEntry_3 |
 |6 | CREDIT|  Xavier      |  Xavier_USD  |   wwcode  | wwcode_USD  | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_3 |
-|7 | DEBIT |   Platform   | Platform_USD |   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |
-|8 | CREDIT|   wwcode     | wwcode_USD   | Platform  |Platform_USD | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |
+|7 | DEBIT |   platform   | platform     |   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |
+|8 | CREDIT|   wwcode     | wwcode_USD   | platform  |platform     | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |
 |9 | DEBIT |  Stripe      | Stripe_WALLET|   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |
 |10| CREDIT|   wwcode     | wwcode_USD   |  Stripe   |Stripe_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |
 |11| DEBIT |  WWCodeInc   |WWCodeInc_USD |   wwcode  | wwcode_USD  | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |
@@ -311,29 +459,48 @@ This would generate a total of 12 transactions in the ledger table:
 
 #### Xavier Contributes €30(through his EUR Wallet) to WWCodeAtlanta(who's a USD Collective), Sender Pay Fees
 
-Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. Platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
+Xavier(contributor) sends 30EUR(that'll be converted to 45USD) to wwcode's(Collective) USD Wallet. platform fee of 1USD. Stripe(the Payment Provider) fee of 1USD. WWCodeInc(Wallet Provider) fee of 1USD. 
 
 Payload:
 
 ```javascript
 {
-  FromWalletName: Xavier_EUR, 
-  ToWalletName: wwcode_USD, 
+  fromWallet: {
+    name: Xavier_EUR,
+    currency: EUR,
+    AccountId: Xavier, // The Account that this wallet will belong to
+    OwnerAccountId: OpenCollective, // Represents the Host in the current opencollective-api
+  },
+  toWallet: {
+    name: wwcode_USD,
+    currency: USD,
+    AccountId: wwcode, // The Account that this wallet will belong to
+    OwnerAccountId: wwcode_Inc, // Represents the Host in the current opencollective-api
+  },
   amount: 3000, 
   currency: 'EUR', 
   destinationAmount: 4500, // The amount to be received(same currency as defined in the "destinationCurrency" field)
   destinationCurrency: 'USD', // The currency to be received
-  walletProviderFee: 100, 
-  platformFee: 100, 
-  paymentProviderFee: 100, 
-  PaymentProviderWalletName: Stripe_WALLET,
+  walletProviderFee: 300, // if this field is not provided the wallet provider fee will for its default fees stored in the database
+  walletProviderWallet: {
+    name: collective,
+    AccountId: opencollective, // The Account that this wallet will belong to
+    OwnerAccountId: opencollective, // Represents the Host in the current opencollective-api
+  }
+  platformFee: 300,
+  paymentProviderFee: 300,
+  paymentProviderWallet: {
+    name: creditcard,
+    AccountId: stripe, // The Account that this wallet will belong to
+    OwnerAccountId: stripe, // Represents the Host in the current opencollective-api
+  },
   senderPayFees: true // flag to indicate the sender will be paying the fees
 }
 ```
 
 This would generate a total of 12 transactions in the ledger table:
 
-|# | type  | FromAccountId| FromWalletName |ToAccountId|ToWalletName   |amount|currency|TransactioGroup|DoubleEntryId |
+|# | type  | FromAccountId| FromWallet     |ToAccountId|ToWallet       |amount|currency|TransactioGroup|DoubleEntryId |
 |--|-------|--------------|--------------|-----------|-------------|------|--------|---------------|--------------|
 |1 | DEBIT |  Stripe      | Stripe_WALLET| Xavier    |Xavier_EUR   | -3000|   EUR  | TG_GROUP_1    |DoubleEntry_1 |
 |2 | CREDIT|  Xavier      |  Xavier_EUR  |  Stripe   |Stripe_WALLET| 3000 |   EUR  | TG_GROUP_1    |DoubleEntry_1 |
@@ -341,8 +508,8 @@ This would generate a total of 12 transactions in the ledger table:
 |4 | CREDIT|  Stripe      | Stripe_WALLET| Xavier    |Xavier_USD   | 4500 |   USD  | TG_GROUP_1    |DoubleEntry_2 |
 |5 | DEBIT |   wwcode     | wwcode_USD   |   User1   |User1_USD    | -4200|   USD  | TG_GROUP_1    |DoubleEntry_3 |
 |6 | CREDIT|  Xavier      |  Xavier_USD  |   wwcode  | wwcode_USD  | 4200 |   USD  | TG_GROUP_1    |DoubleEntry_3 |
-|7 | DEBIT |   Platform   | Platform_USD |   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |
-|8 | CREDIT|  Xavier      |  Xavier_USD  | Platform  |Platform_USD | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |
+|7 | DEBIT |   platform   | platform     |   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_4 |
+|8 | CREDIT|  Xavier      |  Xavier_USD  | platform  |platform     | 100  |   USD  | TG_GROUP_1    |DoubleEntry_4 |
 |9 | DEBIT |  Stripe      | Stripe_WALLET|   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_5 |
 |10| CREDIT|  Xavier      |  Xavier_USD  |  Stripe   |Stripe_WALLET| 100  |   USD  | TG_GROUP_1    |DoubleEntry_5 |
 |11| DEBIT |  WWCodeInc   |WWCodeInc_USD |   User1   |User1_USD    | -100 |   USD  | TG_GROUP_1    |DoubleEntry_6 |
@@ -384,7 +551,7 @@ select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodI
 select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT' and t."deletedAt" is null;
 
 -- Mapping
- select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWalletName", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWalletName", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWalletName", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWalletName", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
+ select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWallet    ", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWallet    ", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWallet", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWallet", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
 
 ```
 
@@ -414,32 +581,52 @@ We can map this query to the following ledger transaction endpoint payload:
 ```js
 {
   FromAccountId: transaction.FromCollectiveId, // `${transaction.FromCollectiveId}(${transaction.fromCollectiveName})`,
-  FromWalletName: transaction.PaymentMethodId,
+  fromWallet: {
+    name: transaction.PaymentMethodId,
+    currency: transaction.hostCurrency,
+    AccountId: transaction.FromCollectiveId,
+    OwnerAccountId: transaction.pmCollectiveId, // We consider the Owner of the wallet The Owner of the payment method
+  },
   ToAccountId:  transaction.CollectiveId, // `${transaction.CollectiveId}(${transaction.collectiveName})`,
-  ToWalletName: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`, // Create a payment method
+  toWallet: {
+    name: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`,
+    currency: transaction.currency,
+    AccountId: transaction.CollectiveId,
+    OwnerAccountId: transaction.HostCollectiveId,
+  },
   amount: transaction.amountInHostCurrency,
   currency: transaction.hostCurrency,
   destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
   destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
   walletProviderFee: Math.round(-1 * transaction.hostFeeInHostCurrency/transaction.hostCurrencyFxRate),
   WalletProviderAccountId:  transaction.HostCollectiveId, // `${transaction.HostCollectiveId}(${transaction.hostName})`,
-  WalletProviderWalletName: transaction.HostCollectiveId,
+  walletProviderWallet: {
+    name: transaction.HostCollectiveId,
+    currency: null,
+    AccountId: transaction.HostCollectiveId,
+    OwnerAccountId: transaction.HostCollectiveId,
+  },
   platformFee: Math.round(-1 * transaction.platformFeeInHostCurrency/transaction.hostCurrencyFxRate),
   paymentProviderFee: Math.round(-1 * transaction.paymentProcessorFeeInHostCurrency/transaction.hostCurrencyFxRate),
   PaymentProviderAccountId: transaction.pmService, // PaymentMethod.service
-  PaymentProviderWalletName: transaction.pmType, // PaymentMethod.type
+  paymentProviderWallet: {
+    name: transaction.pmType, // PaymentMethod.type
+    currency: null,
+    AccountId: transaction.pmService,
+    OwnerAccountId: transaction.pmService,
+  },
   LegacyTransactionId: transaction.id,
 }
 ```
 
 Fields that deserve more attention:
 
-- `FromWalletName` - This will be set to the `PaymentMethodId` of the transaction
-- `ToWalletName` - All Collectives will have a Wallet that will have the id as the combination of the `CollectiveId` with the `HostCollectiveId` fields
+- `fromWallet` - This will be later changed to `FromWalletId` which will simply refer to an existing wallet in the ledger, for now an object is required
+- `toWallet` - This will be later changed to `toWalletId` which will simply refer to an existing wallet in the ledger, for now an object is required
 - `WalletProviderAccountId` - This will be set to the `HostCollectiveId` of the transaction
-- `WalletProviderWalletName` - This will be set with the same of the account of the wallet provider: `HostCollectiveId` of the transaction
+- `walletProviderWallet` - This will be later changed to `walletProviderWalletId` which will simply refer to an existing wallet in the ledger, for now an object is required
 - `PaymentProviderAccountId` - this will be set as the service of the payment method `service` field(stripe, paypal, opencollective, etc...)
-- `PaymentProviderWalletName` - this will be set as the service of the payment method `type` field(creditcard, adaptive, collective, etc...)
+- `paymentProviderwalletProviderWallet` - This will be later changed to `walletProviderWalletId` which will simply refer to an existing wallet in the ledger, for now an object is required
 - `walletProviderFee`, `platformFee` and `paymentProviderFee`
      - The fees are always paid according to the `hostCurrency` field, but the **collective**(from the `CollectiveId` field) will be responsible to pay those fees, so we will be sending the fees(in `hostCurrency`) divided by the `hostCurrencyFxRate` to then obtain the fees in the `currency` field to send to the ledger. 
         - example 1: marco sends 30 USD to webpack(USD collective, USD host). `hostCurrency` is the same as `currency`, `hostCurrencyFxRate` is 1.
@@ -460,7 +647,7 @@ Fields that deserve more attention:
 - `WWCodeBerlin` is a **EUR** Collective and its Host `Women Who Code 501c3` is a **USD** host.
 - Backer `Pia` donates 10EUR to `WWCodeBerlin`. 
 - the 10EUR are converted to **USD** because the Host of the collective is **USD**.
-- the collective `WWCodeBerlin` pays all fees IN **USD** (Platform fee 1USD, Payment processor fee 1USD and Host fee 1USD)
+- the collective `WWCodeBerlin` pays all fees IN **USD** (platform fee 1USD, Payment processor fee 1USD and Host fee 1USD)
 - the collective keeps showing the money as **EUR** because that's its currency.
 
 The current production Transaction table saves the fees in USD. That's not ideal for the Ledger because the `WWCodeBerlin` would have an EUR Wallet. so to make it work we are converting the fees saved in the current prod from USD to EUR using the fee `hostCurrencyFxRate` to get the fees in EUR. This may cause small differences due to the round when converting.
