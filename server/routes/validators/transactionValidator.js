@@ -15,21 +15,13 @@ export default class TransactionValidator extends AbstractValidator {
         check('FromAccountId').isNumeric(),
         check('FromAccountId').isAlphanumeric(),
       ]),
-      oneOf([
-        check('FromWalletName').isString(),
-        check('FromWalletName').isNumeric(),
-        check('FromWalletName').isAlphanumeric(),
-      ]),
+      check('fromWallet').optional().isJSON(),
       oneOf([
         check('ToAccountId').isString(),
         check('ToAccountId').isNumeric(),
         check('ToAccountId').isAlphanumeric(),
       ]),
-      oneOf([
-        check('ToWalletName').isString(),
-        check('ToWalletName').isNumeric(),
-        check('ToWalletName').isAlphanumeric(),
-      ]),
+      check('toWallet').optional().isJSON(),
       check('destinationAmount').optional().isNumeric(),
       check('destinationCurrency').optional().isAlphanumeric().isLength({ min: 3, max: 4 }),
       check('platformFee').optional().isNumeric(), // Will have a default Wallet Id
@@ -39,21 +31,13 @@ export default class TransactionValidator extends AbstractValidator {
         check('PaymentProviderAccountId').optional().isNumeric(),
         check('PaymentProviderAccountId').optional().isAlphanumeric(),
       ]),
-      oneOf([
-        check('PaymentProviderWalletName').optional().isString(),
-        check('PaymentProviderWalletName').optional().isNumeric(),
-        check('PaymentProviderWalletName').optional().isAlphanumeric(),
-      ]),
+      check('paymentProviderWallet').optional().isJSON(),
       oneOf([
         check('WalletProviderAccountId').optional().isString(),
         check('WalletProviderAccountId').optional().isNumeric(),
         check('WalletProviderAccountId').optional().isAlphanumeric(),
       ]),
-      oneOf([
-        check('WalletProviderWalletName').optional().isString(),
-        check('WalletProviderWalletName').optional().isNumeric(),
-        check('WalletProviderWalletName').optional().isAlphanumeric(),
-      ]),
+      check('walletProviderWallet').optional().isJSON(),
       check('walletProviderFee').optional().isNumeric(),
       check('senderPayFees').optional().isBoolean(), // default to false as receiver will pay fees by default
     ];
