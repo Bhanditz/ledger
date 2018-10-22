@@ -1,5 +1,5 @@
 /**
- * Test around the @{Account to Account transactions}
+ * Test around the @{Account to Account(same currency) transactions}
  *
  * @module test/transactions/strategies
  */
@@ -8,7 +8,7 @@ import WalletService from '../../../server/services/walletService';
 import TransactionService from '../../../server/services/transactionService';
 import ResetDb from '../../resetDb';
 
-describe('Account to Account transactions', () => {
+describe('Account to Account(same currency) transactions', () => {
   const walletService = new WalletService();
   const transactionService = new TransactionService();
 
@@ -24,16 +24,16 @@ describe('Account to Account transactions', () => {
   describe('Receiver Paying Fees(default behaviour)', () => {
     it('bob sends 15USD to alice, only wallet provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const transaction =  {
+      const transaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        ToAccountId: 'alice',
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost', },
       };
       const cashinResult = await transactionService.insert(transaction);
 
@@ -47,9 +47,9 @@ describe('Account to Account transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[2];
       const walletProviderFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
       // Validating Account to Account transaction(DEBIT and CREDIT)
       // bob should be set in the "To" fields, alice should be set in the "From" fields, in DEBIT transactions
       expect(normalDebitTransaction.ToAccountId).to.be.equal(transaction.FromAccountId);
@@ -102,16 +102,30 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, only payment provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const transaction =  {
+      const transaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobUSDWallet',
+          currency: 'USD',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'USD',
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
       const cashinResult = await transactionService.insert(transaction);
 
@@ -125,9 +139,9 @@ describe('Account to Account transactions', () => {
       const paymentProviderFeeDebitTransaction = cashinResult[2];
       const paymentProviderFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // Validating Account to Account transaction(DEBIT and CREDIT)
       // bob should be set in the "To" fields, alice should be set in the "From" fields, in DEBIT transactions
       expect(normalDebitTransaction.ToAccountId).to.be.equal(transaction.FromAccountId);
@@ -180,11 +194,11 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, only platform fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const transaction =  {
+      const transaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        ToAccountId: 'alice',
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
         amount: 1500,
         currency: 'USD',
         platformFee: 200,
@@ -201,8 +215,8 @@ describe('Account to Account transactions', () => {
       const platformFeeDebitTransaction = cashinResult[2];
       const platformFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       // the platform wallet will always be named with the 'platform' string
       const platformWallet = await walletService.getOne({ name: 'platform' });
       // Validating Account to Account transaction(DEBIT and CREDIT)
@@ -257,20 +271,38 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, all fees', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const transaction =  {
+      const transaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobUSDWallet',
+          currency: 'USD',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         platformFee: 200,
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
       const cashinResult = await transactionService.insert(transaction);
 
@@ -287,10 +319,10 @@ describe('Account to Account transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // the platform wallet will always be named with the 'platform' string
       const platformWallet = await walletService.getOne({ name: 'platform' });
 
@@ -396,16 +428,16 @@ describe('Account to Account transactions', () => {
   describe('Sender Paying Fees', () => {
     it('bob sends 15USD to alice, only wallet provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        ToAccountId: 'alice',
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost', },
         senderPayFees: true,
       };
       const transaction = { ...originalTransaction };
@@ -421,9 +453,9 @@ describe('Account to Account transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[2];
       const walletProviderFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
       // setting netAmount of Account to Account transaction
       const netAmount = transaction.amount - transaction.walletProviderFee;
       // Validating Account to Account transaction(DEBIT and CREDIT)
@@ -482,16 +514,30 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, only payment provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobUSDWallet',
+          currency: 'USD',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'USD',
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
       const transaction = { ...originalTransaction };
@@ -507,9 +553,9 @@ describe('Account to Account transactions', () => {
       const paymentProviderFeeDebitTransaction = cashinResult[2];
       const paymentProviderFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // setting netAmount of Account to Account transaction
       const netAmount = transaction.amount - transaction.paymentProviderFee;
 
@@ -565,11 +611,11 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, only platform fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        ToAccountId: 'alice',
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
         amount: 1500,
         currency: 'USD',
         platformFee: 200,
@@ -588,8 +634,8 @@ describe('Account to Account transactions', () => {
       const platformFeeDebitTransaction = cashinResult[2];
       const platformFeeCreditTransaction = cashinResult[3];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       // the platform wallet will always be named with the 'platform' string
       const platformWallet = await walletService.getOne({ name: 'platform' });
       // setting netAmount of Account to Account transaction
@@ -647,20 +693,38 @@ describe('Account to Account transactions', () => {
 
     it('bob sends 15USD to alice, all fees', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobUSDWallet',
+          currency: 'USD',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         platformFee: 200,
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
       const transaction = { ...originalTransaction };
@@ -679,10 +743,10 @@ describe('Account to Account transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // the platform wallet will always be named with the 'platform' string
       const platformWallet = await walletService.getOne({ name: 'platform' });
       // setting netAmount of Account to Account transaction
@@ -786,4 +850,4 @@ describe('Account to Account transactions', () => {
 
     }); /** End of "bob sends 15USD to alice, only platform fee" */
   });
-}); /** End of "Account to Account transactions" */
+}); /** End of "Account to Account(same currency) transactions" */

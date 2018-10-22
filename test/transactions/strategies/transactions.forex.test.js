@@ -27,39 +27,65 @@ describe('Forex transactions', () => {
     it('cannot create forex transactions without the paymentProvider wallet', async () => {
       try {
         await transactionService.insert({
-            FromAccountId: 'bob',
-            FromWalletName: 'bobUsdWallet',
-            ToAccountId:  'alice',
-            ToWalletName: 'aliceUsdWallet',
-            amount: 1500,
-            currency: 'EUR',
-            destinationAmount: 2000, // The amount to be received(same currency as defined in the "destinationCurrency" field)
-            destinationCurrency: 'USD', // The currency to be received
-            walletProviderFee: 100,
-            WalletProviderAccountId:  'opencollectiveHost',
-            WalletProviderWalletName: 'opencollectiveHostWallet',
+          FromAccountId: 'bob',
+          fromWallet: {
+            name: 'bobEURWallet', currency: 'EUR', AccountId: 'bob', OwnerAccountId: 'bob',
+          },
+          ToAccountId: 'alice',
+          toWallet: {
+            name: 'aliceUSDWallet',
+            currency: 'USD',
+            AccountId: 'alice',
+            OwnerAccountId: 'opencollectiveHost',
+          },
+          amount: 1500,
+          currency: 'EUR',
+          destinationAmount: 2000, // The amount to be received(same currency as defined in the "destinationCurrency" field)
+          destinationCurrency: 'USD', // The currency to be received
+          walletProviderFee: 100,
+          WalletProviderAccountId: 'opencollectiveHost',
+          walletProviderWallet: {
+            name: 'opencollectiveHostWallet',
+            AccountId: 'opencollectiveHost',
+            OwnerAccountId: 'opencollectiveHost',
+          },
         });
       } catch (error) {
         expect(error).to.exist;
-        expect(error.toString()).to.contain('PaymentProviderWalletName field missing');
+        expect(error.toString()).to.contain('paymentProviderWallet field missing');
       }
     }); /** End of "cannot create forex transactions without the paymentProvider wallet" */
 
     it('cannot create forex transactions without the paymentProvider account', async () => {
       try {
         await transactionService.insert({
-            FromAccountId: 'bob',
-            FromWalletName: 'bobUsdWallet',
-            ToAccountId:  'alice',
-            ToWalletName: 'aliceUsdWallet',
-            amount: 1500,
-            currency: 'EUR',
-            destinationAmount: 2000, // The amount to be received(same currency as defined in the "destinationCurrency" field)
-            destinationCurrency: 'USD', // The currency to be received
-            walletProviderFee: 100,
-            WalletProviderAccountId:  'opencollectiveHost',
-            WalletProviderWalletName: 'opencollectiveHostWallet',
-            PaymentProviderWalletName: 'stripeWallet',
+          FromAccountId: 'bob',
+          fromWallet: {
+            name: 'bobEURWallet', currency: 'EUR', AccountId: 'bob', OwnerAccountId: 'bob',
+          },
+          ToAccountId: 'alice',
+          toWallet: {
+            name: 'aliceUSDWallet',
+            currency: 'USD',
+            AccountId: 'alice',
+            OwnerAccountId: 'opencollectiveHost',
+          },
+          amount: 1500,
+          currency: 'EUR',
+          destinationAmount: 2000, // The amount to be received(same currency as defined in the "destinationCurrency" field)
+          destinationCurrency: 'USD', // The currency to be received
+          walletProviderFee: 100,
+          WalletProviderAccountId: 'opencollectiveHost',
+          walletProviderWallet: {
+            name: 'opencollectiveHostWallet',
+            AccountId: 'opencollectiveHost',
+            OwnerAccountId: 'opencollectiveHost',
+          },
+          paymentProviderWallet: {
+            name: 'stripeWallet',
+            AccountId: 'stripe',
+            OwnerAccountId: 'stripe',
+          },
         });
       } catch (error) {
         expect(error).to.exist;
@@ -71,32 +97,50 @@ describe('Forex transactions', () => {
   describe('Receiver Paying Fees(default behaviour)', () => {
     it('bob sends 15EUR(converted to 20USD) to alice, only wallet provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -104,11 +148,11 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
 
       // Validating Conversion transactions(DEBIT and CREDIT)
       // Conversion: from Bob(EUR wallet) to Stripe
@@ -157,7 +201,7 @@ describe('Forex transactions', () => {
       // amount should be the same of the "original" transaction
       expect(conversionCreditAcctoPPTransaction.amount).to.be.equal(transaction.destinationAmount);
       expect(conversionDebitAcctoPPTransaction.amount).to.be.equal(-1 * transaction.destinationAmount);
-      
+
       // Validating Account to Account transaction(DEBIT and CREDIT)
       // bob should be set in the "To" fields, alice should be set in the "From" fields, in DEBIT transactions
       expect(normalDebitTransaction.ToAccountId).to.be.equal(transaction.FromAccountId);
@@ -210,30 +254,44 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, only payment provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         paymentProviderFee: 100,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -241,10 +299,10 @@ describe('Forex transactions', () => {
       const paymentProviderFeeDebitTransaction = cashinResult[6];
       const paymentProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
 
       // Validating Conversion transactions(DEBIT and CREDIT)
       // Conversion: from Bob(EUR wallet) to Stripe
@@ -323,7 +381,7 @@ describe('Forex transactions', () => {
       expect(paymentProviderFeeDebitTransaction.ToAccountId).to.be.equal(transaction.ToAccountId);
       expect(paymentProviderFeeDebitTransaction.ToWalletId).to.be.equal(toAccountWallet.id);
       expect(paymentProviderFeeDebitTransaction.FromAccountId).to.be.equal(transaction.PaymentProviderAccountId);
-      expect(paymentProviderFeeDebitTransaction.FromWalletId).to.be.equal( paymentProviderWallet.id);
+      expect(paymentProviderFeeDebitTransaction.FromWalletId).to.be.equal(paymentProviderWallet.id);
       // payment Provider should be set in the "To" fields, alice should be set in the "From" fields, in DEBIT transactions
       expect(paymentProviderFeeCreditTransaction.FromAccountId).to.be.equal(transaction.ToAccountId);
       expect(paymentProviderFeeCreditTransaction.FromWalletId).to.be.equal(toAccountWallet.id);
@@ -346,30 +404,44 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, only platform fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         platformFee: 100,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -377,11 +449,11 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       const platformWallet = await walletService.getOne({ name: 'platform' });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
 
       // Validating Conversion transactions(DEBIT and CREDIT)
       // Conversion: from Bob(EUR wallet) to Stripe
@@ -483,34 +555,52 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, all fees', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         platformFee: 200,
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(12);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -522,12 +612,12 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[10];
       const walletProviderFeeCreditTransaction = cashinResult[11];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       const platformWallet = await walletService.getOne({ name: 'platform' });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
 
       // Validating Conversion transactions(DEBIT and CREDIT)
       // Conversion: from Bob(EUR wallet) to Stripe
@@ -679,33 +769,51 @@ describe('Forex transactions', () => {
   describe('Sender Paying Fees', () => {
     it('bob sends 15EUR(converted to 20USD) to alice, only wallet provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -713,11 +821,11 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // finding net Amount from bob to alice
       const netAmount = transaction.destinationAmount - transaction.walletProviderFee;
       // Validating Conversion transactions(DEBIT and CREDIT)
@@ -820,31 +928,44 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, only payment provider fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD', AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         paymentProviderFee: 100,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -852,10 +973,10 @@ describe('Forex transactions', () => {
       const paymentProviderFeeDebitTransaction = cashinResult[6];
       const paymentProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // finding net Amount from bob to alice
       const netAmount = transaction.destinationAmount - transaction.paymentProviderFee;
       // Validating Conversion transactions(DEBIT and CREDIT)
@@ -935,7 +1056,7 @@ describe('Forex transactions', () => {
       expect(paymentProviderFeeDebitTransaction.ToAccountId).to.be.equal(transaction.FromAccountId);
       expect(paymentProviderFeeDebitTransaction.ToWalletId).to.be.equal(fromAccountUsdTemporaryWallet.id);
       expect(paymentProviderFeeDebitTransaction.FromAccountId).to.be.equal(transaction.PaymentProviderAccountId);
-      expect(paymentProviderFeeDebitTransaction.FromWalletId).to.be.equal( paymentProviderWallet.id);
+      expect(paymentProviderFeeDebitTransaction.FromWalletId).to.be.equal(paymentProviderWallet.id);
       // payment Provider should be set in the "To" fields, alice should be set in the "From" fields, in DEBIT transactions
       expect(paymentProviderFeeCreditTransaction.FromAccountId).to.be.equal(transaction.FromAccountId);
       expect(paymentProviderFeeCreditTransaction.FromWalletId).to.be.equal(fromAccountUsdTemporaryWallet.id);
@@ -958,31 +1079,45 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, only platform fee', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob',
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         platformFee: 100,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(8);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -990,11 +1125,11 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[6];
       const walletProviderFeeCreditTransaction = cashinResult[7];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       const platformWallet = await walletService.getOne({ name: 'platform' });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
 
       // finding net Amount from bob to alice
       const netAmount = transaction.destinationAmount - transaction.platformFee;
@@ -1099,35 +1234,53 @@ describe('Forex transactions', () => {
 
     it('bob sends 15EUR(converted to 20USD) to alice, all fees', async () => {
       // first sends money from Credit Card Wallet to USD Wallet
-      const originalTransaction =  {
+      const originalTransaction = {
         FromAccountId: 'bob',
-        FromWalletName: 'bobUsdWallet',
-        ToAccountId:  'alice',
-        ToWalletName: 'aliceUsdWallet',
+        fromWallet: {
+          name: 'bobEURWallet',
+          currency: 'EUR',
+          AccountId: 'bob',
+          OwnerAccountId: 'bob', // We consider the Owner of the wallet The Owner of the payment method
+        },
+        ToAccountId: 'alice',
+        toWallet: {
+          name: 'aliceUSDWallet',
+          currency: 'USD',
+          AccountId: 'alice',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         amount: 1500,
         currency: 'EUR',
         destinationAmount: 2000,
         destinationCurrency: 'USD',
         walletProviderFee: 100,
-        WalletProviderAccountId:  'opencollectiveHost',
-        WalletProviderWalletName: 'opencollectiveHostWallet',
+        WalletProviderAccountId: 'opencollectiveHost',
+        walletProviderWallet: {
+          name: 'opencollectiveHostWallet',
+          AccountId: 'opencollectiveHost',
+          OwnerAccountId: 'opencollectiveHost',
+        },
         platformFee: 200,
         paymentProviderFee: 300,
         PaymentProviderAccountId: 'stripe',
-        PaymentProviderWalletName: 'stripeWallet',
+        paymentProviderWallet: {
+          name: 'stripeWallet',
+          AccountId: 'stripe',
+          OwnerAccountId: 'stripe',
+        },
         senderPayFees: true,
       };
-      const transaction = { ...originalTransaction }
+      const transaction = { ...originalTransaction };
       const cashinResult = await transactionService.insert(originalTransaction);
 
       // check if initial Cashin transaction generates 8 transactions(4 conversion, 2 normal and 2 wallet provider fee transactions, DEBIT AND CREDIT)
       expect(cashinResult).to.be.an('array');
       expect(cashinResult).to.have.lengthOf(12);
-      
+
       // Get all generated Transactions
       const conversionDebitPPToAccTransaction = cashinResult[0];
       const conversionCreditPPToAccTransaction = cashinResult[1];
-      const conversionDebitAcctoPPTransaction  = cashinResult[2];
+      const conversionDebitAcctoPPTransaction = cashinResult[2];
       const conversionCreditAcctoPPTransaction = cashinResult[3];
 
       const normalDebitTransaction = cashinResult[4];
@@ -1139,12 +1292,12 @@ describe('Forex transactions', () => {
       const walletProviderFeeDebitTransaction = cashinResult[10];
       const walletProviderFeeCreditTransaction = cashinResult[11];
       // finding generated wallets
-      const fromAccountWallet = await walletService.getOne({ name: transaction.FromWalletName });
-      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId);
-      const toAccountWallet = await walletService.getOne({ name: transaction.ToWalletName });
+      const fromAccountWallet = await walletService.getOne({ name: transaction.fromWallet.name });
+      const fromAccountUsdTemporaryWallet = await walletLib.findOrCreateTemporaryCurrencyWallet('USD', transaction.FromAccountId, transaction.FromAccountId);
+      const toAccountWallet = await walletService.getOne({ name: transaction.toWallet.name });
       const platformWallet = await walletService.getOne({ name: 'platform' });
-      const walletProviderWallet = await walletService.getOne({ name: transaction.WalletProviderWalletName });
-      const paymentProviderWallet = await walletService.getOne({ name: transaction.PaymentProviderWalletName });
+      const walletProviderWallet = await walletService.getOne({ name: transaction.walletProviderWallet.name });
+      const paymentProviderWallet = await walletService.getOne({ name: transaction.paymentProviderWallet.name });
       // finding net Amount from bob to alice
       const netAmount = transaction.destinationAmount - transaction.walletProviderFee - transaction.platformFee - transaction.paymentProviderFee;
 
