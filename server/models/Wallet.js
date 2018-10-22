@@ -14,10 +14,14 @@ export default class Wallet extends Sequelize.Model {
       },
       currency: {
         type: Sequelize.STRING,
-        defaultValue: 'USD',
+      },
+      AccountId: {
+        type: Sequelize.STRING, // CollectiveId field(current prod "Collective" table that will be renamed to account)
+        allowNull: false,
       },
       OwnerAccountId: {
-        type: Sequelize.STRING, // CollectiveId field(current prod "Collective" table that will be renamed to account)
+        type: Sequelize.STRING, // HostCollectiveId field(current prod "Collective" table that will be renamed to account)
+        allowNull: false,
       },
       temporary: {
         type: Sequelize.BOOLEAN,
@@ -39,8 +43,8 @@ export default class Wallet extends Sequelize.Model {
       sequelize,
       indexes: [
           {
-              unique: true,
-              fields: ['name', 'currency', 'OwnerAccountId'],
+            unique: true,
+            fields: ['name', 'currency', 'AccountId', 'OwnerAccountId'],
           },
       ],
     });

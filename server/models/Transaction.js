@@ -50,7 +50,6 @@ export default class Transaction extends Sequelize.Model {
       },
       currency: {
         type: Sequelize.STRING,
-        defaultValue: 'USD',
       },
       category: {
         type: Sequelize.STRING,

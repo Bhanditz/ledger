@@ -12,10 +12,14 @@ module.exports = {
       },
       currency: {
         type: Sequelize.STRING,
-        defaultValue: 'USD'
+      },
+      AccountId: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       OwnerAccountId: {
         type: Sequelize.STRING,
+        allowNull: false,
       },
       temporary: {
         type: Sequelize.BOOLEAN,
@@ -33,13 +37,19 @@ module.exports = {
         type: Sequelize.DATE
       },
     }, {
-      timestamps: true,
       indexes: [
           {
-              unique: true,
-              fields: ['name', 'currency', 'OwnerAccountId'],
+            unique: true,
+            fields: ['name', 'currency', 'AccountId', 'OwnerAccountId'],
           },
       ],
+      timestamps: true,
+    })
+    .then( () => {
+      return queryInterface.addConstraint('Wallets', ['name', 'currency', 'AccountId', 'OwnerAccountId'], {
+        type: 'unique',
+        name: 'wallets_pkey'
+      });
     });
   },
 

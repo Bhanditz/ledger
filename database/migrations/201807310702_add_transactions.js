@@ -47,7 +47,6 @@ module.exports = {
       },
       currency: {
         type: Sequelize.STRING,
-        defaultValue: 'USD'
       },
       category: {
         type: Sequelize.STRING,
