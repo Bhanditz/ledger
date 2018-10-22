@@ -24,14 +24,16 @@ export default class AbstractTransactionStrategy {
 
   async findOrCreateAccountWallets() {
     this.incomingTransaction.fromWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.FromWalletName,
-      this.incomingTransaction.currency,
-      this.incomingTransaction.FromAccountId
+      this.incomingTransaction.fromWallet.name,
+      this.incomingTransaction.fromWallet.currency,
+      this.incomingTransaction.fromWallet.AccountId,
+      this.incomingTransaction.fromWallet.OwnerAccountId,
     );
     this.incomingTransaction.toWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.ToWalletName,
-      this.incomingTransaction.destinationCurrency,
-      this.incomingTransaction.ToAccountId
+      this.incomingTransaction.toWallet.name,
+      this.incomingTransaction.toWallet.currency,
+      this.incomingTransaction.toWallet.AccountId,
+      this.incomingTransaction.toWallet.OwnerAccountId,
     );
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWallet.id;
     this.incomingTransaction.ToWalletId = this.incomingTransaction.toWallet.id;
@@ -44,6 +46,7 @@ export default class AbstractTransactionStrategy {
       this.incomingTransaction.platformWallet = await this.walletLib.findOrCreateCurrencyWallet(
         'platform',
         null,
+        'platform',
         'platform'
       );
       this.incomingTransaction.PlatformWalletId = this.incomingTransaction.platformWallet.id;
@@ -57,12 +60,13 @@ export default class AbstractTransactionStrategy {
 
   async setPaymentProviderFeeTransactions() {
     let paymentProviderFeeTransactions = null;
-    if (this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.PaymentProviderWalletName) {
+    if (this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.paymentProviderWallet) {
       // finding or creating Wallet
       this.incomingTransaction.paymentProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
-        this.incomingTransaction.PaymentProviderWalletName,
+        this.incomingTransaction.paymentProviderWallet.name,
         null,
-        this.incomingTransaction.PaymentProviderAccountId
+        this.incomingTransaction.paymentProviderWallet.AccountId,
+        this.incomingTransaction.paymentProviderWallet.OwnerAccountId
       );
       if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0) {
         this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
@@ -78,12 +82,13 @@ export default class AbstractTransactionStrategy {
   async setProviderFeeTransactions() {
     let providerFeeTransaction = null;
     if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
-      this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.WalletProviderWalletName) {
+      this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.walletProviderWallet) {
       // finding or creating Wallet
       this.incomingTransaction.walletProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
-        this.incomingTransaction.WalletProviderWalletName,
+        this.incomingTransaction.walletProviderWallet.name,
         null,
-        this.incomingTransaction.WalletProviderAccountId
+        this.incomingTransaction.walletProviderWallet.AccountId,
+        this.incomingTransaction.walletProviderWallet.OwnerAccountId
       );
       this.incomingTransaction.WalletProviderWalletId = this.incomingTransaction.walletProviderWallet.id;
       this.incomingTransaction.WalletProviderAccountId = this.incomingTransaction.walletProviderWallet.OwnerAccountId;
@@ -153,11 +158,11 @@ export default class AbstractTransactionStrategy {
     if (!transaction.ToAccountId) {
       throw Error(operationNotAllowed('field ToAccountId missing'));
     }
-    if (!transaction.FromWalletName) {
-      throw Error(operationNotAllowed('field FromWalletName missing'));
+    if (!transaction.fromWallet) {
+      throw Error(operationNotAllowed('field fromWallet missing'));
     }
-    if (!transaction.ToWalletName) {
-      throw Error(operationNotAllowed('field ToWalletName missing'));
+    if (!transaction.toWallet) {
+      throw Error(operationNotAllowed('field toWallet missing'));
     }
 
   }
