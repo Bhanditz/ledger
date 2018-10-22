@@ -35,7 +35,7 @@ export class StatefulMigration {
     const legacyId = await this.getLatestLegacyIdFromLedger();
     console.log(`legacyId: ${legacyId}`);
     const res = await currentProdDbClient.query(
-      'select t.*, p.service as "pmService", p.type as "pmType"'+
+      'select t.*, p.service as "pmService", p."CollectiveId" as "pmCollectiveId", p.type as "pmType"'+
       ' from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id' +
       ` WHERE t.id<${legacyId} and t.type=\'CREDIT\' and t."PaymentMethodId" is not null` +
       ' and t."FromCollectiveId" is not null and t."HostCollectiveId" is not null ' +
@@ -49,20 +49,40 @@ export class StatefulMigration {
     const formattedLedgerTransaction = res.rows.map(transaction => {
       return {
         FromAccountId: transaction.FromCollectiveId, // `${transaction.FromCollectiveId}(${transaction.fromCollectiveName})`,
-        FromWalletName: transaction.PaymentMethodId,
+        fromWallet: {
+          name: transaction.PaymentMethodId,
+          currency: transaction.hostCurrency,
+          AccountId: transaction.FromCollectiveId,
+          OwnerAccountId: transaction.pmCollectiveId, // We consider the Owner of the wallet The Owner of the payment method
+        },
         ToAccountId:  transaction.CollectiveId, // `${transaction.CollectiveId}(${transaction.collectiveName})`,
-        ToWalletName: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`, // Create a payment method
+        toWallet: {
+          name: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`,
+          currency: transaction.currency,
+          AccountId: transaction.CollectiveId,
+          OwnerAccountId: transaction.HostCollectiveId,
+        },
         amount: transaction.amountInHostCurrency,
         currency: transaction.hostCurrency,
         destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
         destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
         walletProviderFee: Math.round(-1 * transaction.hostFeeInHostCurrency/transaction.hostCurrencyFxRate),
         WalletProviderAccountId:  transaction.HostCollectiveId, // `${transaction.HostCollectiveId}(${transaction.hostName})`,
-        WalletProviderWalletName: transaction.HostCollectiveId,
+        walletProviderWallet: {
+          name: transaction.HostCollectiveId,
+          currency: null,
+          AccountId: transaction.HostCollectiveId,
+          OwnerAccountId: transaction.HostCollectiveId,
+        },
         platformFee: Math.round(-1 * transaction.platformFeeInHostCurrency/transaction.hostCurrencyFxRate),
         paymentProviderFee: Math.round(-1 * transaction.paymentProcessorFeeInHostCurrency/transaction.hostCurrencyFxRate),
         PaymentProviderAccountId: transaction.pmService, // PaymentMethod.service
-        PaymentProviderWalletName: transaction.pmType, // PaymentMethod.type
+        paymentProviderWallet: {
+          name: transaction.pmType, // PaymentMethod.type
+          currency: null,
+          AccountId: transaction.pmService,
+          OwnerAccountId: transaction.pmService,
+        },
         LegacyTransactionId: transaction.id,
       };
     })[0];
