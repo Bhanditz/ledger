@@ -8,11 +8,19 @@ Backward migration, starts inserting by looking at the max id of the current pro
 and then insert on the ledger(keeping state through the ledger's transaction field "LegacyTransactionId")
 Use Cases that migration is NOT working at the moment:
   1. PaymentMethodId is null
+    - select * from "Transactions" t WHERE "PaymentMethodId" is null;
   2. PaymentMethods table has service stripe defined but does NOT have type creditcard(NULL) defined
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."PaymentMethodId" is not NULL and p.type is NULL;
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."PaymentMethodId" is not NULL and p.type is NULL and p.service='paypal';
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."PaymentMethodId" is not NULL and p.type is NULL and p.service='stripe';
   3. FromCollectiveId is null(LegacyId 100784)
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."FromCollectiveId" is null;
   4. HostCollectiveId is null and/or hostCurrency is null(LegacyId 99531)
-  5. WWcodeBerlin example: collective is EUR, host is USD, collective pays the fees
-     but collective pays it in USD even though it's a host
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."HostCollectiveId" is null;
+  5. FromCollectiveId is null and HostCollectiveId is null
+    - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."HostCollectiveId" is null and t."FromCollectiveId" is null;
+  6. Not a Problem, just a PS: Collectives with a currency that have Hosts with different currencies, In this case we are converting the fees that the collective paid in the host currency to the collective's currency. This may cause small differences on the result due to Math rounds.
+    - WWcodeBerlin example: collective is EUR, host is USD, collective pays the fees in USD even though it's a EUR Collective.
 */
 export class StatefulMigration {
 
@@ -39,7 +47,7 @@ export class StatefulMigration {
       ' from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id' +
       ` WHERE t.id<${legacyId} and t.type=\'CREDIT\' and t."PaymentMethodId" is not null` +
       ' and t."FromCollectiveId" is not null and t."HostCollectiveId" is not null ' +
-      ' and p.service is not null and p.type is not null'+
+      ' and p.service is not null and p.type is not null and t."deletedAt" is null'+
       ' order by t.id desc limit 1;'
     );
     if (!res || !res.rows || res.rows.length <= 0)
@@ -50,14 +58,14 @@ export class StatefulMigration {
       return {
         FromAccountId: transaction.FromCollectiveId, // `${transaction.FromCollectiveId}(${transaction.fromCollectiveName})`,
         fromWallet: {
-          name: transaction.PaymentMethodId,
+          name: transaction.PaymentMethodId, // Same name
           currency: transaction.hostCurrency,
           AccountId: transaction.FromCollectiveId,
           OwnerAccountId: transaction.pmCollectiveId, // We consider the Owner of the wallet The Owner of the payment method
         },
         ToAccountId:  transaction.CollectiveId, // `${transaction.CollectiveId}(${transaction.collectiveName})`,
         toWallet: {
-          name: `${transaction.CollectiveId}_${transaction.HostCollectiveId}`,
+          name: `${transaction.hostSlug}_${transaction.collectiveSlug}`,
           currency: transaction.currency,
           AccountId: transaction.CollectiveId,
           OwnerAccountId: transaction.HostCollectiveId,

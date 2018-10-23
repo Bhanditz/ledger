@@ -21,6 +21,9 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      PaymentMethodId: {
+        type: Sequelize.INTEGER,
+      },
       temporary: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,

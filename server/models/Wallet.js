@@ -23,6 +23,9 @@ export default class Wallet extends Sequelize.Model {
         type: Sequelize.STRING, // HostCollectiveId field(current prod "Collective" table that will be renamed to account)
         allowNull: false,
       },
+      PaymentMethodId: {
+        type: Sequelize.INTEGER,
+      },
       temporary: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
