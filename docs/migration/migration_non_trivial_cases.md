@@ -1,4 +1,116 @@
 
+# migration query
+
+```sql
+select 
+    t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency, t."hostFeeInHostCurrency",
+    t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."OrderId",
+    f.slug as "fromCollectiveSlug",
+    c.slug as "collectiveSlug",
+    h.slug as "hostCollectiveSlug",
+    p.service as "paymentMethodService", 
+    p.type as "paymentMethodType",
+    pmc.id as "paymentMethodCollectiveId",
+    pmc.slug as "paymentMethodCollectiveSlug",
+    ofc.id as "orderFromCollectiveId", 
+    ofc.slug as "orderFromCollectiveSlug",
+    opmc.id as "orderPaymentMethodCollectiveId",
+    opmc.slug as "orderPaymentMethodCollectiveSlug",
+    e."UserId" as "expenseUserId", 
+    e."CollectiveId" as "expenseCollectiveId", 
+    e."payoutMethod" as "expensePayoutMethod",
+    ec.slug as "expenseCollectiveSlug",
+    eu."paypalEmail" as "expenseUserPaypalEmail",
+    euc.slug as "expenseUserCollectiveSlug"
+    from "Transactions" t 
+    left join "Collectives" f on t."FromCollectiveId" =f.id
+    left join "Collectives" c on t."CollectiveId" =c.id
+    left join "Collectives" h on t."HostCollectiveId" =h.id
+    left join "PaymentMethods" p on t."PaymentMethodId"=p.id
+    left join "Collectives" pmc on p."CollectiveId" =pmc.id
+    left join "Expenses" e on t."ExpenseId" =e.id
+    left join "Collectives" ec on e."CollectiveId"=ec.id
+    left join "Users" eu on e."UserId"=eu.id
+    left join "Collectives" euc on eu."CollectiveId"=euc.id
+    left join "Orders" o on t."OrderId"=o.id
+    left join "Collectives" ofc on o."FromCollectiveId"=ofc.id
+    left join "PaymentMethods" opm on o."PaymentMethodId"=opm.id
+    left join "Collectives" opmc on opm."CollectiveId"=opmc.id
+WHERE t.type='CREDIT' and t."deletedAt" is null 
+order by t.id desc;
+```
+
+
+```js
+const test = `
+select 
+    t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency, t."hostFeeInHostCurrency",
+    t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."OrderId",
+    f.slug as "fromCollectiveSlug",
+    c.slug as "collectiveSlug",
+    h.slug as "hostCollectiveSlug",
+    p.service as "paymentMethodService", 
+    p.type as "paymentMethodType",
+    pmc.id as "paymentMethodCollectiveId",
+    pmc.slug as "paymentMethodCollectiveSlug",
+    ofc.id as "orderFromCollectiveId", 
+    ofc.slug as "orderFromCollectiveSlug",
+    opmc.id as "orderPaymentMethodCollectiveId",
+    opmc.slug as "orderPaymentMethodCollectiveSlug",
+    e."UserId" as "expenseUserId", 
+    e."CollectiveId" as "expenseCollectiveId", 
+    e."payoutMethod" as "expensePayoutMethod",
+    ec.slug as "expenseCollectiveSlug",
+    eu."paypalEmail" as "expenseUserPaypalEmail",
+    euc.slug as "expenseUserCollectiveSlug"
+    from "Transactions" t 
+    left join "Collectives" f on t."FromCollectiveId" =f.id
+    left join "Collectives" c on t."CollectiveId" =c.id
+    left join "Collectives" h on t."HostCollectiveId" =h.id
+    left join "PaymentMethods" p on t."PaymentMethodId"=p.id
+    left join "Collectives" pmc on p."CollectiveId" =pmc.id
+    left join "Expenses" e on t."ExpenseId" =e.id
+    left join "Collectives" ec on e."CollectiveId"=ec.id
+    left join "Users" eu on e."UserId"=eu.id
+    left join "Collectives" euc on eu."CollectiveId"=euc.id
+    left join "Orders" o on t."OrderId"=o.id
+    left join "Collectives" ofc on o."FromCollectiveId"=ofc.id
+    left join "PaymentMethods" opm on o."PaymentMethodId"=opm.id
+    left join "Collectives" opmc on opm."CollectiveId"=opmc.id
+WHERE t.type='CREDIT' and t."deletedAt" is null and t."ExpenseId" is not null
+order by t.id desc;
+`;
+
+t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency, t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."OrderId",  
+
+transaction.id, // NO JOIN
+transaction.FromCollectiveId, // NO JOIN
+transaction.CollectiveId, // NO JOIN
+transaction.amountInHostCurrency, // NO JOIN
+transaction.hostCurrency, // NO JOIN
+transaction.amount, // NO JOIN
+transaction.currency, // NO JOIN
+transaction.hostFeeInHostCurrency, // NO JOIN
+transaction.platformFeeInHostCurrency, // NO JOIN
+transaction.paymentProcessorFeeInHostCurrency, // NO JOIN        
+transaction.PaymentMethodId, // NO JOIN
+transaction.HostCollectiveId, // NO JOIN
+transaction.ExpenseId,  // NO JOIN
+transaction.OrderId,  // NO JOIN
+transaction.fromCollectiveSlug // left join collectives f
+transaction.collectiveSlug, // left join collectives c
+transaction.hostCollectiveSlug, // left join collectives h
+transaction.paymentMethodService // left join paymentmethods
+transaction.paymentMethodType // left join paymentmethods
+transaction.paymentMethodCollectiveSlug // left join paymentmethods left join collectives
+transaction.paymentMethodCollectiveId // left join paymentmethods left join collectives
+transaction.orderPaymentMethodCollectiveSlug // left join orders left join paymentMethods          
+transaction.expensePayoutMethod // left join expenses
+transaction.expenseUserPaypalEmail // left join expenses left join users
+transaction.expenseUserCollectiveSlug // left join expenses left join users left join collectives
+      
+      
+```
 
 # Queries to fix on the legacy DB
 
