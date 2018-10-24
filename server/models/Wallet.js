@@ -26,6 +26,12 @@ export default class Wallet extends Sequelize.Model {
       PaymentMethodId: {
         type: Sequelize.INTEGER,
       },
+      OrderId: {
+        type: Sequelize.INTEGER,
+      },
+      ExpenseId: {
+        type: Sequelize.INTEGER,
+      },
       temporary: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
