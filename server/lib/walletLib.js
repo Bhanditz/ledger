@@ -1,6 +1,7 @@
 import Database from '../models';
 import Transaction from '../models/Transaction';
 import Wallet from '../models/Wallet';
+import { omit } from 'lodash';
 
 export default class WalletLib {
 
@@ -27,21 +28,29 @@ export default class WalletLib {
     return balanceCurrency ? balanceCurrency : 0;
   }
 
-  async findOrCreateCurrencyWallet(name, currency, accountId, ownerAccountId, temp){
+  async findOrCreateCurrencyWallet(data, temp){
     return Wallet.findOrCreate({
       where: {
-        temporary: temp || false,
-        currency: currency,
-        AccountId: `${accountId}`,
-        OwnerAccountId: `${ownerAccountId}`,
-        name: `${name}`,
+        currency: data.currency,
+        AccountId: `${data.AccountId}`,
+        OwnerAccountId: `${data.OwnerAccountId}`,
+        name: `${data.name}`,
+      },
+      defaults: {
+       temp: temp || false,
+       ...omit(data, ['currency', 'AccountId', 'OwnerAccountId', 'name']),
       },
     }).spread((result) => {
       return result;
     });
   }
 
-  async findOrCreateTemporaryCurrencyWallet(currency, accountId, ownerAccountId){
-    return this.findOrCreateCurrencyWallet(`temp_${currency}_${accountId}`, currency, accountId, ownerAccountId, true);
+  async findOrCreateTemporaryCurrencyWallet(currency, AccountId, OwnerAccountId){
+    return this.findOrCreateCurrencyWallet({
+      name: `temp_${currency}_${AccountId}`,
+      currency,
+      AccountId,
+      OwnerAccountId,
+    }, true);
   }
 }
