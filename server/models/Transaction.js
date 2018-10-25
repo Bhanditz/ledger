@@ -35,6 +35,9 @@ export default class Transaction extends Sequelize.Model {
         onUpdate: 'CASCADE',
       },
       amount: {
+        type: Sequelize.INTEGER,
+      },
+      forexRate: {
         type: Sequelize.FLOAT,
       },
       transactionGroupId: {

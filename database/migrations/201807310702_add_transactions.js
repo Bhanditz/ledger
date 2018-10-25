@@ -34,6 +34,9 @@ module.exports = {
       amount: {
         type: Sequelize.INTEGER,
       },
+      forexRate: {
+        type: Sequelize.FLOAT,
+      },
       transactionGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
