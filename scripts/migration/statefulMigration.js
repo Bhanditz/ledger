@@ -40,8 +40,9 @@ export class StatefulMigration {
     const legacyId = await this.getLatestLegacyIdFromLedger();
     console.log(`legacyId: ${legacyId}`);
     const query = ` select 
-    t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency, t."hostFeeInHostCurrency",
-    t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."OrderId",
+    t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
+    t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
+    t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", 
     f.slug as "fromCollectiveSlug",
     c.slug as "collectiveSlug",
     h.slug as "hostCollectiveSlug",
@@ -86,31 +87,38 @@ export class StatefulMigration {
     const formattedLedgerTransaction = res.rows.map(transaction => {
       // We define all properties of the new ledger here, except for all wallets(from, to, and fees)
       // and the WalletProvider and PaymentProvider Account ids
+      const hostCurrency = transaction.hostCurrency || transaction.currency;
+      const amountInHostCurrency = transaction.amountInHostCurrency || transaction.amount;
+      // Fees are negative in DEBIT transactions...
+      const hostFeeInHostCurrency = -1 * transaction.hostFeeInHostCurrency;
+      const platformFeeInHostCurrency = -1 * transaction.platformFeeInHostCurrency;
+      const paymentProcessorFeeInHostCurrency = -1 * transaction.paymentProcessorFeeInHostCurrency;
       const formattedTransaction = {
         FromAccountId: transaction.FromCollectiveId,
         ToAccountId:  transaction.CollectiveId,
-        amount: transaction.amountInHostCurrency,
-        currency: transaction.hostCurrency,
-        destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
-        destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
-        walletProviderFee: transaction.hostFeeInHostCurrency,
-        platformFee: transaction.platformFeeInHostCurrency,
-        paymentProviderFee: transaction.paymentProcessorFeeInHostCurrency,
+        amount: amountInHostCurrency,
+        currency: hostCurrency,
+        // destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
+        // destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
+        walletProviderFee: hostFeeInHostCurrency,
+        platformFee: platformFeeInHostCurrency,
+        paymentProviderFee: paymentProcessorFeeInHostCurrency,
         LegacyTransactionId: transaction.id,
+        forexRate: transaction.hostCurrencyFxRate,
       };
       // setting toWallet
       formattedTransaction.toWallet = {
-        currency: transaction.currency,
+        currency: hostCurrency,
         AccountId: transaction.CollectiveId,
       };
       if (transaction.HostCollectiveId) {
         // setting toWallet properties
-        formattedTransaction.toWallet.name = `owner: ${transaction.hostCollectiveSlug}, account: ${transaction.collectiveSlug}, ${transaction.currency}`;
+        formattedTransaction.toWallet.name = `owner: ${transaction.hostCollectiveSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
         formattedTransaction.toWallet.OwnerAccountId = transaction.HostCollectiveId;
         // if there is HostCollectiveId and hostFeeInHostCurrency, so we add the Wallet Provider
         // according to the Host Collective properties
-        if (transaction.hostFeeInHostCurrency > 0) {
-          formattedTransaction.walletProviderFee = transaction.hostFeeInHostCurrency;
+        if (hostFeeInHostCurrency > 0) {
+          formattedTransaction.walletProviderFee = hostFeeInHostCurrency;
           formattedTransaction.WalletProviderAccountId = transaction.HostCollectiveId;
           formattedTransaction.walletProviderWallet = {
             name: `owner and account: ${transaction.hostCollectiveSlug}, multi-currency`,
@@ -121,15 +129,15 @@ export class StatefulMigration {
         }
       } else {
         // setting toWallet properties in case there's no host fees
-        formattedTransaction.toWallet.name = `owner: ${transaction.collectiveSlug}, account: ${transaction.collectiveSlug}, ${transaction.currency}`;
+        formattedTransaction.toWallet.name = `owner: ${transaction.collectiveSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
         formattedTransaction.toWallet.OwnerAccountId = transaction.CollectiveId;
         // if there is No HostCollectiveId but there ishostFeeInHostCurrency,
         // We add the wallet provider through either the ExpenseId or OrderId
-        if (transaction.hostFeeInHostCurrency > 0) {
-          formattedTransaction.walletProviderFee = transaction.hostFeeInHostCurrency;
+        if (hostFeeInHostCurrency > 0) {
+          formattedTransaction.walletProviderFee = hostFeeInHostCurrency;
           if (transaction.ExpenseId) {
             // setting toWallet properties in case there's host fees through an Expense
-            formattedTransaction.toWallet.name = `owner: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail}), account: ${transaction.collectiveSlug}, ${transaction.currency}`;
+            formattedTransaction.toWallet.name = `owner: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail}), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
             formattedTransaction.toWallet.OwnerAccountId = `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`;
             // setting wallet provider wallet
             formattedTransaction.WalletProviderAccountId = `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`;
@@ -141,7 +149,7 @@ export class StatefulMigration {
             };
           } else { // Order
             // setting toWallet properties in case there's host fees through an Expense
-            formattedTransaction.toWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}(Order), account: ${transaction.collectiveSlug}, ${transaction.currency}`;
+            formattedTransaction.toWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}(Order), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
             formattedTransaction.toWallet.OwnerAccountId = `${transaction.orderPaymentMethodCollectiveSlug}(Order)`;
             // setting wallet provider wallet
             formattedTransaction.WalletProviderAccountId = `${transaction.orderPaymentMethodCollectiveSlug}(Order)`;
@@ -157,7 +165,7 @@ export class StatefulMigration {
       // setting fromWallet
       formattedTransaction.fromWallet = {
         name: '',
-        currency: transaction.hostCurrency,
+        currency: hostCurrency,
         AccountId: transaction.FromCollectiveId,
         PaymentMethodId: transaction.PaymentMethodId || null,
         ExpenseId: transaction.ExpenseId || null,
@@ -165,7 +173,7 @@ export class StatefulMigration {
       };
       // setting from and payment provider wallets
       if (transaction.PaymentMethodId) {
-        formattedTransaction.fromWallet.name = `owner: ${transaction.paymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.hostCurrency}`;
+        formattedTransaction.fromWallet.name = `owner: ${transaction.paymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
         formattedTransaction.fromWallet.OwnerAccountId = transaction.paymentMethodCollectiveId;
         // creating Payment Provider wallet
         formattedTransaction.PaymentProviderAccountId = transaction.paymentMethodService;
@@ -177,7 +185,7 @@ export class StatefulMigration {
           PaymentMethodId: transaction.PaymentMethodId,
         };
       } else if (transaction.ExpenseId) {
-        formattedTransaction.fromWallet.name = `owner: ${transaction.expenseCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.hostCurrency}`;
+        formattedTransaction.fromWallet.name = `owner: ${transaction.expenseCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
         formattedTransaction.fromWallet.OwnerAccountId = transaction.expenseCollectiveId;
         formattedTransaction.PaymentProviderAccountId = transaction.expensePayoutMethod;
         formattedTransaction.paymentProviderWallet = {
@@ -191,7 +199,7 @@ export class StatefulMigration {
         // Order has PaymentMethod, then the slug will come from the transaction.order.paymentmethod
         // otherwise we will consider transaction.order.fromCollective as the owner
         if (transaction.orderPaymentMethodCollectiveSlug) {
-          formattedTransaction.fromWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.hostCurrency}`;
+          formattedTransaction.fromWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
           formattedTransaction.fromWallet.OwnerAccountId = transaction.orderPaymentMethodCollectiveId;
           formattedTransaction.PaymentProviderAccountId = `${transaction.orderPaymentMethodCollectiveId}_${transaction.orderPaymentMethodService}_${transaction.orderPaymentMethodType}`;
           formattedTransaction.paymentProviderWallet = {
@@ -202,7 +210,7 @@ export class StatefulMigration {
             OrderId: transaction.OrderId,
           };
         } else {
-          formattedTransaction.fromWallet.name = `owner: ${transaction.orderFromCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.hostCurrency}`;
+          formattedTransaction.fromWallet.name = `owner: ${transaction.orderFromCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
           formattedTransaction.fromWallet.OwnerAccountId = transaction.orderFromCollectiveId;
           formattedTransaction.PaymentProviderAccountId = `${transaction.orderFromCollectiveId}_${transaction.OrderId}`;
           formattedTransaction.paymentProviderWallet = {
