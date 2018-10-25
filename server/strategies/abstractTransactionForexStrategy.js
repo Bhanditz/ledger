@@ -10,18 +10,10 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
 
   async findOrCreateAccountWallets() {
     // finding or creating from and to Wallets
-    this.incomingTransaction.fromWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.fromWallet.name,
-      this.incomingTransaction.fromWallet.currency,
-      this.incomingTransaction.fromWallet.AccountId,
-      this.incomingTransaction.fromWallet.OwnerAccountId,
-    );
-    this.incomingTransaction.toWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.toWallet.name,
-      this.incomingTransaction.toWallet.currency,
-      this.incomingTransaction.toWallet.AccountId,
-      this.incomingTransaction.toWallet.OwnerAccountId,
-    );
+    this.incomingTransaction.fromWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
+    this.incomingTransaction.toWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.toWallet);
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWallet.id;
     this.incomingTransaction.ToWalletId = this.incomingTransaction.toWallet.id;
     this.incomingTransaction.fromWalletDestinationCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(

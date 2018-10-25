@@ -23,18 +23,10 @@ export default class AbstractTransactionStrategy {
   async getTransactions (){}
 
   async findOrCreateAccountWallets() {
-    this.incomingTransaction.fromWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.fromWallet.name,
-      this.incomingTransaction.fromWallet.currency,
-      this.incomingTransaction.fromWallet.AccountId,
-      this.incomingTransaction.fromWallet.OwnerAccountId,
-    );
-    this.incomingTransaction.toWallet = await this.walletLib.findOrCreateCurrencyWallet(
-      this.incomingTransaction.toWallet.name,
-      this.incomingTransaction.toWallet.currency,
-      this.incomingTransaction.toWallet.AccountId,
-      this.incomingTransaction.toWallet.OwnerAccountId,
-    );
+    this.incomingTransaction.fromWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
+    this.incomingTransaction.toWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.toWallet);
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWallet.id;
     this.incomingTransaction.ToWalletId = this.incomingTransaction.toWallet.id;
   }
@@ -43,12 +35,12 @@ export default class AbstractTransactionStrategy {
     let platformFeeTransaction = null;
     if (this.incomingTransaction.platformFee && this.incomingTransaction.platformFee > 0) {
       // finding or creating platform Wallet
-      this.incomingTransaction.platformWallet = await this.walletLib.findOrCreateCurrencyWallet(
-        'platform',
-        null,
-        'platform',
-        'platform'
-      );
+      this.incomingTransaction.platformWallet = await this.walletLib.findOrCreateCurrencyWallet({
+        name: 'platform',
+        currency: null,
+        AccountId: 'platform',
+        OwnerAccountId: 'platform',
+      });
       this.incomingTransaction.PlatformWalletId = this.incomingTransaction.platformWallet.id;
       this.incomingTransaction.PlatformAccountId = this.incomingTransaction.platformWallet.OwnerAccountId;
       // Generate platform fee transactions
@@ -62,12 +54,8 @@ export default class AbstractTransactionStrategy {
     let paymentProviderFeeTransactions = null;
     if (this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.paymentProviderWallet) {
       // finding or creating Wallet
-      this.incomingTransaction.paymentProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
-        this.incomingTransaction.paymentProviderWallet.name,
-        null,
-        this.incomingTransaction.paymentProviderWallet.AccountId,
-        this.incomingTransaction.paymentProviderWallet.OwnerAccountId
-      );
+      this.incomingTransaction.paymentProviderWallet = await this.walletLib
+        .findOrCreateCurrencyWallet(this.incomingTransaction.paymentProviderWallet);
       if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0) {
         this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
         this.incomingTransaction.PaymentProviderAccountId = this.incomingTransaction.paymentProviderWallet.OwnerAccountId;
@@ -84,12 +72,8 @@ export default class AbstractTransactionStrategy {
     if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
       this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.walletProviderWallet) {
       // finding or creating Wallet
-      this.incomingTransaction.walletProviderWallet = await this.walletLib.findOrCreateCurrencyWallet(
-        this.incomingTransaction.walletProviderWallet.name,
-        null,
-        this.incomingTransaction.walletProviderWallet.AccountId,
-        this.incomingTransaction.walletProviderWallet.OwnerAccountId
-      );
+      this.incomingTransaction.walletProviderWallet = await this.walletLib
+        .findOrCreateCurrencyWallet(this.incomingTransaction.walletProviderWallet);
       this.incomingTransaction.WalletProviderWalletId = this.incomingTransaction.walletProviderWallet.id;
       this.incomingTransaction.WalletProviderAccountId = this.incomingTransaction.walletProviderWallet.OwnerAccountId;
       providerFeeTransaction = new WalletProviderFeeTransactions(this.incomingTransaction);
