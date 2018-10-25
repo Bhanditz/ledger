@@ -94,8 +94,18 @@ describe('Wallets', () => {
     }); /** End of "" */
 
     it('should find a wallet instead of create using findOrCreate', async () => {
-      const wallet1 = await lib.findOrCreateCurrencyWallet('bob_wallet','USD', 'bob', 'opencollective');
-      const wallet2 = await lib.findOrCreateCurrencyWallet('bob_wallet','USD', 'bob', 'opencollective');
+      const wallet1 = await lib.findOrCreateCurrencyWallet({
+        name: 'bob_wallet',
+        currency: 'USD', 
+        AccountId: 'bob', 
+        OwnerAccountId: 'opencollective',
+      });
+      const wallet2 = await lib.findOrCreateCurrencyWallet({
+        name: 'bob_wallet',
+        currency: 'USD', 
+        AccountId: 'bob', 
+        OwnerAccountId: 'opencollective',
+      });
       // wallet1 should match properties of creation
       expect(wallet1.name).to.equal('bob_wallet');
       expect(wallet1.currency).to.equal('USD');

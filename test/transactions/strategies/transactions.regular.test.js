@@ -479,10 +479,6 @@ describe('Account to Account(same currency) transactions', () => {
       expect(normalDebitTransaction.FromWalletId).to.be.equal(normalCreditTransaction.ToWalletId);
       expect(normalCreditTransaction.FromWalletId).to.be.equal(normalDebitTransaction.ToWalletId);
       // amount should be the same of the "original" transaction
-      console.log(`transaction.amount:${transaction.amount}`);
-      console.log(`netAmount:${netAmount}`);
-      console.log(`normalCreditTransaction.amount:${normalCreditTransaction.amount}`);
-      console.log(`normalDebitTransaction.amount:${normalDebitTransaction.amount}`);
       expect(normalCreditTransaction.amount).to.be.equal(netAmount);
       expect(normalDebitTransaction.amount).to.be.equal(-1 * netAmount);
 
