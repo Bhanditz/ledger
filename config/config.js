@@ -10,5 +10,6 @@ export default {
     port: process.env.PORT || 3060,
     queue: {
         url: process.env.QUEUE_URL ? `amqp://${process.env.QUEUE_URL}` : 'amqp://localhost',
+        transactionQueue: process.env.TRANSACTION_QUEUE || 'transactions',
     },
 };
