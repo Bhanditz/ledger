@@ -50,10 +50,12 @@ export default class AbstractFeeTransactions {
       ToAccountId: this.feeAccountId,
       ToWalletId: this.feeWalletId,
       amount: this.getTotalFee(),
+      forexRate: this.transaction.forexRate,
+      forexRateSourceCoin: this.transaction.forexRateSourceCoin,
+      forexRateDestinationCoin: this.transaction.forexRateDestinationCoin,
       currency: currency,
       category: this.category,
       transactionGroupId: this.transaction.transactionGroupId,
-      transactionGroupTotalAmount: this.transaction.transactionGroupTotalAmount,
       LegacyTransactionId: this.transaction.LegacyTransactionId,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);

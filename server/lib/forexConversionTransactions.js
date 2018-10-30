@@ -39,6 +39,9 @@ export default class ForexConversionTransactions {
       ToWalletId: toWalletId,
       amount: amount,
       currency: currency,
+      forexRate: this.transaction.forexRate,
+      forexRateSourceCoin: this.transaction.forexRateSourceCoin,
+      forexRateDestinationCoin: this.transaction.forexRateDestinationCoin,
       transactionGroupId: this.transaction.transactionGroupId,
       LegacyTransactionId: this.transaction.LegacyTransactionId,
     };
