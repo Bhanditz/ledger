@@ -54,7 +54,7 @@ export default class TransactionService extends AbstractCrudService {
    * @param {Object} transaction - Object base on the current Transaction model(https://github.com/opencollective/opencollective-api/blob/master/server/models/Transaction.js)
    */
   parseAndInsertTransaction(transaction) {
-    const parsedTransaction = parsedTransaction(transaction);
+    const parsedTransaction = this.parseTransaction(transaction);
     return this.insert(parsedTransaction);
   }
 
@@ -84,6 +84,8 @@ export default class TransactionService extends AbstractCrudService {
         paymentProviderFee: paymentProcessorFeeInHostCurrency,
         LegacyTransactionId: transaction.id,
         forexRate: transaction.hostCurrencyFxRate,
+        forexRateSourceCoin: transaction.currency,
+        forexRateDestinationCoin: transaction.hostCurrency,
       };
       // setting toWallet
       ledgerTransaction.toWallet = {
