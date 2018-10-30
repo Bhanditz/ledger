@@ -35,9 +35,8 @@ export class QueueStatefulMigration {
   async sendToQueue(transaction) {
     const conn = await amqp.connect(config.queue.url);
     const channel = await conn.createChannel();
-    await channel.assertQueue(config.queue.transactionQueue, { exclusive: true });
-
-    channel.sendToQueue(config.queue.transactionQueue, Buffer.alloc(JSON.stringify(transaction)));
+    await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
+    channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transaction), 'utf8'));
     // wait half a second to close channel after msg is actually sent
     setTimeout(() => {
       conn.close();
@@ -99,10 +98,8 @@ export class QueueStatefulMigration {
 
     console.log(`Raw Txs: ${JSON.stringify(res.rows, null,2)}`);
     const rawTransaction = res.rows[0];
-    const service = new TransactionService();
-    const formattedLedgerTransaction = service.parseTransaction(rawTransaction);
     console.log(`raw transaction: ${JSON.stringify(rawTransaction, null,2)}`);
-    return this.sendToQueue(formattedLedgerTransaction);
+    return this.sendToQueue(rawTransaction);
   }
 
   async run() {
