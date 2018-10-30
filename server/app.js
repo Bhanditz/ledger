@@ -5,7 +5,7 @@ import os from 'os';
 import Database from './models';
 import pino from 'express-pino-logger';
 import Logger from './globals/logger';
-import TransactionsWorker from './workers/transactionsWorker';
+import TransactionsWorker from './queue/transactionsWorker';
 export let app = null;
 
 export default class App {
