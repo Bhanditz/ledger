@@ -5,6 +5,7 @@ import os from 'os';
 import Database from './models';
 import pino from 'express-pino-logger';
 import Logger from './globals/logger';
+import TransactionsWorker from './workers/transactionsWorker';
 export let app = null;
 
 export default class App {
@@ -17,6 +18,7 @@ export default class App {
     app.routers = new Router(app);
     app.models = this.database.models;
     this.startServer();
+    this.startTransactionsQueueWorker();
   }
 
   startServer() {
@@ -28,6 +30,12 @@ export default class App {
       this.logger.info(`Open Collective API listening at http://${host}:${server.address().port} in ${app.set('env')} environment.\n`);
     });
   }
+
+  startTransactionsQueueWorker() {
+    const worker = new TransactionsWorker();
+    worker.consume();
+  }
+
 }
 
 new App();
