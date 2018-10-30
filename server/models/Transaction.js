@@ -37,8 +37,8 @@ export default class Transaction extends Sequelize.Model {
       amount: {
         type: Sequelize.INTEGER,
       },
-      forexRate: {
-        type: Sequelize.FLOAT,
+      currency: {
+        type: Sequelize.STRING,
       },
       transactionGroupId: {
         type: Sequelize.UUID,
@@ -51,10 +51,16 @@ export default class Transaction extends Sequelize.Model {
         type: Sequelize.UUID,
         allowNull: false,
       },
-      currency: {
+      category: {
         type: Sequelize.STRING,
       },
-      category: {
+      forexRate: {
+        type: Sequelize.FLOAT,
+      },
+      forexRateSourceCoin: {
+        type: Sequelize.STRING,
+      },
+      forexRateDestinationCoin: {
         type: Sequelize.STRING,
       },
       LegacyTransactionId: {

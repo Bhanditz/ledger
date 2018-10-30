@@ -37,6 +37,12 @@ module.exports = {
       forexRate: {
         type: Sequelize.FLOAT,
       },
+      forexRateSourceCoin: {
+        type: Sequelize.STRING,
+      },
+      forexRateDestinationCoin: {
+        type: Sequelize.STRING,
+      },
       transactionGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
