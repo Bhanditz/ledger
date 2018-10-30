@@ -34,13 +34,7 @@ module.exports = {
       amount: {
         type: Sequelize.INTEGER,
       },
-      forexRate: {
-        type: Sequelize.FLOAT,
-      },
-      forexRateSourceCoin: {
-        type: Sequelize.STRING,
-      },
-      forexRateDestinationCoin: {
+      currency: {
         type: Sequelize.STRING,
       },
       transactionGroupId: {
@@ -54,10 +48,16 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
       },
-      currency: {
+      category: {
         type: Sequelize.STRING,
       },
-      category: {
+      forexRate: {
+        type: Sequelize.FLOAT,
+      },
+      forexRateSourceCoin: {
+        type: Sequelize.STRING,
+      },
+      forexRateDestinationCoin: {
         type: Sequelize.STRING,
       },
       LegacyTransactionId: {
