@@ -1,5 +1,4 @@
 import amqp from 'amqplib';
-import { operationNotAllowed } from '../globals/errors';
 import config from '../../config/config';
 import Logger from '../globals/logger';
 import TransactionService from '../services/transactionService';
@@ -17,7 +16,7 @@ export default class TransactionsWorker {
   async consume() {
     const conn = await amqp.connect(config.queue.url);
     const channel = await conn.createChannel();
-    const q = await channel.assertQueue(config.queue.transactionQueue, { exclusive: true });
+    const q = await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
       try {
