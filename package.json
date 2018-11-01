@@ -14,7 +14,7 @@
     "build": "npm run clean && npm run build-config && npm run build-server",
     "dev": "nodemon server/app.js -x babel-node . -e js,hbs",
     "start": "npm run build && node ./dist/server/app.js",
-    "test": "NODE_ENV=test mocha --recursive --exit --require babel-core/register test/**/*.test.js",
+    "test": "NODE_ENV=test mocha --recursive --exit --require babel-core/register 'test/**/*.test.js' ",
     "recreate-test-db": "sh scripts/recreate_test_db_and_migrate.sh",
     "migrate-test": "npm run recreate-test-db && npm run test",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
