@@ -1,5 +1,5 @@
 import Database from '../models';
-import Transaction from '../models/Transaction';
+import LedgerTransaction from '../models/LedgerTransaction';
 import Wallet from '../models/Wallet';
 import { omit } from 'lodash';
 
@@ -11,7 +11,7 @@ export default class WalletLib {
   }
 
   getBalanceFromWalletId(walletId) {
-    return Transaction.findAll({
+    return LedgerTransaction.findAll({
       attributes: [
         'currency',
         [ this.sequelize.fn('COALESCE', this.sequelize.fn('SUM', this.sequelize.col('amount')), 0), 'balance'],
@@ -24,7 +24,7 @@ export default class WalletLib {
   }
 
   async getCurrencyBalanceFromWalletId(currency, walletId) {
-    const balanceCurrency = await Transaction.sum('amount', { where: { ToWalletId: walletId, currency: currency } });
+    const balanceCurrency = await LedgerTransaction.sum('amount', { where: { ToWalletId: walletId, currency: currency } });
     return balanceCurrency ? balanceCurrency : 0;
   }
 
