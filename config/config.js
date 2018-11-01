@@ -1,6 +1,6 @@
 export default {
     database: {
-        database: process.env.DB_NAME || 'opencollective_ledger_dvl',
+        database: process.env.DB_NAME || 'opencollective_prod_snapshot',
         username: process.env.DB_USER || 'opencollective',
         password: process.env.DB_PASSWORD || '',
         host: process.env.DB_HOST || '127.0.0.1',

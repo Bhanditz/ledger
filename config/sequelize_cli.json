@@ -1,17 +1,19 @@
 {
   "development": {
-    "database": "opencollective_ledger_dvl",
+    "database": "opencollective_prod_snapshot",
     "username": "opencollective",
     "password": "",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "test": {
     "database": "opencollective_ledger_test",
     "username": "opencollective",
     "password": "",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "circleci": {
     "database": "circle_ledger_test",
@@ -19,7 +21,8 @@
     "password": "",
     "host": "localhost",
     "protocol": "postgres",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "docker": {
     "database": "opencollective_ledger_dvl",
@@ -27,12 +30,15 @@
     "password": "",
     "host": "postgres",
     "protocol": "postgres",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "staging": {
-    "use_env_variable": "PG_URL"
+    "use_env_variable": "PG_URL",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "production": {
-    "use_env_variable": "PG_URL"
+    "use_env_variable": "PG_URL",
+    "migrationStorageTableName": "SequelizeLedgerMeta"
   }
 }
