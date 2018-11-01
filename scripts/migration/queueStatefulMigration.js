@@ -2,7 +2,7 @@ import PgAsync from 'pg-async';
 import amqp from 'amqplib';
 import TransactionService from '../../server/services/transactionService';
 import Database from '../../server/models';
-import Transaction from '../../server/models/Transaction';
+import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
 
 /*
@@ -28,7 +28,7 @@ export class QueueStatefulMigration {
   }
 
   async getLatestLegacyIdFromLedger() {
-    const min = await Transaction.min('LegacyTransactionId');
+    const min = await LedgerTransaction.min('LegacyTransactionId');
     return min || Number.MAX_SAFE_INTEGER;
   }
 
@@ -91,10 +91,10 @@ export class QueueStatefulMigration {
     left join "Collectives" opmc on opm."CollectiveId"=opmc.id
     WHERE t.id<${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null
     order by t.id desc limit 1;
-    `;
+    `; // WHERE t.id=XXXXXX
     const res = await currentProdDbClient.query(query);
     if (!res || !res.rows || res.rows.length <= 0)
-      console.error('Now records were found');
+      console.error('No records were found');
 
     console.log(`Raw Txs: ${JSON.stringify(res.rows, null,2)}`);
     const rawTransaction = res.rows[0];

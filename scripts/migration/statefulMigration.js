@@ -1,7 +1,7 @@
 import PgAsync from 'pg-async';
 import TransactionService from '../../server/services/transactionService';
 import Database from '../../server/models';
-import Transaction from '../../server/models/Transaction';
+import LedgerTransaction from '../../server/models/LedgerTransaction';
 
 /*
 Backward migration, starts inserting by looking at the max id of the current prod's transaction table
@@ -26,7 +26,7 @@ export class StatefulMigration {
   }
 
   async getLatestLegacyIdFromLedger() {
-    const min = await Transaction.min('LegacyTransactionId');
+    const min = await LedgerTransaction.min('LegacyTransactionId');
     return min || Number.MAX_SAFE_INTEGER;
   }
 
