@@ -1,12 +1,12 @@
 import AbstractCrudService from './abstractCrudService';
-import Transaction from '../models/Transaction';
+import LedgerTransaction from '../models/LedgerTransaction';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 
 export default class TransactionService extends AbstractCrudService {
 
   constructor() {
-    super(Transaction);
+    super(LedgerTransaction);
   }
 
   /** Given a transaction, identify which kind of transaction it will be and
@@ -75,10 +75,10 @@ export default class TransactionService extends AbstractCrudService {
       const ledgerTransaction = {
         FromAccountId: transaction.FromCollectiveId,
         ToAccountId:  transaction.CollectiveId,
-        amount: amountInHostCurrency,
-        currency: hostCurrency,
-        // destinationAmount: transaction.amount, // ONLY for FOREX transactions(currency != hostCurrency)
-        // destinationCurrency: transaction.currency, // ONLY for FOREX transactions(currency != hostCurrency)
+        amount: transaction.amount,
+        currency: transaction.currency,
+        destinationAmount: amountInHostCurrency, // ONLY for FOREX transactions(currency != hostCurrency)
+        destinationCurrency: hostCurrency, // ONLY for FOREX transactions(currency != hostCurrency)
         walletProviderFee: hostFeeInHostCurrency,
         platformFee: platformFeeInHostCurrency,
         paymentProviderFee: paymentProcessorFeeInHostCurrency,
@@ -146,7 +146,7 @@ export default class TransactionService extends AbstractCrudService {
       // setting base of fromWallet
       ledgerTransaction.fromWallet = {
         name: '',
-        currency: hostCurrency,
+        currency: transaction.currency,
         AccountId: transaction.FromCollectiveId,
         PaymentMethodId: transaction.PaymentMethodId || null,
         ExpenseId: transaction.ExpenseId || null,
