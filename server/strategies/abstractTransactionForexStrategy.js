@@ -8,7 +8,7 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
     this._validateForexTransaction();
   }
 
-  async findOrCreateAccountWallets() {
+  async findOrCreateAccountWallets(fromWalletConvertCurrency) {
     // finding or creating from and to Wallets
     this.incomingTransaction.fromWallet = await this.walletLib
       .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
@@ -16,6 +16,14 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
       .findOrCreateCurrencyWallet(this.incomingTransaction.toWallet);
     this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWallet.id;
     this.incomingTransaction.ToWalletId = this.incomingTransaction.toWallet.id;
+    if (!fromWalletConvertCurrency) {
+      this.incomingTransaction.toWalletSourceCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(
+        this.incomingTransaction.currency,
+        this.incomingTransaction.toWallet.AccountId,
+        this.incomingTransaction.toWallet.OwnerAccountId
+      );
+      return;
+    }
     this.incomingTransaction.fromWalletDestinationCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(
       this.incomingTransaction.destinationCurrency,
       this.incomingTransaction.fromWallet.AccountId,
