@@ -1,6 +1,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Transactions', {
+    return queryInterface.createTable('LedgerTransactions', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -74,11 +74,24 @@ module.exports = {
       deletedAt: {
         type: Sequelize.DATE
       },
-    }, { timestamps: true });
+    }, 
+    { 
+      timestamps: true 
+    }).then( () => {
+      return queryInterface.addConstraint('LedgerTransactions', ['transactionGroupSequence', 'LegacyTransactionId'], {
+        type: 'unique',
+        name: 'ledger_transactions_constraint_uniq'
+      });
+    }).then( () => {
+      return queryInterface.addIndex('LedgerTransactions', {
+        fields: ['transactionGroupId', 'LegacyTransactionId'],
+        name: 'ledger_tx_idx_group_legacytx'
+      });
+    });
 
   },
 
   down: (queryInterface) => {
-    return queryInterface.dropTable('Transactions');
+    return queryInterface.dropTable('LedgerTransactions');
   }
 };

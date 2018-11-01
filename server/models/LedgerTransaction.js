@@ -1,7 +1,7 @@
 import Sequelize from 'sequelize';
 import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
 
-export default class Transaction extends Sequelize.Model {
+export default class LedgerTransaction extends Sequelize.Model {
   static init(sequelize) {
     return super.init({
       id: {
