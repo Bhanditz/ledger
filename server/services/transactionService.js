@@ -2,6 +2,7 @@ import AbstractCrudService from './abstractCrudService';
 import LedgerTransaction from '../models/LedgerTransaction';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
+import TransactionRefundStrategy from '../strategies/transactionRefundStrategy';
 
 export default class TransactionService extends AbstractCrudService {
 
@@ -41,6 +42,9 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Object} strategy - Return defined Strategy Class Object
   */
   async _defineTransactionStrategy(transaction) {
+    if (transaction.RefundTransactionId) {
+      return new TransactionRefundStrategy(transaction);
+    }
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
       return new TransactionRegularStrategy(transaction);
@@ -98,7 +102,7 @@ export default class TransactionService extends AbstractCrudService {
         ledgerTransaction.toWallet.OwnerAccountId = transaction.HostCollectiveId;
         // if there is HostCollectiveId and hostFeeInHostCurrency, so we add the Wallet Provider
         // according to the Host Collective properties
-        if (hostFeeInHostCurrency > 0) {
+        if (hostFeeInHostCurrency) {
           ledgerTransaction.walletProviderFee = hostFeeInHostCurrency;
           ledgerTransaction.WalletProviderAccountId = transaction.HostCollectiveId;
           ledgerTransaction.walletProviderWallet = {
@@ -114,7 +118,7 @@ export default class TransactionService extends AbstractCrudService {
         ledgerTransaction.toWallet.OwnerAccountId = transaction.CollectiveId;
         // if there is No HostCollectiveId but there ishostFeeInHostCurrency,
         // We add the wallet provider through either the ExpenseId or OrderId
-        if (hostFeeInHostCurrency > 0) {
+        if (hostFeeInHostCurrency) {
           ledgerTransaction.walletProviderFee = hostFeeInHostCurrency;
           if (transaction.ExpenseId) {
             // setting toWallet properties in case there's host fees through an Expense
