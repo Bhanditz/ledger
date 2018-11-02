@@ -33,7 +33,7 @@ export default class AbstractTransactionStrategy {
 
   async setPlatformFeeTransactions() {
     let platformFeeTransaction = null;
-    if (this.incomingTransaction.platformFee && this.incomingTransaction.platformFee > 0) {
+    if (this.incomingTransaction.platformFee) {
       // finding or creating platform Wallet
       this.incomingTransaction.platformWallet = await this.walletLib.findOrCreateCurrencyWallet({
         name: 'platform',
@@ -56,7 +56,7 @@ export default class AbstractTransactionStrategy {
       // finding or creating Wallet
       this.incomingTransaction.paymentProviderWallet = await this.walletLib
         .findOrCreateCurrencyWallet(this.incomingTransaction.paymentProviderWallet);
-      if (this.incomingTransaction.paymentProviderFee && this.incomingTransaction.paymentProviderFee > 0) {
+        if (this.incomingTransaction.paymentProviderFee) {
         this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
         this.incomingTransaction.PaymentProviderAccountId = this.incomingTransaction.paymentProviderWallet.OwnerAccountId;
         // find Payment Provider wallet to generate transactions
@@ -69,8 +69,8 @@ export default class AbstractTransactionStrategy {
 
   async setProviderFeeTransactions() {
     let providerFeeTransaction = null;
-    if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.walletProviderFee > 0 &&
-      this.incomingTransaction.WalletProviderAccountId && this.incomingTransaction.walletProviderWallet) {
+    if (this.incomingTransaction.walletProviderFee && this.incomingTransaction.WalletProviderAccountId
+      && this.incomingTransaction.walletProviderWallet) {
       // finding or creating Wallet
       this.incomingTransaction.walletProviderWallet = await this.walletLib
         .findOrCreateCurrencyWallet(this.incomingTransaction.walletProviderWallet);
@@ -114,9 +114,9 @@ export default class AbstractTransactionStrategy {
   }
 
   async getFeeTransactions() {
-    // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0) and a wallet id defined
+    // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0 or < 0) and a wallet id defined
     const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions();
-    // Plaftorm fee transactions -> Check whether Platform fee is > 0
+    // Plaftorm fee transactions -> Check whether Platform fee is > 0  or < 0
     const platformFeeTransactions = await this.setPlatformFeeTransactions();
     // if Wallet Provider has any fee, then create transactions
     const providerFeeTransactions = await this.setProviderFeeTransactions();
