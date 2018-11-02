@@ -66,6 +66,9 @@ export default class LedgerTransaction extends Sequelize.Model {
       LegacyTransactionId: {
         type: Sequelize.INTEGER,
       },
+      RefundTransactionId: {
+        type: Sequelize.INTEGER,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,

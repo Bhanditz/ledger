@@ -63,6 +63,9 @@ module.exports = {
       LegacyTransactionId: {
         type: Sequelize.INTEGER,
       },
+      RefundTransactionId: {
+        type: Sequelize.INTEGER,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('NOW()')
