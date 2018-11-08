@@ -1,9 +1,9 @@
 import PgAsync from 'pg-async';
 import amqp from 'amqplib';
-import TransactionService from '../../server/services/transactionService';
 import Database from '../../server/models';
 import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
+import Promise from 'bluebird';
 
 /*
 Backward migration, starts inserting by looking at the max id of the current prod's transaction table
@@ -24,23 +24,22 @@ Use Cases that migration is NOT working at the moment:
 export class QueueStatefulMigration {
 
   constructor() {
-    this.ledgerDatabase = new Database();
   }
 
   async getLatestLegacyIdFromLedger() {
-    const min = await LedgerTransaction.min('LegacyTransactionId');
-    return min || Number.MAX_SAFE_INTEGER;
+    const ledgerDatabase = new Database();
+    const max = await LedgerTransaction.max('LegacyTransactionId');
+    const pool = ledgerDatabase.sequelize.connectionManager.pool;
+    const connection = await pool.acquire();
+    await pool.release(connection);
+    await pool.drain();
+    await pool.clear();
+    return max || Number.MIN_SAFE_INTEGER;
   }
 
-  async sendToQueue(transaction) {
-    const conn = await amqp.connect(config.queue.url);
-    const channel = await conn.createChannel();
+  async sendToQueue(transaction, channel) {
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
     channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transaction), 'utf8'));
-    // wait half a second to close channel after msg is actually sent
-    setTimeout(() => {
-      conn.close();
-    }, 250);
   }
 
   async sendSingleTransactionToQueue() {
@@ -50,12 +49,14 @@ export class QueueStatefulMigration {
       database: process.env.MIGRATION_DB_NAME || 'opencollective_prod_snapshot',
       port: process.env.MIGRATION_DB_PORT || 5432,
     });
+    const conn = await amqp.connect(config.queue.url);
+    const channel = await conn.createChannel();
     const legacyId = await this.getLatestLegacyIdFromLedger();
     console.log(`legacyId: ${legacyId}`);
     const query = ` select 
     t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
     t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
-    t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", 
+    t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", t."RefundTransactionId",
     f.slug as "fromCollectiveSlug",
     c.slug as "collectiveSlug",
     h.slug as "hostCollectiveSlug",
@@ -89,17 +90,27 @@ export class QueueStatefulMigration {
     left join "Collectives" ofc on o."FromCollectiveId"=ofc.id
     left join "PaymentMethods" opm on o."PaymentMethodId"=opm.id
     left join "Collectives" opmc on opm."CollectiveId"=opmc.id
-    WHERE t.id<${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null
-    order by t.id desc limit 1;
+    WHERE t.id>${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null
+    order by t.id asc limit 1;
     `; // WHERE t.id=XXXXXX
     const res = await currentProdDbClient.query(query);
+    // closing pg connections
+    currentProdDbClient.closeConnections();
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
-    console.log(`Raw Txs: ${JSON.stringify(res.rows, null,2)}`);
-    const rawTransaction = res.rows[0];
-    console.log(`raw transaction: ${JSON.stringify(rawTransaction, null,2)}`);
-    return this.sendToQueue(rawTransaction);
+      const rawTransactions = res.rows;
+      // console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
+    await Promise.map(rawTransactions, (transaction) => {
+      this.sendToQueue(transaction, channel);
+    });
+    
+    return true;
+
+  }
+
+  timeout(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async run() {
@@ -107,7 +118,7 @@ export class QueueStatefulMigration {
       console.log('migrating one more row...');
       await this.sendSingleTransactionToQueue();
       console.log('tx sent to queue...');
-      setTimeout(this.run.bind(this), 500);
+      setTimeout(this.run.bind(this), 100);
     } catch (error) {
       console.error(error);
       process.exit(1);
