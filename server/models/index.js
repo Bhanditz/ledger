@@ -9,6 +9,12 @@ export default class Database {
       this.sequelize = new Sequelize(config.database.database, config.database.username, config.database.password, {
         dialect: config.database.dialect,
         logging: false,
+        pool: {
+          max: 100,
+          min: 0,
+          acquire: 30000,
+          idle: 10000,
+        },
       });
     }
     if (!this.models) {
