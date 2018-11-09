@@ -24,10 +24,9 @@ export default class TransactionsWorker {
     const q = await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
-      let incomingTransaction = null;
       try {
         this.logger.info(` [x] ${msg.fields.routingKey}:'${msg.content.toString()}'`);
-        incomingTransaction = JSON.parse(msg.content);
+        const incomingTransaction = JSON.parse(msg.content);
         const parsedTransactions = await this.transactionService.parseAndInsertTransaction(incomingTransaction);
         this.logger.info(`Transaction Parsed and inserted successfully,
           list of generated transactions: ${JSON.stringify(parsedTransactions, null, 2)}`);
@@ -38,7 +37,6 @@ export default class TransactionsWorker {
         //   this.logger.warn('Resending transaction to queue...');
         //   this.sendToQueue(channel, incomingTransaction);
         // }
-
       }
     }, { noAck: true });
   }
