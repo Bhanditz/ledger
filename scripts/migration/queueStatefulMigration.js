@@ -90,9 +90,9 @@ export class QueueStatefulMigration {
     left join "Collectives" ofc on o."FromCollectiveId"=ofc.id
     left join "PaymentMethods" opm on o."PaymentMethodId"=opm.id
     left join "Collectives" opmc on opm."CollectiveId"=opmc.id
-    WHERE t.id>${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null
-    order by t.id asc limit 1;
-    `; // WHERE t.id=XXXXXX
+    WHERE t.id>${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null 
+    order by t.id asc limit 100;
+    `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
     // closing pg connections
     currentProdDbClient.closeConnections();
@@ -102,9 +102,9 @@ export class QueueStatefulMigration {
       const rawTransactions = res.rows;
       // console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
     await Promise.map(rawTransactions, (transaction) => {
-      this.sendToQueue(transaction, channel);
+      return this.sendToQueue(transaction, channel);
     });
-    
+    setTimeout(() => conn.close(), 250);
     return true;
 
   }
