@@ -1,52 +1,28 @@
-import TransactionService from '../services/transactionService';
-import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
 import LedgerTransaction from '../models/LedgerTransaction';
 
 export default class TransactionRefundStrategy {
-
-    constructor(refundTransactionId) {
-    this.refundTransactionId = refundTransactionId;
-    this.service = new TransactionService();
+  constructor(transaction, auxStrategy) {
+    this.transaction = transaction;
+    this.auxStrategy = auxStrategy;
   }
 
-  async getTransactions() { // getTransactionsWithToAccountConvertingCurrency
-    // Problem because credit transactions point to debit transactions on refund
-    // and we only look for credit transactions
-    const legacyRefundTransaction = LedgerTransaction.findOne({
+  async getTransactions() {
+    const transactions = await this.auxStrategy.getTransactions()
+    .map( async (ledgerTransaction) => {
+      // when a refund is made, the RefundTransactionId of a CREDIT transaction
+      // corresponds to the id of the original correlated DEBIT transaction
+      const refundTransaction = await LedgerTransaction.findOne({
+        attributes: ['id'],
         where: {
-            LegacyTransactionId: this.refundTransactionId,
+          LegacyDebitTransactionId: this.transaction.RefundTransactionId,
+          type: ledgerTransaction.type,
+          category: ledgerTransaction.category,
         },
+      });
+      ledgerTransaction.RefundTransactionId = refundTransaction.id;
+      ledgerTransaction.category = `REFUND: ${ledgerTransaction.category}`;
+      return ledgerTransaction;
     });
-    if (!legacyRefundTransaction) {
-        throw Error('Refund transaction did not match any previous transaction');
-    }
-    const transactions = await LedgerTransaction.findAll(legacyRefundTransaction.transactionGroupId);
-    if (!transactions || transactions.length <= 0) {
-        throw Error('Refund transaction did not match any previous transaction');
-    }
-    const refundTransactions =  transactions.map( transaction => {
-        const type = transaction.type === transactionTypeEnum.DEBIT ?
-            transactionTypeEnum.CREDIT :
-            transactionTypeEnum.DEBIT;
-        return {
-              type: type,
-              FromAccountId: transaction.ToAccountId,
-              FromWalletId: transaction.ToWalletId,
-              ToAccountId: transaction.FromAccountId,
-              ToWalletId: transaction.FromWalletId,
-              amount: transaction.amount * -1,
-              currency: transaction.currency,
-              transactionGroupId: transaction.transactionGroupId,
-              doubleEntryGroupId: transaction.doubleEntryGroupId,
-              category: `REFUND: ${transaction.category}`,
-              forexRate: transaction.forexRate,
-              forexRateSourceCoin: transaction.forexRateSourceCoin,
-              forexRateDestinationCoin: transaction.forexRateDestinationCoin,
-              LegacyTransactionId: this.refundTransactionId,
-              RefundTransactionId: transaction.id,
-        };
-    });
-    return refundTransactions;
+    return transactions;
   }
-
 }
