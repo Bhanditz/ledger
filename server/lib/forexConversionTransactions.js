@@ -43,7 +43,9 @@ export default class ForexConversionTransactions {
       forexRateSourceCoin: this.transaction.forexRateSourceCoin,
       forexRateDestinationCoin: this.transaction.forexRateDestinationCoin,
       transactionGroupId: this.transaction.transactionGroupId,
-      LegacyTransactionId: this.transaction.LegacyTransactionId,
+      LegacyCreditTransactionId: this.transaction.LegacyCreditTransactionId,
+      LegacyDebitTransactionId: this.transaction.LegacyDebitTransactionId,
+      description: this.transaction.description,
     };
     return this.transactionLib.getDoubleEntryArray(conversionTransaction);
   }

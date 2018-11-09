@@ -29,9 +29,11 @@ export default class TransactionLib {
       forexRate: transaction.forexRate,
       forexRateSourceCoin: transaction.forexRateSourceCoin,
       forexRateDestinationCoin: transaction.forexRateDestinationCoin,
-      LegacyTransactionId: transaction.LegacyTransactionId,
+      LegacyCreditTransactionId: transaction.LegacyCreditTransactionId,
+      LegacyDebitTransactionId: transaction.LegacyDebitTransactionId,
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
+      description: transaction.description,
     };
     const creditTransaction = {
       type: transactionTypeEnum.CREDIT,
@@ -45,9 +47,11 @@ export default class TransactionLib {
       forexRate: transaction.forexRate,
       forexRateSourceCoin: transaction.forexRateSourceCoin,
       forexRateDestinationCoin: transaction.forexRateDestinationCoin,
-      LegacyTransactionId: transaction.LegacyTransactionId,
+      LegacyCreditTransactionId: transaction.LegacyCreditTransactionId,
+      LegacyDebitTransactionId: transaction.LegacyDebitTransactionId,
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
+      description: transaction.description,
     };
     return [debitTransaction, creditTransaction];
   }

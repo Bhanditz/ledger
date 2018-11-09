@@ -56,7 +56,9 @@ export default class AbstractFeeTransactions {
       currency: currency,
       category: this.category,
       transactionGroupId: this.transaction.transactionGroupId,
-      LegacyTransactionId: this.transaction.LegacyTransactionId,
+      LegacyCreditTransactionId: this.transaction.LegacyCreditTransactionId,
+      LegacyDebitTransactionId: this.transaction.LegacyDebitTransactionId,
+      description: this.transaction.description,
     };
     return this.transactionLib.getDoubleEntryArray(feeTransaction);
   }
