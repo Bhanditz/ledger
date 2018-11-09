@@ -2,6 +2,7 @@ import amqp from 'amqplib';
 import config from '../../config/config';
 import Logger from '../globals/logger';
 import TransactionService from '../services/transactionService';
+import Database from '../models';
 
 export default class TransactionsWorker {
 
@@ -19,6 +20,10 @@ export default class TransactionsWorker {
   * @return {void}
   */
   async consume() {
+    // getting db pools and connections
+    const ledgerDatabase = new Database();
+    const pool = ledgerDatabase.sequelize.connectionManager.pool;
+    // connecting to queue server
     const conn = await amqp.connect(config.queue.url);
     const channel = await conn.createChannel();
     const q = await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
@@ -37,6 +42,10 @@ export default class TransactionsWorker {
         //   this.logger.warn('Resending transaction to queue...');
         //   this.sendToQueue(channel, incomingTransaction);
         // }
+      } finally {
+        // releasing pool size
+        pool.drain();
+        pool.clear();
       }
     }, { noAck: true });
   }
