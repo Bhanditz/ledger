@@ -6,8 +6,8 @@ import config from '../../config/config';
 import Promise from 'bluebird';
 
 /*
-Backward migration, starts inserting by looking at the max id of the current prod's transaction table
-and then insert on the ledger(keeping state through the ledger's transaction field "LegacyTransactionId")
+Migration, starts inserting by looking at the min id of the current prod's transaction table
+and then insert on the ledger(keeping state through the ledger's transaction fields "LegacyCreditTransactionId" and "LegacyDebitTransactionId")
 Use Cases that migration is NOT working at the moment:
   1. PaymentMethodId is null
     - select * from "Transactions" t WHERE "PaymentMethodId" is null;
@@ -28,7 +28,7 @@ export class QueueStatefulMigration {
 
   async getLatestLegacyIdFromLedger() {
     const ledgerDatabase = new Database();
-    const max = await LedgerTransaction.max('LegacyTransactionId');
+    const max = await LedgerTransaction.max('LegacyCreditTransactionId');
     const pool = ledgerDatabase.sequelize.connectionManager.pool;
     const connection = await pool.acquire();
     await pool.release(connection);
@@ -53,54 +53,55 @@ export class QueueStatefulMigration {
     const channel = await conn.createChannel();
     const legacyId = await this.getLatestLegacyIdFromLedger();
     console.log(`legacyId: ${legacyId}`);
-    const query = ` select 
-    t.id, t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
-    t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
-    t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", t."RefundTransactionId",
-    f.slug as "fromCollectiveSlug",
-    c.slug as "collectiveSlug",
-    h.slug as "hostCollectiveSlug",
-    p.service as "paymentMethodService", 
-    p.type as "paymentMethodType",
-    pmc.id as "paymentMethodCollectiveId",
-    pmc.slug as "paymentMethodCollectiveSlug",
-    ofc.id as "orderFromCollectiveId", 
-    ofc.slug as "orderFromCollectiveSlug",
-    opm.service as "orderPaymentMethodService",
-    opm.type as "orderPaymentMethodType",
-    opmc.id as "orderPaymentMethodCollectiveId",
-    opmc.slug as "orderPaymentMethodCollectiveSlug",
-    e."UserId" as "expenseUserId", 
-    e."CollectiveId" as "expenseCollectiveId", 
-    e."payoutMethod" as "expensePayoutMethod",
-    ec.slug as "expenseCollectiveSlug",
-    eu."paypalEmail" as "expenseUserPaypalEmail",
-    euc.slug as "expenseUserCollectiveSlug"
-    from "Transactions" t 
-    left join "Collectives" f on t."FromCollectiveId" =f.id
-    left join "Collectives" c on t."CollectiveId" =c.id
-    left join "Collectives" h on t."HostCollectiveId" =h.id
-    left join "PaymentMethods" p on t."PaymentMethodId"=p.id
-    left join "Collectives" pmc on p."CollectiveId" =pmc.id
-    left join "Expenses" e on t."ExpenseId" =e.id
-    left join "Collectives" ec on e."CollectiveId"=ec.id
-    left join "Users" eu on e."UserId"=eu.id
-    left join "Collectives" euc on eu."CollectiveId"=euc.id
-    left join "Orders" o on t."OrderId"=o.id
-    left join "Collectives" ofc on o."FromCollectiveId"=ofc.id
-    left join "PaymentMethods" opm on o."PaymentMethodId"=opm.id
-    left join "Collectives" opmc on opm."CollectiveId"=opmc.id
-    WHERE t.id>${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null 
-    order by t.id asc limit 100;
+    const query = ` SELECT
+      t.id, td.id as "debitId",t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
+      t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
+      t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", t."RefundTransactionId",
+      f.slug as "fromCollectiveSlug",
+      c.slug as "collectiveSlug",
+      h.slug as "hostCollectiveSlug",
+      p.service as "paymentMethodService",
+      p.type as "paymentMethodType",
+      pmc.id as "paymentMethodCollectiveId",
+      pmc.slug as "paymentMethodCollectiveSlug",
+      ofc.id as "orderFromCollectiveId",
+      ofc.slug as "orderFromCollectiveSlug",
+      opm.service as "orderPaymentMethodService",
+      opm.type as "orderPaymentMethodType",
+      opmc.id as "orderPaymentMethodCollectiveId",
+      opmc.slug as "orderPaymentMethodCollectiveSlug",
+      e."UserId" as "expenseUserId",
+      e."CollectiveId" as "expenseCollectiveId",
+      e."payoutMethod" as "expensePayoutMethod",
+      ec.slug as "expenseCollectiveSlug",
+      eu."paypalEmail" as "expenseUserPaypalEmail",
+      euc.slug as "expenseUserCollectiveSlug"
+      FROM "Transactions" t
+      LEFT JOIN "Collectives" f on t."FromCollectiveId" =f.id and f."deletedAt" is null
+      LEFT JOIN "Collectives" c on t."CollectiveId" =c.id and c."deletedAt" is null
+      LEFT JOIN "Collectives" h on t."HostCollectiveId" =h.id and h."deletedAt" is null
+      LEFT JOIN "PaymentMethods" p on t."PaymentMethodId"=p.id and p."deletedAt" is null
+      LEFT JOIN "Collectives" pmc on p."CollectiveId" =pmc.id and pmc."deletedAt" is null
+      LEFT JOIN "Expenses" e on t."ExpenseId" =e.id and e."deletedAt" is null
+      LEFT JOIN "Collectives" ec on e."CollectiveId"=ec.id and ec."deletedAt" is null
+      LEFT JOIN "Users" eu on e."UserId"=eu.id and eu."deletedAt" is null
+      LEFT JOIN "Collectives" euc on eu."CollectiveId"=euc.id and euc."deletedAt" is null
+      LEFT JOIN "Orders" o on t."OrderId"=o.id and o."deletedAt" is null
+      LEFT JOIN "Collectives" ofc on o."FromCollectiveId"=ofc.id and ofc."deletedAt" is null
+      LEFT JOIN "PaymentMethods" opm on o."PaymentMethodId"=opm.id and opm."deletedAt" is null
+      LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
+      LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
+      WHERE t.id>${legacyId} and t.type=\'CREDIT\' and t."deletedAt" is null
+      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 1};
     `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
     // closing pg connections
-    currentProdDbClient.closeConnections();
+    await currentProdDbClient.closeConnections();
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
-      const rawTransactions = res.rows;
-      // console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
+    const rawTransactions = res.rows;
+    console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
     await Promise.map(rawTransactions, (transaction) => {
       return this.sendToQueue(transaction, channel);
     });
