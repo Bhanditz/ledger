@@ -551,7 +551,7 @@ select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodI
 select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT' and t."deletedAt" is null;
 
 -- Mapping
- select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWallet    ", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWallet    ", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWallet", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWallet", t.id as "LegacyTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
+ select t."FromCollectiveId" as "FromAccountId", t."FromCollectiveId" || '_' || t."PaymentMethodId" as "FromWallet    ", t."CollectiveId" as "ToAccountId", t."CollectiveId" || '_Wallet' as "ToWallet    ", t.amount, t.currency, t."amountInHostCurrency" as "destinationAmount", t."hostCurrency" as "destinationCurrency", t."hostFeeInHostCurrency" as "walletProviderFee", t."HostCollectiveId" as "WalletProviderAccountId", t."HostCollectiveId" || '_' || t."PaymentMethodId" as "WalletProviderWallet", t."platformFeeInHostCurrency" as "platformFee", t."paymentProcessorFeeInHostCurrency" as "paymentProviderFee", p.service as "PaymentProviderAccountId", p.service as "PaymentProviderWallet", t.id as "LegacyCreditTransactionId" from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE "TransactionGroup"='4495b880-1d9c-4e16-8980-e1280ccb3139' and t.type='CREDIT';
 
 ```
 
@@ -559,7 +559,7 @@ select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodI
 
 This is going to be a list of problems, approaches and **real** use cases found along the migration.
 
-The current stateful migration is under the `scripts/migration/statefulMigration.js`. It keeps the state through the `LegacyTransactionId` field stored in the ledger transactions.
+The current stateful migration is under the `scripts/migration/statefulMigration.js`. It keeps the state through the `LegacyCreditTransactionId` and `LegacyDebitTransactionId` field stored in the ledger transactions.
 
 you can run the migration by installing [babel-node](https://github.com/babel/babel/tree/master/packages/babel-node) and running:
 
@@ -615,7 +615,8 @@ We can map this query to the following ledger transaction endpoint payload:
     AccountId: transaction.pmService,
     OwnerAccountId: transaction.pmService,
   },
-  LegacyTransactionId: transaction.id,
+  LegacyCreditTransactionId: transaction.id,
+  LegacyDebitTransactionId: transaction.debitId,
 }
 ```
 
@@ -632,14 +633,15 @@ Fields that deserve more attention:
         - example 1: marco sends 30 USD to webpack(USD collective, USD host). `hostCurrency` is the same as `currency`, `hostCurrencyFxRate` is 1.
         - example 2: marco sends 30 USD to weco(USD collective, EUR host). `hostCurrency`(EUR) is different than `currency`(USD), `hostCurrencyFxRate` will then convert the fees from **EUR** to **USD** to send to the ledger. 
      - We will be looking only for CREDIT transactions(DEBIT is just the same transaction but represented as the opposite, due to the double entry system) and the fees are negatives, so we need to multiply by -1 to send values higher than zero. 
- - `LegacyTransactionId` - current production `Transactions` table id, this will be a temporary field to support the migration period keeping a state of the records that were already saved
+ - `LegacyCreditTransactionId` - current production `Transactions` of type `CREDIT` table id, this will be a temporary field to support the migration period keeping a state of the records that were already saved
+ - `LegacyDebitTransactionId` - - current production `Transactions` of type `DEBIT` table id, this will be a temporary field to support the migration period keeping a state of the records that were already saved
 
 ### Cases that the migration is not working
 
 1. PaymentMethodId is **NULL**
 2. PaymentMethods table has service defined but does NOT have type defined (example: payment method has service **stripe** but its type is **NULL**(instead of for example **creditcard**))
-3. FromCollectiveId is **NULL**(first case found in `LegacyTransactionId` **100784**)
-4. HostCollectiveId is **NULL** and/or hostCurrency is **NULL**(first case found `LegacyTransactionId` **99531**)
+3. FromCollectiveId is **NULL**(first case found in `LegacyCreditTransactionId` **100784**)
+4. HostCollectiveId is **NULL** and/or hostCurrency is **NULL**(first case found `LegacyCreditTransactionId` **99531**)
 5. WWcodeBerlin example: collective is EUR, host is USD, collective pays the fees but collective pays it in USD even though it's a host
 
 #### 5th case: Collective is EUR, host is USD. Collective pays fees in USD even though it's not a USD Collective
@@ -675,54 +677,54 @@ In the current prod DB, we need a Query to find all currencies that have both cu
 select distinct(currency) from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null;
 select * from "Transactions" where currency='GBP' and "hostCurrency"='GBP' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126856
     select * from "Transactions" where id=126856; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126856; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126864
     select * from "Transactions" where id=126864; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126864; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864; 
 select * from "Transactions" where currency='AUD' and "hostCurrency"='AUD' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 121964
     select * from "Transactions" where id=121964; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=121964; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=121964; 
 select * from "Transactions" where currency='EUR' and "hostCurrency"='EUR' and type='CREDIT' and "deletedAt" is null order by id desc;  -- id 126808
     select * from "Transactions" where id=126808;
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 select * from "Transactions" where currency='MXN' and "hostCurrency"='MXN' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126392
     select * from "Transactions" where id=126392; 
-	  select * from "LedgerTransactions" where "LegacyTransactionId"=126392; 
+	  select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126392; 
 ```
 
 - GBP
 
 ```sql
 select * from "Transactions" where id=126856; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126856; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856; 
 ```
 
 - USD
 
 ```sql
 select * from "Transactions" where id=126864; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126864; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864; 
 ```
 
 - AUD
 
 ```sql
 select * from "Transactions" where id=121964; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=121964; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=121964; 
 ```
 
 - EUR
 
 ```sql
 select * from "Transactions" where id=126808; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 ```
 
 - MXN
 
 ```sql
 select * from "Transactions" where id=126392; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126392; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126392; 
 ```
 
 #### All combinations of fees
@@ -734,7 +736,7 @@ select * from "LedgerTransactions" where "LegacyTransactionId"=126392;
 -- With all fees: `hostFeeInHostCurrency`, `platformFeeInHostCurrency`, `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126864
     select * from "Transactions" where id=126864; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126864;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864;
 ```
 
 - With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
@@ -743,7 +745,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 125586
     select * from "Transactions" where id=126256; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126256;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126256;
 ```
 
 - With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
@@ -752,7 +754,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency"=0) and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 108954
     select * from "Transactions" where id=108954; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=108954;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=108954;
 ```
 
 - With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
@@ -761,7 +763,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126856
     select * from "Transactions" where id=126856; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126856;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856;
 ```
 
 - With only `hostFeeInHostCurrency`
@@ -770,7 +772,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 107266
     select * from "Transactions" where id=107266; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=107266;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=107266;
 ```
 
 - With only `platformFeeInHostCurrency`
@@ -779,7 +781,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 99667
     select * from "Transactions" where id=99667; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99667;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99667;
 ```
 
 - With only `paymentProcessorFeeInHostCurrency`
@@ -788,7 +790,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 
     select * from "Transactions" where id=126766; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126766;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126766;
 ```
 
 - With no fees
@@ -797,7 +799,7 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With no fees
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126808
     select * from "Transactions" where id=126808; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 ```
 
 - With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
@@ -808,7 +810,7 @@ Case where the Ledger is NOT COMPLIANT at the moment, generating wrong transacti
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=126592; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126592; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126592; 
 ```
 
 - All Queries used on the fee combinations:
@@ -818,39 +820,39 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 -- With all fees: `hostFeeInHostCurrency`, `platformFeeInHostCurrency`, `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126864
     select * from "Transactions" where id=126864; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126864;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864;
 -- With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 125586
     select * from "Transactions" where id=126256; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126256;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126256;
 -- With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency"=0) and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 108954
     select * from "Transactions" where id=108954; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=108954;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=108954;
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126856
     select * from "Transactions" where id=126856; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126856;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856;
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 107266
     select * from "Transactions" where id=107266; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=107266;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=107266;
 -- With only `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 99667
     select * from "Transactions" where id=99667; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99667;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99667;
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 
     select * from "Transactions" where id=126766; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126766;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126766;
 -- With no fees
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126808
     select * from "Transactions" where id=126808; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=126592; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126592; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126592; 
 ```
 
 ### Forex Transactions
@@ -861,134 +863,134 @@ select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and
 select distinct(currency, "hostCurrency") from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null;
 select * from "Transactions" where currency='AUD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 115214
     select * from "Transactions" where id=115214; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=115214; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=115214; 
 select * from "Transactions" where currency='CAD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 124466
     select * from "Transactions" where id=124466; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=124466; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124466; 
 select * from "Transactions" where currency='EUR' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 125502
     select * from "Transactions" where id=125502; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125502; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125502; 
 select * from "Transactions" where currency='GBP' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126404
     select * from "Transactions" where id=126404; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 select * from "Transactions" where currency='INR' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 99099
     select * from "Transactions" where id=99099; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99099; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99099; 
 select * from "Transactions" where currency='JPY' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 98944
     select * from "Transactions" where id=98944; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=98944; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=98944; 
 select * from "Transactions" where currency='MXN' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126336
     select * from "Transactions" where id=126336; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126336; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126336; 
 select * from "Transactions" where currency='NZD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 116622
     select * from "Transactions" where id=116622; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=116622; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=116622; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='AUD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126292
     select * from "Transactions" where id=126292; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126292; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126292; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='EUR' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126322
     select * from "Transactions" where id=126322; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126322; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126322; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='GBP' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126860
     select * from "Transactions" where id=126860; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126860; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='NZD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 123317
     select * from "Transactions" where id=123317; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=123317; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=123317; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='UYU' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 99519
     select * from "Transactions" where id=99519; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99519; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99519; 
 ```
 
 - (AUD,USD)
 
 ```sql
 select * from "Transactions" where id=115214; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=115214; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=115214; 
 ```
 
 - (CAD,USD)
 
 ```sql
 select * from "Transactions" where id=124466; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=124466; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124466; 
 ```
 
 - (EUR,USD)
 
 ```sql
 select * from "Transactions" where id=125502; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=125502; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125502; 
 ```
 
 - (GBP,USD)
 
 ```sql
 select * from "Transactions" where id=126404; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 ```
 
 - (INR,USD)
 
 ```sql
 select * from "Transactions" where id=99099; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=99099; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99099; 
 ```
 
 - (JPY,USD)
 
 ```sql
 select * from "Transactions" where id=98944; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=98944; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=98944; 
 ```
 
 - (MXN,USD)
 
 ```sql
 select * from "Transactions" where id=126336; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126336;
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126336;
 ```
 
 - (NZD,USD)
 
 ```sql
 select * from "Transactions" where id=116622; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=116622;
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=116622;
 ```
 
 - (USD,AUD)
 
 ```sql
 select * from "Transactions" where id=126292; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126292; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126292; 
 ```
 
 - (USD,EUR)
 
 ```sql
 select * from "Transactions" where id=126322; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126322;
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126322;
 ```
 
 - (USD,GBP)
 
 ```sql
 select * from "Transactions" where id=126860; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=126860;
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860;
 ```
 
 - (USD,NZD)
 
 ```sql
 select * from "Transactions" where id=123317; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=123317; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=123317; 
 ```
 
 - (USD,UYU)
 
 ```sql
 select * from "Transactions" where id=99519; 
-select * from "LedgerTransactions" where "LegacyTransactionId"=99519; 
+select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99519; 
 ```
 
 #### All combinations of fees
@@ -1001,7 +1003,7 @@ Case not found with the following query:
 -- With all fees: `hostFeeInHostCurrency`, `platformFeeInHostCurrency`, `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126482
 	select * from "Transactions" where id=126482; 
-  select * from "LedgerTransactions" where "LegacyTransactionId"=126482;
+  select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126482;
 ```
 
 - With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
@@ -1028,7 +1030,7 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126860
     select * from "Transactions" where id=126860; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126860;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860;
 ```
 
 - With only `hostFeeInHostCurrency`
@@ -1037,7 +1039,7 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 125962
     select * from "Transactions" where id=125962; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125962;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125962;
 ```
 
 - With only `platformFeeInHostCurrency`
@@ -1055,7 +1057,7 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id
     select * from "Transactions" where id=125552; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125552;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125552;
 ```
 
 - With no fees
@@ -1064,7 +1066,7 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With no fees
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126404
     select * from "Transactions" where id=126404; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 ```
 
 - With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
@@ -1075,7 +1077,7 @@ Case where the Ledger is NOT COMPLIANT at the moment, generating wrong transacti
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=124964; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=124964; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124964; 
 ```
 
 - All Queries used on the fee combinations:
@@ -1085,7 +1087,7 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With all fees: `hostFeeInHostCurrency`, `platformFeeInHostCurrency`, `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126482
 	select * from "Transactions" where id=126482; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126482;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126482;
 -- With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- NO RESULT
 -- With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
@@ -1093,25 +1095,25 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126860
     select * from "Transactions" where id=126860; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126860;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860;
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 125962
     select * from "Transactions" where id=125962; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125962;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125962;
 -- With only `platformFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- NO RESULT
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id
     select * from "Transactions" where id=125552; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125552;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125552;
 -- With no fees
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126404
     select * from "Transactions" where id=126404; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=124964; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=124964; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124964; 
 ```
 
 ### All queries together
@@ -1123,107 +1125,107 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 select distinct(currency) from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null;
 select * from "Transactions" where currency='GBP' and "hostCurrency"='GBP' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126856
     select * from "Transactions" where id=126856; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126856; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126864
     select * from "Transactions" where id=126864; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126864; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864; 
 select * from "Transactions" where currency='AUD' and "hostCurrency"='AUD' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 121964
     select * from "Transactions" where id=121964; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=121964; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=121964; 
 select * from "Transactions" where currency='EUR' and "hostCurrency"='EUR' and type='CREDIT' and "deletedAt" is null order by id desc;  -- id 126808
     select * from "Transactions" where id=126808;
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 select * from "Transactions" where currency='MXN' and "hostCurrency"='MXN' and type='CREDIT' and "deletedAt" is null order by id desc; -- id 126392
     select * from "Transactions" where id=126392; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126392; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126392; 
 
 -- Same currency txs
 -- all fees combinations
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126864
     select * from "Transactions" where id=126864; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126864;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126864;
 -- With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 125586
     select * from "Transactions" where id=126256; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126256;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126256;
 -- With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency"=0) and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 108954
     select * from "Transactions" where id=108954; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=108954;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=108954;
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126856
     select * from "Transactions" where id=126856; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126856;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126856;
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 107266
     select * from "Transactions" where id=107266; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=107266;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=107266;
 -- With only `platformFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 99667
     select * from "Transactions" where id=99667; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99667;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99667;
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 
     select * from "Transactions" where id=126766; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126766;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126766;
 -- With no fees
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126808
     select * from "Transactions" where id=126808; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126808; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126808; 
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=126592; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126592; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126592; 
 
 -- Forex transactions
 -- all currencies combinations
 select distinct(currency, "hostCurrency") from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null;
 select * from "Transactions" where currency='AUD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 115214
     select * from "Transactions" where id=115214; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=115214; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=115214; 
 select * from "Transactions" where currency='CAD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 124466
     select * from "Transactions" where id=124466; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=124466; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124466; 
 select * from "Transactions" where currency='EUR' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 125502
     select * from "Transactions" where id=125502; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125502; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125502; 
 select * from "Transactions" where currency='GBP' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126404
     select * from "Transactions" where id=126404; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 select * from "Transactions" where currency='INR' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 99099
     select * from "Transactions" where id=99099; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99099; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99099; 
 select * from "Transactions" where currency='JPY' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 98944
     select * from "Transactions" where id=98944; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=98944; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=98944; 
 select * from "Transactions" where currency='MXN' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126336
     select * from "Transactions" where id=126336; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126336; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126336; 
 select * from "Transactions" where currency='NZD' and "hostCurrency"='USD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 116622
     select * from "Transactions" where id=116622; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=116622; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=116622; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='AUD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126292
     select * from "Transactions" where id=126292; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126292; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126292; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='EUR' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126322
     select * from "Transactions" where id=126322; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126322; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126322; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='GBP' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 126860
     select * from "Transactions" where id=126860; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126860; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='NZD' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 123317
     select * from "Transactions" where id=123317; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=123317; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=123317; 
 select * from "Transactions" where currency='USD' and "hostCurrency"='UYU' and type='CREDIT' and "deletedAt" is null order by id desc; -- first id that this kind of transaction shows up: 99519
     select * from "Transactions" where id=99519; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=99519; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=99519; 
 
 
 -- Forex transactions
 -- all fees combinations
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- first id 126482
   select * from "Transactions" where id=126482; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126482;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126482;
 -- With only `hostFeeInHostCurrency` and `platformFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and "hostFeeInHostCurrency" < 0  order by id desc; -- NO RESULT
 -- With only `hostFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
@@ -1231,24 +1233,24 @@ select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' an
 -- With only `platformFeeInHostCurrency` and `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency" < 0 and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126860
     select * from "Transactions" where id=126860; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126860;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126860;
 -- With only `hostFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and "hostFeeInHostCurrency" < 0  order by id desc;  -- first id 125962
     select * from "Transactions" where id=125962; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125962;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125962;
 -- With only `platformFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency"=0) and "platformFeeInHostCurrency" < 0 and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- NO RESULT
 -- With only `paymentProcessorFeeInHostCurrency`
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and "paymentProcessorFeeInHostCurrency"< 0 and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id
     select * from "Transactions" where id=125552; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=125552;
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=125552;
 -- With no fees
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" is null or "paymentProcessorFeeInHostCurrency" = 0) and ("platformFeeInHostCurrency" is null or "platformFeeInHostCurrency" = 0) and ("hostFeeInHostCurrency" is null or "hostFeeInHostCurrency" = 0)  order by id desc; -- first id 126404
     select * from "Transactions" where id=126404; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=126404; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=126404; 
 -- With Positive fees(fees are usually negative but they can be positive in some cases like refunds)
 select * from "Transactions" where currency!="hostCurrency" and type='CREDIT' and "deletedAt" is null and ("paymentProcessorFeeInHostCurrency" > 0 or "platformFeeInHostCurrency" > 0 or "hostFeeInHostCurrency" > 0)  order by id desc; -- first id 124964
     select * from "Transactions" where id=124964; 
-    select * from "LedgerTransactions" where "LegacyTransactionId"=124964; 
+    select * from "LedgerTransactions" where "LegacyCreditTransactionId"=124964; 
 
 ```
