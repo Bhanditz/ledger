@@ -42,18 +42,27 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Object} strategy - Return defined Strategy Class Object
   */
   async _defineTransactionStrategy(transaction) {
-    if (transaction.RefundTransactionId) {
-      return new TransactionRefundStrategy(transaction);
-    }
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
-      return new TransactionRegularStrategy(transaction);
+      const strategy = new TransactionRegularStrategy(transaction);
+      // Check whether it's a REFUND transaction
+      if (transaction.RefundTransactionId && transaction.id && transaction.RefundTransactionId &&
+        transaction.id > transaction.RefundTransactionId ) {
+        return new TransactionRefundStrategy(transaction, strategy);
+      }
+      return strategy;
     }
-    return new TransactionForexStrategy(transaction);
+    const strategy = new TransactionForexStrategy(transaction);
+    // Check whether the forex Transaction is also a REFUND transaction
+    if (transaction.RefundTransactionId && transaction.id && transaction.RefundTransactionId &&
+      transaction.id > transaction.RefundTransactionId ) {
+      return new TransactionRefundStrategy(transaction, strategy);
+    }
+    return strategy;
   }
 
   /**
-   * Parse incoming transaction to be formatted as a Ledger transaction 
+   * Parse incoming transaction to be formatted as a Ledger transaction
    * and then insert transaction into ledger database
    * @param {Object} transaction - Object base on the current Transaction model(https://github.com/opencollective/opencollective-api/blob/master/server/models/Transaction.js)
    */
@@ -86,10 +95,12 @@ export default class TransactionService extends AbstractCrudService {
         walletProviderFee: hostFeeInHostCurrency,
         platformFee: platformFeeInHostCurrency,
         paymentProviderFee: paymentProcessorFeeInHostCurrency,
-        LegacyTransactionId: transaction.id,
+        LegacyCreditTransactionId: transaction.id,
+        LegacyDebitTransactionId: transaction.debitId,
         forexRate: transaction.hostCurrencyFxRate,
         forexRateSourceCoin: transaction.currency,
         forexRateDestinationCoin: transaction.hostCurrency,
+        description: transaction.description,
       };
       // setting toWallet
       ledgerTransaction.toWallet = {
