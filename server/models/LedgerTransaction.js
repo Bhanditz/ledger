@@ -40,6 +40,9 @@ export default class LedgerTransaction extends Sequelize.Model {
       currency: {
         type: Sequelize.STRING,
       },
+      description: {
+        type: Sequelize.STRING,
+      },
       transactionGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -63,7 +66,10 @@ export default class LedgerTransaction extends Sequelize.Model {
       forexRateDestinationCoin: {
         type: Sequelize.STRING,
       },
-      LegacyTransactionId: {
+      LegacyCreditTransactionId: {
+        type: Sequelize.INTEGER,
+      },
+      LegacyDebitTransactionId: {
         type: Sequelize.INTEGER,
       },
       RefundTransactionId: {

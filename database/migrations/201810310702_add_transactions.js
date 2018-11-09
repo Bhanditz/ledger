@@ -37,6 +37,9 @@ module.exports = {
       currency: {
         type: Sequelize.STRING,
       },
+      description: {
+        type: Sequelize.STRING,
+      },
       transactionGroupId: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -60,7 +63,10 @@ module.exports = {
       forexRateDestinationCoin: {
         type: Sequelize.STRING,
       },
-      LegacyTransactionId: {
+      LegacyCreditTransactionId: {
+        type: Sequelize.INTEGER,
+      },
+      LegacyDebitTransactionId: {
         type: Sequelize.INTEGER,
       },
       RefundTransactionId: {
@@ -81,13 +87,13 @@ module.exports = {
     { 
       timestamps: true 
     }).then( () => {
-      return queryInterface.addConstraint('LedgerTransactions', ['transactionGroupSequence', 'LegacyTransactionId'], {
+      return queryInterface.addConstraint('LedgerTransactions', ['transactionGroupSequence', 'LegacyCreditTransactionId'], {
         type: 'unique',
         name: 'ledger_transactions_constraint_uniq'
       });
     }).then( () => {
       return queryInterface.addIndex('LedgerTransactions', {
-        fields: ['transactionGroupId', 'LegacyTransactionId'],
+        fields: ['transactionGroupId', 'LegacyCreditTransactionId'],
         name: 'ledger_tx_idx_group_legacytx'
       });
     });
