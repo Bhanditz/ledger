@@ -26,14 +26,14 @@ describe('Account to Account(same currency) transactions', () => {
       // first sends money from Credit Card Wallet to USD Wallet
       const transaction = {
         FromAccountId: 'bob',
-        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob' },
         ToAccountId: 'alice',
-        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost' },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
         WalletProviderAccountId: 'opencollectiveHost',
-        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost', },
+        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost' },
       };
       const cashinResult = await transactionService.insert(transaction);
 
@@ -196,9 +196,9 @@ describe('Account to Account(same currency) transactions', () => {
       // first sends money from Credit Card Wallet to USD Wallet
       const transaction = {
         FromAccountId: 'bob',
-        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob' },
         ToAccountId: 'alice',
-        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost' },
         amount: 1500,
         currency: 'USD',
         platformFee: 200,
@@ -430,14 +430,14 @@ describe('Account to Account(same currency) transactions', () => {
       // first sends money from Credit Card Wallet to USD Wallet
       const originalTransaction = {
         FromAccountId: 'bob',
-        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob' },
         ToAccountId: 'alice',
-        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost' },
         amount: 1500,
         currency: 'USD',
         walletProviderFee: 100,
         WalletProviderAccountId: 'opencollectiveHost',
-        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost', },
+        walletProviderWallet: { name: 'opencollectiveHostWallet', AccountId: 'opencollectiveHost', OwnerAccountId: 'opencollectiveHost' },
         senderPayFees: true,
       };
       const transaction = { ...originalTransaction };
@@ -609,9 +609,9 @@ describe('Account to Account(same currency) transactions', () => {
       // first sends money from Credit Card Wallet to USD Wallet
       const originalTransaction = {
         FromAccountId: 'bob',
-        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob', },
+        fromWallet: { name: 'bobUSDWallet', currency: 'USD', AccountId: 'bob', OwnerAccountId: 'bob' },
         ToAccountId: 'alice',
-        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost', },
+        toWallet: { name: 'aliceUSDWallet', currency: 'USD', AccountId: 'alice', OwnerAccountId: 'opencollectiveHost' },
         amount: 1500,
         currency: 'USD',
         platformFee: 200,

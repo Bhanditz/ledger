@@ -41,7 +41,7 @@ describe('Wallets', () => {
       });
       expect(wallet.currency).to.be.null;
     }); /** End of "" */
-    
+
     it('should create a wallet succesfully', async () => {
       const wallet = await service.insert({
         name: 'bob_wallet',
@@ -53,7 +53,7 @@ describe('Wallets', () => {
       expect(wallet.currency).to.equal('USD');
       expect(wallet.AccountId).to.equal('bob');
       expect(wallet.OwnerAccountId).to.equal('opencollective');
-      
+
     }); /** End of "" */
 
     it('should create a temporary wallet succesfully', async () => {
@@ -96,14 +96,14 @@ describe('Wallets', () => {
     it('should find a wallet instead of create using findOrCreate', async () => {
       const wallet1 = await lib.findOrCreateCurrencyWallet({
         name: 'bob_wallet',
-        currency: 'USD', 
-        AccountId: 'bob', 
+        currency: 'USD',
+        AccountId: 'bob',
         OwnerAccountId: 'opencollective',
       });
       const wallet2 = await lib.findOrCreateCurrencyWallet({
         name: 'bob_wallet',
-        currency: 'USD', 
-        AccountId: 'bob', 
+        currency: 'USD',
+        AccountId: 'bob',
         OwnerAccountId: 'opencollective',
       });
       // wallet1 should match properties of creation
@@ -116,7 +116,7 @@ describe('Wallets', () => {
       expect(wallet2.currency).to.equal('USD');
       expect(wallet2.AccountId).to.equal('bob');
       expect(wallet2.OwnerAccountId).to.equal('opencollective');
-      // wallet1 Id should be the same of wallet2 because method findOrCreateCurrencyWallet FOUND 
+      // wallet1 Id should be the same of wallet2 because method findOrCreateCurrencyWallet FOUND
       // an already existing wallet with same property
       expect(wallet1.id).to.equal(wallet2.id);
     }); /** End of "" */
