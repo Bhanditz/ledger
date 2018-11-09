@@ -54,8 +54,8 @@ export class QueueStatefulMigration {
     const legacyId = await this.getLatestLegacyIdFromLedger();
     console.log(`legacyId: ${legacyId}`);
     const query = ` SELECT
-      t.id, td.id as "debitId",t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
-      t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
+      t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
+      t.description, t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
       t."PaymentMethodId", t."HostCollectiveId", t."ExpenseId", t."hostCurrencyFxRate", t."RefundTransactionId",
       f.slug as "fromCollectiveSlug",
       c.slug as "collectiveSlug",
