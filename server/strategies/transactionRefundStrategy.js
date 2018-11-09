@@ -1,5 +1,6 @@
 import TransactionService from '../services/transactionService';
 import transactionTypeEnum from '../globals/enums/transactionTypeEnum';
+import LedgerTransaction from '../models/LedgerTransaction';
 
 export default class TransactionRefundStrategy {
 
@@ -9,13 +10,26 @@ export default class TransactionRefundStrategy {
   }
 
   async getTransactions() { // getTransactionsWithToAccountConvertingCurrency
-    const transactions = await this.service.getOne(this.refundTransactionId);
+    // Problem because credit transactions point to debit transactions on refund
+    // and we only look for credit transactions
+    const legacyRefundTransaction = LedgerTransaction.findOne({
+        where: {
+            LegacyTransactionId: this.refundTransactionId,
+        },
+    });
+    if (!legacyRefundTransaction) {
+        throw Error('Refund transaction did not match any previous transaction');
+    }
+    const transactions = await LedgerTransaction.findAll(legacyRefundTransaction.transactionGroupId);
     if (!transactions || transactions.length <= 0) {
         throw Error('Refund transaction did not match any previous transaction');
     }
-    return transactions.map( transaction => {
+    const refundTransactions =  transactions.map( transaction => {
+        const type = transaction.type === transactionTypeEnum.DEBIT ?
+            transactionTypeEnum.CREDIT :
+            transactionTypeEnum.DEBIT;
         return {
-              type: transaction.type === transactionTypeEnum.DEBIT ? transactionTypeEnum.CREDIT : transactionTypeEnum.DEBIT,
+              type: type,
               FromAccountId: transaction.ToAccountId,
               FromWalletId: transaction.ToWalletId,
               ToAccountId: transaction.FromAccountId,
@@ -24,7 +38,7 @@ export default class TransactionRefundStrategy {
               currency: transaction.currency,
               transactionGroupId: transaction.transactionGroupId,
               doubleEntryGroupId: transaction.doubleEntryGroupId,
-              category: transaction.category,
+              category: `REFUND: ${transaction.category}`,
               forexRate: transaction.forexRate,
               forexRateSourceCoin: transaction.forexRateSourceCoin,
               forexRateDestinationCoin: transaction.forexRateDestinationCoin,
@@ -32,6 +46,7 @@ export default class TransactionRefundStrategy {
               RefundTransactionId: transaction.id,
         };
     });
+    return refundTransactions;
   }
 
 }
