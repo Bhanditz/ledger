@@ -11,7 +11,8 @@
     "clean": "rm -rf dist && mkdir dist",
     "build-config": "babel config -d ./dist/config",
     "build-server": "babel server -d ./dist/server",
-    "build": "npm run clean && npm run build-config && npm run build-server",
+    "build-scripts": "babel scripts -d ./dist/scripts",
+    "build": "npm run clean && npm run build-config && npm run build-server && npm run build-scripts",
     "dev": "nodemon server/app.js -x babel-node . -e js,hbs",
     "start": "npm run build && node ./dist/server/app.js",
     "test": "NODE_ENV=test mocha --recursive --exit --require babel-core/register 'test/**/*.test.js' ",
@@ -78,7 +79,7 @@
     "eslint-plugin-react": "7.11.1",
     "mocha": "5.2.0",
     "nock": "9.6.1",
-    "nodemon": "1.18.3",
+    "nodemon": "^1.18.3",
     "nyc": "12.0.2",
     "sinon": "6.1.5",
     "webpack": "4.16.5"
