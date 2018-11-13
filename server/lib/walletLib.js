@@ -32,9 +32,9 @@ export default class WalletLib {
     return Wallet.findOrCreate({
       where: {
         currency: data.currency,
-        AccountId: `${data.AccountId}`,
-        OwnerAccountId: `${data.OwnerAccountId}`,
-        name: `${data.name}`,
+        AccountId: `${data.AccountId || 'UNKNOWN'}`,
+        OwnerAccountId: `${data.OwnerAccountId || 'UNKNOWN'}`,
+        name: `${data.name || 'UNKNOWN'}`,
       },
       defaults: {
        temp: temp || false,
