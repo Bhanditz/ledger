@@ -1,3 +1,4 @@
+import { pickBy, identity } from 'lodash';
 import AbstractTransactionStrategy from './abstractTransactionStrategy';
 import { operationNotAllowed } from '../globals/errors';
 
@@ -8,7 +9,14 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
     this._validateForexTransaction();
   }
 
-  async findOrCreateAccountWallets(fromWalletConvertCurrency) {
+  async findOrCreateWallets(fromWalletConvertCurrency) {
+    // check whether there is a payment provider
+    if (!this.incomingTransaction.PaymentProviderAccountId) {
+      this.incomingTransaction.paymentProviderWallet = await this.walletLib
+        .findOrCreateCurrencyWallet(pickBy(this.incomingTransaction.paymentProviderWallet, identity));
+        this.incomingTransaction.PaymentProviderAccountId =
+          this.incomingTransaction.paymentProviderWallet.PaymentProviderAccountId;
+    }
     // finding or creating from and to Wallets
     this.incomingTransaction.fromWallet = await this.walletLib
       .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
@@ -51,12 +59,6 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
     }
     if (!this.incomingTransaction.destinationCurrency) {
       throw Error(operationNotAllowed('field destinationCurrency missing'));
-    }
-    if (!this.incomingTransaction.paymentProviderWallet) {
-      throw Error(operationNotAllowed('paymentProviderWallet field missing'));
-    }
-    if (!this.incomingTransaction.PaymentProviderAccountId) {
-      throw Error(operationNotAllowed('PaymentProviderAccountId field missing'));
     }
   }
 
