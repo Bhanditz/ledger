@@ -11,7 +11,6 @@ export default class AbstractTransactionStrategy {
   constructor(incomingTransaction) {
     this._validateTransaction(incomingTransaction);
     this.incomingTransaction = this._checkAndInsertTransactionGroup(incomingTransaction);
-    this.incomingTransaction.transactionGroupTotalAmount = this.incomingTransaction.amount;
     this.transactionLib = new TransactionLib();
     this.walletLib = new WalletLib();
   }
@@ -22,7 +21,7 @@ export default class AbstractTransactionStrategy {
   */
   async getTransactions (){}
 
-  async findOrCreateAccountWallets() {
+  async findOrCreateWallets() {
     this.incomingTransaction.fromWallet = await this.walletLib
       .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
     this.incomingTransaction.toWallet = await this.walletLib
@@ -56,7 +55,7 @@ export default class AbstractTransactionStrategy {
       // finding or creating Wallet
       this.incomingTransaction.paymentProviderWallet = await this.walletLib
         .findOrCreateCurrencyWallet(this.incomingTransaction.paymentProviderWallet);
-        if (this.incomingTransaction.paymentProviderFee) {
+      if (this.incomingTransaction.paymentProviderFee) {
         this.incomingTransaction.PaymentProviderWalletId = this.incomingTransaction.paymentProviderWallet.id;
         this.incomingTransaction.PaymentProviderAccountId = this.incomingTransaction.paymentProviderWallet.OwnerAccountId;
         // find Payment Provider wallet to generate transactions
@@ -114,11 +113,8 @@ export default class AbstractTransactionStrategy {
   }
 
   async getFeeTransactions() {
-    // PaymentProvider fee transactions -> Check whether payment provider has fees(> 0 or < 0) and a wallet id defined
     const paymentProviderFeeTransactions = await this.setPaymentProviderFeeTransactions();
-    // Plaftorm fee transactions -> Check whether Platform fee is > 0  or < 0
     const platformFeeTransactions = await this.setPlatformFeeTransactions();
-    // if Wallet Provider has any fee, then create transactions
     const providerFeeTransactions = await this.setProviderFeeTransactions();
     return [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions];
   }

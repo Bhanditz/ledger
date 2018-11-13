@@ -10,7 +10,7 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
   }
 
   async getTransactionsWithFromAccountConvertingCurrency() {
-    await this.findOrCreateAccountWallets(true);
+    await this.findOrCreateWallets(true);
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
     const conversionTransactionsManager = new ForexConversionTransactions(this.incomingTransaction);
     const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
@@ -40,14 +40,8 @@ export default class TransactionForexStrategy extends AbstractTransactionForexSt
       paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
   }
 
-  // marco pays 10EUR wwcodeberlin(USD with host EUR)
-  // 1 - marco creates or find EUR Wallet, wcodeberlin creates or find a TEMPORARY EUR wallet
-  // 2 - marco sends 10EUR to wwcodeberlin
-  // 3 - wwcodeberlin sends 10 EUR to stripe
-  // 4 - strip3 sends 11.24USD to wwcodeberlin
-  // 5, 6 and 7 - wwcodeberlin pays fees in USD(wallet provider, payment provider and platform)
   async getTransactions() { // getTransactionsWithToAccountConvertingCurrency
-    await this.findOrCreateAccountWallets(false);
+    await this.findOrCreateWallets(false);
     // setting account to account transactions
     const transactionWithToWalletInSourceCurrency = {
       ...this.incomingTransaction,
