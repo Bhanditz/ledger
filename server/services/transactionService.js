@@ -28,7 +28,7 @@ export default class TransactionService extends AbstractCrudService {
     return this.database.sequelize.transaction( t => {
         return this.model.bulkCreate(transactions, { transaction: t });
     }).then( result => {
-      this.logger.info(result, 'Transactions created successfully');
+      // this.logger.info(result, 'Transactions created successfully');
       return result;
     }).catch( error => {
       this.logger.error('Rolling Back Transactions', error);
@@ -46,8 +46,8 @@ export default class TransactionService extends AbstractCrudService {
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
       const strategy = new TransactionRegularStrategy(transaction);
       // Check whether it's a REFUND transaction
-      if (transaction.RefundTransactionId && transaction.id && transaction.RefundTransactionId &&
-        transaction.id > transaction.RefundTransactionId ) {
+      if (transaction.RefundTransactionId && transaction.LegacyCreditTransactionId &&
+        transaction.LegacyCreditTransactionId > transaction.RefundTransactionId) {
         return new TransactionRefundStrategy(transaction, strategy);
       }
       return strategy;
@@ -101,6 +101,7 @@ export default class TransactionService extends AbstractCrudService {
         forexRateSourceCoin: transaction.currency,
         forexRateDestinationCoin: transaction.hostCurrency,
         description: transaction.description,
+        RefundTransactionId: transaction.RefundTransactionId,
       };
       // setting toWallet
       ledgerTransaction.toWallet = {
