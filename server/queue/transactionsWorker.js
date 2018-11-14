@@ -30,11 +30,9 @@ export default class TransactionsWorker {
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
       try {
-        this.logger.info(` [x] ${msg.fields.routingKey}:'${msg.content.toString()}'`);
         const incomingTransaction = JSON.parse(msg.content);
-        const parsedTransactions = await this.transactionService.parseAndInsertTransaction(incomingTransaction);
-        this.logger.info(`Transaction Parsed and inserted successfully,
-          list of generated transactions: ${JSON.stringify(parsedTransactions, null, 2)}`);
+        await this.transactionService.parseAndInsertTransaction(incomingTransaction);
+        this.logger.info('Transaction Parsed and inserted successfully');
       } catch (error) {
         this.logger.error(error);
         // if there is an error with a transaction, resend to queue
