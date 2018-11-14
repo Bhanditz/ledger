@@ -11,12 +11,18 @@ export default class TransactionLib {
   getDoubleEntryArray (transaction){
     this.validateTransaction(transaction);
     const doubleEntryGroupId = uuidv4();
-    const fromAccountId = (transaction.amount < 0) ? transaction.FromAccountId : transaction.ToAccountId,
-          toAccountId = (transaction.amount < 0) ? transaction.ToAccountId: transaction.FromAccountId,
-          fromWalletId = transaction.ToWalletId,
-          toWalletId = transaction.FromWalletId,
-          amount = (transaction.amount < 0) ? (-1 * transaction.amount) : transaction.amount;
-
+    let fromAccountId = transaction.ToAccountId;
+    let toAccountId = transaction.FromAccountId;
+    let fromWalletId = transaction.ToWalletId;
+    let toWalletId = transaction.FromWalletId;
+    let amount = transaction.amount;
+    if (transaction.amount < 0) {
+      fromAccountId = transaction.FromAccountId;
+      toAccountId = transaction.ToAccountId;
+      fromWalletId = transaction.FromWalletId;
+      toWalletId = transaction.ToWalletId;
+      amount = (-1 * transaction.amount);
+    }
     const debitTransaction = {
       type: transactionTypeEnum.DEBIT,
       FromAccountId: fromAccountId,

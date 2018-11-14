@@ -71,6 +71,10 @@ module.exports = {
       },
       RefundTransactionId: {
         type: Sequelize.INTEGER,
+        references: { key: 'id', model: 'LedgerTransactions' },
+        allowNull: true,
+        onDelete: 'SET NULL',
+        onUpdate: 'SET NULL',
       },
       createdAt: {
         type: Sequelize.DATE,
