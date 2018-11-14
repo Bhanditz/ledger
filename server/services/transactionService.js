@@ -3,6 +3,7 @@ import LedgerTransaction from '../models/LedgerTransaction';
 import TransactionRegularStrategy from '../strategies/transactionRegularStrategy';
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import TransactionRefundStrategy from '../strategies/transactionRefundStrategy';
+import TransactionForexRefundStrategy from '../strategies/transactionForexRefundStrategy';
 
 export default class TransactionService extends AbstractCrudService {
 
@@ -28,7 +29,7 @@ export default class TransactionService extends AbstractCrudService {
     return this.database.sequelize.transaction( t => {
         return this.model.bulkCreate(transactions, { transaction: t });
     }).then( result => {
-      // this.logger.info(result, 'Transactions created successfully');
+      this.logger.info('Transactions created successfully');
       return result;
     }).catch( error => {
       this.logger.error('Rolling Back Transactions', error);
@@ -44,21 +45,19 @@ export default class TransactionService extends AbstractCrudService {
   async _defineTransactionStrategy(transaction) {
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
-      const strategy = new TransactionRegularStrategy(transaction);
       // Check whether it's a REFUND transaction
       if (transaction.RefundTransactionId && transaction.LegacyCreditTransactionId &&
         transaction.LegacyCreditTransactionId > transaction.RefundTransactionId) {
-        return new TransactionRefundStrategy(transaction, strategy);
+        return new TransactionRefundStrategy(transaction);
       }
-      return strategy;
+      return new TransactionRegularStrategy(transaction);
     }
-    const strategy = new TransactionForexStrategy(transaction);
     // Check whether the forex Transaction is also a REFUND transaction
-    if (transaction.RefundTransactionId && transaction.id && transaction.RefundTransactionId &&
-      transaction.id > transaction.RefundTransactionId ) {
-      return new TransactionRefundStrategy(transaction, strategy);
+    if (transaction.RefundTransactionId && transaction.LegacyCreditTransactionId &&
+      transaction.LegacyCreditTransactionId > transaction.RefundTransactionId) {
+      return new TransactionForexRefundStrategy(transaction);
     }
-    return strategy;
+    return new TransactionForexStrategy(transaction);
   }
 
   /**
