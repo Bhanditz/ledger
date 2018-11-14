@@ -4,9 +4,8 @@ import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 import Promise from 'bluebird';
 
 export default class TransactionRefundStrategy  extends AbstractTransactionStrategy {
-  constructor(transaction, auxStrategy) {
+  constructor(transaction) {
     super(transaction);
-    this.auxStrategy = auxStrategy;
   }
 
   async getTransactions() {
@@ -25,6 +24,12 @@ export default class TransactionRefundStrategy  extends AbstractTransactionStrat
     const totalAmountTransaction = {
       ...this.incomingTransaction,
       amount: netTransactionAmount,
+      FromAccountId: this.incomingTransaction.ToAccountId,
+      ToAccountId: this.incomingTransaction.FromAccountId,
+      FromWalletId: this.incomingTransaction.ToWalletId,
+      ToWalletId: this.incomingTransaction.FromWalletId,
+      fromWallet: this.incomingTransaction.toWallet,
+      toWallet: this.incomingTransaction.fromWallet,
     };
     // create account to account transactions after having a net amount(total amount - fees)
     const accountToAccountTransactions = this.transactionLib.getDoubleEntryArray(totalAmountTransaction)
