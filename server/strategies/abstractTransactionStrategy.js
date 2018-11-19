@@ -51,7 +51,7 @@ export default class AbstractTransactionStrategy {
 
   async setPaymentProviderFeeTransactions() {
     let paymentProviderFeeTransactions = null;
-    if (this.incomingTransaction.PaymentProviderAccountId && this.incomingTransaction.paymentProviderWallet) {
+    if (this.incomingTransaction.paymentProviderWallet) {
       // finding or creating Wallet
       this.incomingTransaction.paymentProviderWallet = await this.walletLib
         .findOrCreateCurrencyWallet(this.incomingTransaction.paymentProviderWallet);
