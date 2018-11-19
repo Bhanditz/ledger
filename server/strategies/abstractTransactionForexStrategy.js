@@ -11,7 +11,7 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
 
   async findOrCreateWallets(fromWalletConvertCurrency) {
     // check whether there is a payment provider
-    if (!this.incomingTransaction.PaymentProviderAccountId) {
+    if (this.incomingTransaction.paymentProviderWallet) {
       this.incomingTransaction.paymentProviderWallet = await this.walletLib
         .findOrCreateCurrencyWallet(pickBy(this.incomingTransaction.paymentProviderWallet, identity));
         this.incomingTransaction.PaymentProviderAccountId =
