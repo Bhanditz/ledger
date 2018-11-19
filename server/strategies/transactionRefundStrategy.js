@@ -2,69 +2,60 @@ import LedgerTransaction from '../models/LedgerTransaction';
 import AbstractTransactionStrategy from './abstractTransactionStrategy';
 import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 import Promise from 'bluebird';
+import TransactionRegularStrategy from './transactionRegularStrategy';
 
-export default class TransactionRefundStrategy  extends AbstractTransactionStrategy {
+export default class TransactionRefundStrategy extends AbstractTransactionStrategy {
   constructor(transaction) {
     super(transaction);
   }
 
   async getTransactions() {
     await this.findOrCreateWallets();
-    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
-    let netTransactionAmount = Math.abs(this.incomingTransaction.amount);
-    if (paymentProviderFeeTransactions) {
-      netTransactionAmount += Math.abs(paymentProviderFeeTransactions.getTotalFee());
-    }
-    if (platformFeeTransactions) {
-      netTransactionAmount += Math.abs(platformFeeTransactions.getTotalFee());
-    }
-    if (providerFeeTransactions) {
-      netTransactionAmount += Math.abs(providerFeeTransactions.getTotalFee());
-    }
-    const totalAmountTransaction = {
+    const feeStrategy = new TransactionRegularStrategy({
       ...this.incomingTransaction,
-      amount: netTransactionAmount,
       FromAccountId: this.incomingTransaction.ToAccountId,
       ToAccountId: this.incomingTransaction.FromAccountId,
       FromWalletId: this.incomingTransaction.ToWalletId,
       ToWalletId: this.incomingTransaction.FromWalletId,
       fromWallet: this.incomingTransaction.toWallet,
       toWallet: this.incomingTransaction.fromWallet,
-    };
-    // create account to account transactions after having a net amount(total amount - fees)
-    const accountToAccountTransactions = this.transactionLib.getDoubleEntryArray(totalAmountTransaction)
-    .map(transaction => {
-      transaction.category = transactionCategoryEnum.ACCOUNT;
-      return transaction;
     });
-    let transactions = [];
-    if (paymentProviderFeeTransactions) {
-      // Add Payment Provider Fee transactions to transactions array
-      transactions = transactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    if (platformFeeTransactions) {
-      // Add Platform Fee transactions to transactions array
-      transactions = transactions.concat(platformFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    if (providerFeeTransactions) {
-      // Add Wallet Provider Fee transactions to transactions array
-      transactions = transactions.concat(providerFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    transactions = Promise.map(transactions.concat(accountToAccountTransactions), async (ledgerTransaction) => {
+    const [paymentProviderFeeManager, platformFeeManager, providerFeeManager] = await feeStrategy.getFeeTransactions();
+    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = [
+      paymentProviderFeeManager ? paymentProviderFeeManager.getFeeDoubleEntryTransactions() : [],
+      platformFeeManager ? platformFeeManager.getFeeDoubleEntryTransactions() : [],
+      providerFeeManager ? providerFeeManager.getFeeDoubleEntryTransactions() : [],
+    ];
+    const accountStrategy = new TransactionRegularStrategy(this.incomingTransaction);
+    const transactions = await accountStrategy.getTransactions();
+    // finding "original" transactions to be refunded by current transaction
+    // and order them by fees first
+    const ledgerTransactions = Promise.map([
+      ...paymentProviderFeeTransactions,
+      ...platformFeeTransactions,
+      ...providerFeeTransactions,
+      ...transactions.filter(t => t.category === transactionCategoryEnum.ACCOUNT),
+    ], async ledgerTransaction => {
       // when a refund is made, the RefundTransactionId of a CREDIT transaction
       // corresponds to the id of the original correlated DEBIT transaction
       const refundTransaction = await LedgerTransaction.findOne({
-        attributes: ['id'],
+        attributes: ['id', 'amount'],
         where: {
-          LegacyDebitTransactionId: this.incomingTransaction.RefundTransactionId,
+          LegacyDebitTransactionId: this.incomingTransaction
+            .RefundTransactionId,
           type: ledgerTransaction.type,
           category: ledgerTransaction.category,
         },
       });
+      // the contributor will always be fully reimbursed as the host pays any fee loss
+      if (ledgerTransaction.category === transactionCategoryEnum.ACCOUNT) {
+        ledgerTransaction.amount = refundTransaction.amount;
+      }
       ledgerTransaction.RefundTransactionId = refundTransaction.id;
       ledgerTransaction.category = `REFUND: ${ledgerTransaction.category}`;
       return ledgerTransaction;
     });
-    return transactions;
+    return ledgerTransactions;
   }
+
 }
