@@ -170,7 +170,7 @@ export default class TransactionService extends AbstractCrudService {
       // setting from and payment provider wallets through one of the following:
       // PaymentMethodId or ExpenseId or OrderId, respectively
       if (transaction.PaymentMethodId) {
-        ledgerTransaction.fromWallet.name = `owner: ${transaction.paymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
+        ledgerTransaction.fromWallet.name = `owner: ${transaction.paymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
         ledgerTransaction.fromWallet.OwnerAccountId = transaction.paymentMethodCollectiveId;
         // creating Payment Provider wallet
         ledgerTransaction.PaymentProviderAccountId = transaction.paymentMethodService;
@@ -182,7 +182,7 @@ export default class TransactionService extends AbstractCrudService {
           PaymentMethodId: transaction.PaymentMethodId,
         };
       } else if (transaction.ExpenseId) {
-        ledgerTransaction.fromWallet.name = `owner: ${transaction.expenseCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
+        ledgerTransaction.fromWallet.name = `owner: ${transaction.expenseCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
         ledgerTransaction.fromWallet.OwnerAccountId = transaction.expenseCollectiveId;
         ledgerTransaction.PaymentProviderAccountId = transaction.expensePayoutMethod;
         ledgerTransaction.paymentProviderWallet = {
@@ -196,7 +196,7 @@ export default class TransactionService extends AbstractCrudService {
         // Order has PaymentMethod, then the slug will come from the transaction.order.paymentmethod
         // otherwise we will consider transaction.order.fromCollective as the owner
         if (transaction.orderPaymentMethodCollectiveSlug) {
-          ledgerTransaction.fromWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
+          ledgerTransaction.fromWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
           ledgerTransaction.fromWallet.OwnerAccountId = transaction.orderPaymentMethodCollectiveId;
           ledgerTransaction.PaymentProviderAccountId = `${transaction.orderPaymentMethodCollectiveId}_${transaction.orderPaymentMethodService}_${transaction.orderPaymentMethodType}`;
           ledgerTransaction.paymentProviderWallet = {
