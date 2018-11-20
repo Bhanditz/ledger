@@ -1,71 +1,110 @@
+import Promise from 'bluebird';
 import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 import ForexToAccountConvertTransactions from '../lib/forexToAccountConvertTransactions';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
+import TransactionForexStrategy from './transactionForexStrategy';
+import LedgerTransaction from '../models/LedgerTransaction';
+import Wallet from '../models/Wallet';
 
 export default class TransactionForexRefundStrategy  extends AbstractTransactionForexStrategy {
   constructor(transaction) {
     super(transaction);
   }
 
+  async _generateRefundWallets() {
+    // tries to find existing wallet(its very likely it exists due the fact it is a refund)
+    const fromWalletDestinationCurrency = await Wallet.findOne({
+      where: {
+        currency: this.incomingTransaction.destinationCurrency,
+        AccountId: `${this.incomingTransaction.fromWallet.AccountId}`,
+        OwnerAccountId: `${this.incomingTransaction.fromWallet.OwnerAccountId}`,
+      },
+    });
+    if (fromWalletDestinationCurrency) {
+      await this.findOrCreateWallets();
+      this.incomingTransaction.fromWalletDestinationCurrency = fromWalletDestinationCurrency;
+      return;
+    }
+    await this.findOrCreateWallets(true);
+  }
+
   async getTransactions() {
-    await this.findOrCreateWallets(false);
-    console.log(`REFUND TRANSACTION this.incomingTransaction: ${JSON.stringify(this.incomingTransaction, null,2)}`);
-    // setting account to account transactions
-    const transactionWithToWalletInSourceCurrency = {
+    await this._generateRefundWallets();
+    // generating fee transactions
+    const feeStrategy = new TransactionForexStrategy({
       ...this.incomingTransaction,
       FromAccountId: this.incomingTransaction.ToAccountId,
       ToAccountId: this.incomingTransaction.FromAccountId,
-      FromWalletId: this.incomingTransaction.toWalletSourceCurrency.id,
-      ToWalletId: this.incomingTransaction.FromWalletId,
-    };
-    const accountToAccountlDestinationCurrencyTransactions = this.transactionLib.getDoubleEntryArray(transactionWithToWalletInSourceCurrency)
-    .map(transaction => {
-      transaction.category = `REFUND: ${transactionCategoryEnum.ACCOUNT}`;
-      return transaction;
+      FromWalletId: this.incomingTransaction.ToWalletId,
+      ToWalletId: this.incomingTransaction.fromWalletDestinationCurrency.id,
+      fromWallet: this.incomingTransaction.toWallet,
+      toWallet: this.incomingTransaction.fromWalletDestinationCurrency,
     });
-    // setting fee transactions
-    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
-    const refundConversionTransaction = {
+    const [paymentProviderFeeManager, platformFeeManager, providerFeeManager] = await feeStrategy.getFeeTransactions();
+    const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = [
+      paymentProviderFeeManager ? paymentProviderFeeManager.getFeeDoubleEntryTransactions() : [],
+      platformFeeManager ? platformFeeManager.getFeeDoubleEntryTransactions() : [],
+      providerFeeManager ? providerFeeManager.getFeeDoubleEntryTransactions() : [],
+    ];
+    // generating conversion(SENDER) transactions
+    const refundSenderConversionTransaction = {
       ...this.incomingTransaction,
       amount: this.incomingTransaction.destinationAmount,
       currency: this.incomingTransaction.destinationCurrency,
       destinationAmount: this.incomingTransaction.amount,
       destinationCurrency: this.incomingTransaction.currency,
-      toWalletSourceCurrency: { id: this.incomingTransaction.ToWalletId },
-      ToWalletId: this.incomingTransaction.toWalletSourceCurrency.id,
+      toWalletSourceCurrency: { id: this.incomingTransaction.fromWalletDestinationCurrency.id },
+      ToWalletId: this.incomingTransaction.fromWallet.id,
+      ToAccountId: this.incomingTransaction.FromAccountId,
+      FromAccountId: this.incomingTransaction.ToAccountId,
     };
-    // setting conversion Transactions
-    const conversionTransactionsManager = new ForexToAccountConvertTransactions(refundConversionTransaction);
-    const conversionTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions()
-    .map(transaction => {
-      transaction.category = `REFUND: ${transactionCategoryEnum.CURRENCY_CONVERSION}`;
-      return transaction;
+    const conversionTransactionsManager = new ForexToAccountConvertTransactions(refundSenderConversionTransaction);
+    const conversionSenderTransactions = conversionTransactionsManager.getForexDoubleEntryTransactions();
+    // generating account to account transactions
+    const accountToAccountlDestinationCurrencyTransactions = this.transactionLib
+      .getDoubleEntryArray({
+        ...this.incomingTransaction,
+        ToWalletId: this.incomingTransaction.toWalletSourceCurrency.id,
+        toWallet: this.incomingTransaction.toWalletSourceCurrency,
+      })
+      .map(transaction => {
+        transaction.category = transactionCategoryEnum.ACCOUNT;
+        return transaction;
+      });
+    // generating conversion(RECEIVER) transactions
+    const conversionReceiverTransactionsManager = new ForexToAccountConvertTransactions(this.incomingTransaction);
+    const conversionReceiverTransactions = conversionReceiverTransactionsManager.getForexDoubleEntryTransactions();
+    // finding "original" transactions to be refunded by current transaction
+    // and order them by fees, conversion(sender), account to account and conversion(receiver) respectively.
+    const ledgerTransactions = Promise.map([
+      ...paymentProviderFeeTransactions,
+      ...platformFeeTransactions,
+      ...providerFeeTransactions,
+      ...conversionSenderTransactions,
+      ...accountToAccountlDestinationCurrencyTransactions,
+      ...conversionReceiverTransactions,
+    ], async ledgerTransaction => {
+      // when a refund is made, the RefundTransactionId of a CREDIT transaction
+      // corresponds to the id of the original correlated DEBIT transaction
+      const refundTransaction = await LedgerTransaction.findOne({
+        attributes: ['id', 'amount'],
+        where: {
+          LegacyDebitTransactionId: this.incomingTransaction.RefundTransactionId,
+          type: ledgerTransaction.type,
+          category: ledgerTransaction.category,
+        },
+      });
+      if (!refundTransaction) return ledgerTransaction;
+      // the contributor will always be fully reimbursed as the host pays any fee loss
+      // IF THERE IS A CONVERSION THIS MAY NOT BE TRUE FOR ALL CASES(SEE opencollective-api Transactions table ids 99446 and 83642)
+      // if (ledgerTransaction.category === transactionCategoryEnum.ACCOUNT) {
+      //   ledgerTransaction.amount = refundTransaction.amount;
+      // }
+      ledgerTransaction.RefundTransactionId = refundTransaction.id;
+      ledgerTransaction.category = `REFUND: ${ledgerTransaction.category}`;
+      return ledgerTransaction;
     });
-
-    // if senderPayFees, he will discount the fees from the total amount to send the net amount to the receiver
-    // otherwise the sender will send the full amount and the receiver will pay the fees
-    if (this.incomingTransaction.senderPayFees) {
-      // calculating netAmount of the regular transaction
-      this.incomingTransaction.amount = this.getTransactionNetAmount(paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions);
-    }
-    let feeTransactions = [];
-    if (paymentProviderFeeTransactions) {
-      // Add Payment Provider Fee transactions to transactions array
-      feeTransactions = feeTransactions.concat(paymentProviderFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    if (platformFeeTransactions) {
-      // Add Platform Fee transactions to transactions array
-      feeTransactions = feeTransactions.concat(platformFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    if (providerFeeTransactions) {
-      // Add Wallet Provider Fee transactions to transactions array
-    feeTransactions = feeTransactions.concat(providerFeeTransactions.getFeeDoubleEntryTransactions());
-    }
-    feeTransactions = feeTransactions.map(transaction => {
-      transaction.category = `REFUND: ${transaction.category}`;
-      return transaction;
-    });
-
-    return [...feeTransactions, ...conversionTransactions, ...accountToAccountlDestinationCurrencyTransactions];
+    return ledgerTransactions;
   }
+
 }
