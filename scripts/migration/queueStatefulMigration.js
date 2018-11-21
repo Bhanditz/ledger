@@ -116,7 +116,7 @@ export class QueueStatefulMigration {
 
   async run() {
     try {
-      console.log('migrating one more row...');
+      console.log('migrating more data...');
       await this.sendSingleTransactionToQueue();
       console.log('tx sent to queue...');
       setTimeout(this.run.bind(this), 100);
@@ -125,8 +125,8 @@ export class QueueStatefulMigration {
       process.exit(1);
     }
   }
-
 }
 
+console.log(`Initializing Migration, list of ENV vars: ${JSON.stringify(process.env, null, 2 )}`);
 const migration = new QueueStatefulMigration();
 migration.run();
