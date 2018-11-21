@@ -20,46 +20,87 @@ Use Cases that migration is NOT working at the moment:
     - select * from "Transactions" t left join "PaymentMethods" p on t."PaymentMethodId"=p.id WHERE t."HostCollectiveId" is null and t."deletedAt" is null;
   6. Not a Problem, just a PS: Collectives with a currency that have Hosts with different currencies, In this case we are converting the fees that the collective paid in the host currency to the collective's currency. This may cause small differences on the result due to Math rounds.
     - WWcodeBerlin example: collective is EUR, host is USD, collective pays the fees in USD even though it's a EUR Collective.
+
+    PS: Environment variable QUERY_LIMIT defines the size of the batch
+    of transactions to be inserted at once.
 */
 export class QueueStatefulMigration {
 
   constructor() {
   }
 
+  /** Opens current prod database connection
+  * @return {void}
+  */
   async getProductionConnection() {
-    this.currentProdDbClient = new PgAsync({
-      user: process.env.DB_USER || 'apple',
-      password: process.env.DB_PASSWORD || '',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'opencollective_prod_snapshot',
-      port: process.env.DB_PORT || 5432,
-      ssl: process.env.DB_SSL_MODE,
-    });
+    if (!this.currentProdDbClient) {
+      console.log('Initializing current production db...');
+      this.currentProdDbClient = new PgAsync({
+        user: config.database.username,
+        password: config.database.password,
+        host: config.database.host,
+        database: config.database.database,
+        port: config.database.port,
+        ssl: config.database.sslMode,
+      });
+    }
+    return this.currentProdDbClient;
   }
 
+  /** Opens and returns Ledger database connection
+  * @return {void}
+  */
   getLedgerConnection() {
-    this.ledgerDbConnection = new Database();
+    if (!this.ledgerDbConnection) {
+      console.log('Initializing Ledger db...');
+      this.ledgerDbConnection = new Database();
+    }
+    return this.ledgerDbConnection;
   }
 
-  async getAmqpConnection() {
-    this.amqpConnection = await amqp.connect(config.queue.url);
-    this.amqpChannel = await this.amqpConnection.createChannel();
+  /** Opens and returns Queue channel to wait for incoming
+   * transactions to be consumed
+  * @return {void}
+  */
+  async getAmqpChannel() {
+    if (!this.amqpChannel) {
+      console.log('Initializing queue...');
+      this.amqpConnection = await amqp.connect(config.queue.url);
+      this.amqpChannel = await this.amqpConnection.createChannel();
+    }
+    return this.amqpChannel;
   }
+
+  /** returns the latest Legacy Id inserted into the ledger database
+  * @return {number}
+  */
   async getLatestLegacyIdFromLedger() {
-    const max = await LedgerTransaction.max('LegacyCreditTransactionId');
-    return max || Number.MIN_SAFE_INTEGER;
+    if (!this.latestLegacyIdFromLedger) {
+      console.log(`${JSON.stringify(LedgerTransaction, null,2)}`);
+      this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
+    }
+    return this.latestLegacyIdFromLedger || Number.MIN_SAFE_INTEGER;
   }
 
-  async sendToQueue(transaction, channel) {
+  /** Sends data to queue
+  * @param {Object} transaction - the transaction object to be sent to queue
+  * @param {Object} channel - amqp initiated channel object
+  * @return {void}
+  */
+  async sendToQueue(transaction) {
+    const channel = await this.getAmqpChannel();
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
     channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transaction), 'utf8'));
   }
 
+  /** Parse transactions from Current production database(Transactions table)
+   * to be sent to the Ledger Queue Consumer
+  * @return {boolean}
+  */
   async sendTransactionsToQueue() {
-    if (!this.latestLegacyIdFromLedger) {
-      this.latestLegacyIdFromLedger = await this.getLatestLegacyIdFromLedger();
-    }
-    console.log(`latestLegacyIdFromLedger: ${this.latestLegacyIdFromLedger}`);
+    const currentProdDbClient = await this.getProductionConnection();
+    const latestLegacyIdFromLedger = await this.getLatestLegacyIdFromLedger();
+    console.log(`Inserting data starting from Legacy Id: ${latestLegacyIdFromLedger}`);
     const query = ` SELECT
       t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
       t.description, t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
@@ -98,10 +139,10 @@ export class QueueStatefulMigration {
       LEFT JOIN "PaymentMethods" opm on o."PaymentMethodId"=opm.id and opm."deletedAt" is null
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
-      WHERE t.id>${this.latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
+      WHERE t.id>${latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
       ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 1};
     `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
-    const res = await this.currentProdDbClient.query(query);
+    const res = await currentProdDbClient.query(query);
 
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
@@ -109,35 +150,26 @@ export class QueueStatefulMigration {
     const rawTransactions = res.rows;
     console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
     await Promise.map(rawTransactions, (transaction) => {
-      return this.sendToQueue(transaction, this.amqpChannel);
+      return this.sendToQueue(transaction);
     });
     this.latestLegacyIdFromLedger = Math.max(rawTransactions.map(t => t.id));
+    console.log(`Latest Legacy Id inserted: ${this.latestLegacyIdFromLedger}`);
+    // await currentProdDbClient.closeConnections();
+    // const pool = this.ledgerDbConnection.sequelize.connectionManager.pool;
+    // const connection = await pool.acquire();
+    // await pool.release(connection);
+    // await pool.drain();
+    // await pool.clear();
     return true;
-  }
-
-  async initializeOrFindExistingConnections() {
-    console.log('Initializing transactions...');
-    if (!this.currentProdDbClient) {
-      console.log('Initializing current production db...');
-      await this.getProductionConnection();
-    }
-    if (!this.amqpChannel) {
-      console.log('Initializing queue...');
-      await this.getAmqpConnection();
-    }
-    if (!this.ledgerDbConnection) {
-      console.log('Initializing Ledger db...');
-      this.getLedgerConnection();
-    }
   }
 
   async run() {
     try {
-      await this.initializeOrFindExistingConnections();
+      this.getLedgerConnection();
       console.log('migrating single transaction...');
       await this.sendTransactionsToQueue();
       console.log('tx sent to queue...');
-      setTimeout(this.run.bind(this), 500);
+      this.run();
     } catch (error) {
       console.error(error);
       process.exit(1);
