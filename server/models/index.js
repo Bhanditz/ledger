@@ -15,10 +15,10 @@ export default class Database {
         port: config.database.port,
         logging: false,
         pool: {
-          max: 100,
-          min: 0,
-          acquire: 30000,
-          idle: 10000,
+          max: config.database.poolMax,
+          min: config.database.poolMin,
+          acquire: config.database.poolAcquire,
+          idle: config.database.poolIdle,
         },
       });
     }
