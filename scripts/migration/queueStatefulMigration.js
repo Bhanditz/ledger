@@ -107,7 +107,7 @@ export class QueueStatefulMigration {
     await Promise.map(rawTransactions, (transaction) => {
       return this.sendToQueue(transaction, channel);
     });
-    setTimeout(() => conn.close(), 250);
+    setTimeout(() => conn.close(), 100);
     return true;
 
   }
@@ -121,7 +121,7 @@ export class QueueStatefulMigration {
       console.log('migrating single transaction...');
       await this.sendSingleTransactionToQueue();
       console.log('tx sent to queue...');
-      setTimeout(this.run.bind(this), 100);
+      setTimeout(this.run.bind(this), 500);
     } catch (error) {
       console.error(error);
       process.exit(1);
