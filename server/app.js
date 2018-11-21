@@ -17,8 +17,12 @@ export default class App {
     app.use(pino());
     app.routers = new Router(app);
     app.models = this.database.models;
+
     this.startServer();
-    this.startTransactionsQueueWorker();
+
+    if (!process.env.SKIP_WORKERS) {
+      this.startTransactionsQueueWorker();
+    }
   }
 
   startServer() {
