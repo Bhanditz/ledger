@@ -7,7 +7,12 @@ export default class Database {
   constructor() {
     if (!this.sequelize) {
       this.sequelize = new Sequelize(config.database.database, config.database.username, config.database.password, {
+        host: config.database.host,
         dialect: config.database.dialect,
+        dialectOptions: {
+          ssl: config.database.sslMode,
+        },
+        port: config.database.port,
         logging: false,
         pool: {
           max: 100,
