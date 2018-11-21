@@ -1,4 +1,5 @@
 import amqp from 'amqplib';
+import Promise from 'bluebird';
 import config from '../../config/config';
 import Logger from '../globals/logger';
 import TransactionService from '../services/transactionService';
@@ -33,9 +34,14 @@ export default class TransactionsWorker {
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
       try {
-        const incomingTransaction = JSON.parse(msg.content);
-        await this.transactionService.parseAndInsertTransaction(incomingTransaction);
-        this.logger.info('Transaction Parsed and inserted successfully');
+        const incomingTransactions = JSON.parse(msg.content);
+        if (!incomingTransactions || incomingTransactions.length <= 0) {
+          throw new Error('No transactions were found on queue message');
+        }
+        await Promise.map(incomingTransactions, (transaction) => {
+          return this.transactionService.parseAndInsertTransaction(transaction);
+        });
+        this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
         this.logger.error(error);
       }

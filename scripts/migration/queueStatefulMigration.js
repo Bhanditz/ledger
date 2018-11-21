@@ -3,7 +3,6 @@ import amqp from 'amqplib';
 import Database from '../../server/models';
 import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
-import Promise from 'bluebird';
 
 /*
 Migration, starts inserting by looking at the min id of the current prod's transaction table
@@ -76,7 +75,6 @@ export class QueueStatefulMigration {
   */
   async getLatestLegacyIdFromLedger() {
     if (!this.latestLegacyIdFromLedger) {
-      console.log(`${JSON.stringify(LedgerTransaction, null,2)}`);
       this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
     }
     return this.latestLegacyIdFromLedger || Number.MIN_SAFE_INTEGER;
@@ -87,10 +85,12 @@ export class QueueStatefulMigration {
   * @param {Object} channel - amqp initiated channel object
   * @return {void}
   */
-  async sendToQueue(transaction) {
+  async sendToQueue(transactions) {
+    console.time(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
     const channel = await this.getAmqpChannel();
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
-    channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transaction), 'utf8'));
+    channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transactions), 'utf8'));
+    console.timeEnd(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
   }
 
   /** Parse transactions from Current production database(Transactions table)
@@ -140,26 +140,17 @@ export class QueueStatefulMigration {
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
       WHERE t.id>${latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
-      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 1};
+      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 100};
     `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
 
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
-    const rawTransactions = res.rows;
-    console.log(`inserting ${rawTransactions.length} Raw Txs: ${JSON.stringify(rawTransactions, null,2)}`);
-    await Promise.map(rawTransactions, (transaction) => {
-      return this.sendToQueue(transaction);
-    });
-    this.latestLegacyIdFromLedger = Math.max(rawTransactions.map(t => t.id));
+    await this.sendToQueue(res.rows);
+    const transactionLegacyIds = res.rows.map(t => t.id);
+    this.latestLegacyIdFromLedger = Math.max(...transactionLegacyIds);
     console.log(`Latest Legacy Id inserted: ${this.latestLegacyIdFromLedger}`);
-    // await currentProdDbClient.closeConnections();
-    // const pool = this.ledgerDbConnection.sequelize.connectionManager.pool;
-    // const connection = await pool.acquire();
-    // await pool.release(connection);
-    // await pool.drain();
-    // await pool.clear();
     return true;
   }
 
