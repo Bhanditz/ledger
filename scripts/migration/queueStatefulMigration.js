@@ -116,13 +116,17 @@ export class QueueStatefulMigration {
   }
 
   async initializeOrFindExistingConnections() {
+    console.log('Initializing transactions...');
     if (!this.currentProdDbClient) {
+      console.log('Initializing current production db...');
       await this.getProductionConnection();
     }
     if (!this.amqpChannel) {
-      await this.getProductionConnection();
+      console.log('Initializing queue...');
+      await this.getAmqpConnection();
     }
     if (!this.ledgerDbConnection) {
+      console.log('Initializing Ledger db...');
       this.getLedgerConnection();
     }
   }
