@@ -44,10 +44,12 @@ export class QueueStatefulMigration {
 
   async sendSingleTransactionToQueue() {
     const currentProdDbClient = new PgAsync({
-      user: process.env.MIGRATION_DB_USER || 'apple',
-      host: process.env.MIGRATION_DB_HOST || 'localhost',
-      database: process.env.MIGRATION_DB_NAME || 'opencollective_prod_snapshot',
-      port: process.env.MIGRATION_DB_PORT || 5432,
+      user: process.env.DB_USER || 'apple',
+      password: process.env.DB_PASSWORD || '',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'opencollective_prod_snapshot',
+      port: process.env.DB_PORT || 5432,
+      ssl: process.env.DB_SSL_MODE,
     });
     const conn = await amqp.connect(config.queue.url);
     const channel = await conn.createChannel();
@@ -116,7 +118,7 @@ export class QueueStatefulMigration {
 
   async run() {
     try {
-      console.log('migrating more data...');
+      console.log('migrating single transaction...');
       await this.sendSingleTransactionToQueue();
       console.log('tx sent to queue...');
       setTimeout(this.run.bind(this), 100);
@@ -126,7 +128,6 @@ export class QueueStatefulMigration {
     }
   }
 }
-
-console.log(`Initializing Migration, list of ENV vars: ${JSON.stringify(process.env, null, 2 )}`);
+console.log('Initializing migration...');
 const migration = new QueueStatefulMigration();
 migration.run();
