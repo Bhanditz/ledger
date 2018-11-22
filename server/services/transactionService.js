@@ -17,6 +17,15 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Array} containing the original incoming transaction + its double entry equivalent.
   */
   async insert(data) {
+    const transactions = this.getSequencedTransactions(data);
+    this.insertMultipleParsedTransactions(transactions);
+  }
+
+  /** Defines Strategy, get transactions from strategy and sequence them
+  * @param {Object} data - transaction object
+  * @return {Array} of transactions
+  */
+  async getSequencedTransactions(data) {
     // the strategy will return an array of transactions already formatted for the db
     const strategy = await this._defineTransactionStrategy(data);
     const transactions = await strategy.getTransactions();
@@ -24,10 +33,19 @@ export default class TransactionService extends AbstractCrudService {
     for (const index in transactions) {
     transactions[index].transactionGroupSequence = parseInt(index);
     }
+    return transactions;
+  }
+
+
+  /** Given an array of Ledger formatted transactions, bulk insert them
+  * @param {Array} transactions - array of transactions
+  * @return {Array} of transactions
+  */
+  async insertMultipleParsedTransactions(transactions) {
     // Creating a Sequelize "Managed transaction" which automatically commits
     // if all transactions are done or rollback if any of them fail.
     return this.database.sequelize.transaction( t => {
-        return this.model.bulkCreate(transactions, { transaction: t });
+      return this.model.bulkCreate(transactions, { transaction: t });
     }).then( result => {
       this.logger.info('Transactions created successfully');
       return result;
@@ -36,7 +54,6 @@ export default class TransactionService extends AbstractCrudService {
       throw error;
     });
   }
-
 
   /** Given a transaction, return the related "strategy" Object
   * @param {Object} incomingTransaction - transaction
