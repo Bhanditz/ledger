@@ -77,7 +77,9 @@ export class QueueStatefulMigration {
     if (!this.latestLegacyIdFromLedger) {
       this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
     }
-    return this.latestLegacyIdFromLedger || Number.MIN_SAFE_INTEGER;
+    return this.latestLegacyIdFromLedger && this.latestLegacyIdFromLedger > 0
+      ? this.latestLegacyIdFromLedger
+      : 0;
   }
 
   /** Sends data to queue
@@ -86,12 +88,13 @@ export class QueueStatefulMigration {
   * @return {void}
   */
   async sendToQueue(transactions) {
-    console.time(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
+    const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
+    console.time(`Time to send ${queryLimit} transactions to queue:`);
     const channel = await this.getAmqpChannel();
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
     channel.sendToQueue(config.queue.transactionQueue,
       Buffer.from(JSON.stringify(transactions), 'utf8'), { persistent: true });
-    console.timeEnd(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
+    console.timeEnd(`Time to send ${queryLimit} transactions to queue:`);
   }
 
   /** Parse transactions from Current production database(Transactions table)
@@ -149,6 +152,7 @@ export class QueueStatefulMigration {
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
+    console.log(`res.rows: ${JSON.stringify(res.rows, null,2)}`);
     await this.sendToQueue(res.rows);
     const transactionLegacyIds = res.rows.map(t => t.id);
     this.latestLegacyIdFromLedger = Math.max(...transactionLegacyIds);
@@ -163,6 +167,7 @@ export class QueueStatefulMigration {
       await this.sendTransactionsToQueue();
       console.log('tx sent to queue...');
       this.run();
+      // setTimeout(this.run.bind(this), 500);
     } catch (error) {
       console.error(error);
       process.exit(1);
