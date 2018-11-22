@@ -167,7 +167,7 @@ export class QueueStatefulMigration {
       await this.sendTransactionsToQueue();
       console.log('tx sent to queue...');
       this.run();
-      setTimeout(this.run.bind(this), 1000);
+      setTimeout(this.run.bind(this), parseInt(process.env.MIGRATION_TIMEOUT) || 1000);
     } catch (error) {
       console.error(error);
       process.exit(1);
