@@ -43,9 +43,10 @@ export default class TransactionsWorker {
         if (!incomingTransactions || incomingTransactions.length <= 0) {
           throw new Error('No transactions were found on queue message');
         }
-        await Promise.map(incomingTransactions, (transaction) => {
-          return this.transactionService.parseAndInsertTransaction(transaction);
-        });
+        for (let i = 0; i < incomingTransactions.length; i++) {
+          await this.transactionService
+            .parseAndInsertTransaction(incomingTransactions[i]);
+        }
         channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
