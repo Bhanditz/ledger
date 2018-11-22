@@ -89,7 +89,8 @@ export class QueueStatefulMigration {
     console.time(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
     const channel = await this.getAmqpChannel();
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
-    channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transactions), 'utf8'));
+    channel.sendToQueue(config.queue.transactionQueue,
+      Buffer.from(JSON.stringify(transactions), 'utf8'), { persistent: true });
     console.timeEnd(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
   }
 
@@ -140,7 +141,7 @@ export class QueueStatefulMigration {
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
       WHERE t.id>${latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
-      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 100};
+      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 1};
     `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
 
