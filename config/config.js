@@ -10,8 +10,10 @@ export default {
         poolMax: process.env.DB_POOL_MAX || 14,
         poolMin: process.env.DB_POOL_MIN || 0,
         poolIdle: process.env.DB_POOL_IDLE || 10000,
-        poolAcquire:process.env.DB_POOL_ACQUIRE || 30000,
+        poolAcquire: process.env.DB_POOL_ACQUIRE || 30000,
+        logging: parseInt(process.env.DB_LOGGING) || 0,
     },
+    skipWorkers: parseInt(process.env.SKIP_WORKERS) || 0,
     host: process.env.HOST || '0.0.0.0',
     port: process.env.PORT || 3060,
     queue: {

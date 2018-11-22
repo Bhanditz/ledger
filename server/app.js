@@ -6,6 +6,7 @@ import Database from './models';
 import pino from 'express-pino-logger';
 import Logger from './globals/logger';
 import TransactionsWorker from './queue/transactionsWorker';
+import config from '../config/config';
 export let app = null;
 
 export default class App {
@@ -20,7 +21,7 @@ export default class App {
 
     this.startServer();
 
-    if (!process.env.SKIP_WORKERS) {
+    if (!config.skipWorkers) {
       this.startTransactionsQueueWorker();
     }
   }
