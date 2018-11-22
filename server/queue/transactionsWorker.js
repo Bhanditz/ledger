@@ -30,7 +30,12 @@ export default class TransactionsWorker {
   async consume() {
     // connecting to queue server
     const channel = await this.getAmqpChannel();
-    const q = await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
+    const q = await channel.assertQueue(config.queue.transactionQueue, {
+      exclusive: false,
+      durable: true,
+    });
+    const channelPrefetchSize = process.env.PREFETCH_SIZE || 1;
+    channel.prefetch(channelPrefetchSize);
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
       try {
@@ -41,11 +46,12 @@ export default class TransactionsWorker {
         await Promise.map(incomingTransactions, (transaction) => {
           return this.transactionService.parseAndInsertTransaction(transaction);
         });
+        channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
         this.logger.error(error);
       }
-    }, { noAck: true });
+    }, { noAck: false });
   }
 
 }

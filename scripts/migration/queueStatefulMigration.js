@@ -89,7 +89,8 @@ export class QueueStatefulMigration {
     console.time(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
     const channel = await this.getAmqpChannel();
     await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
-    channel.sendToQueue(config.queue.transactionQueue, Buffer.from(JSON.stringify(transactions), 'utf8'));
+    channel.sendToQueue(config.queue.transactionQueue,
+      Buffer.from(JSON.stringify(transactions), 'utf8'), { persistent: true });
     console.timeEnd(`Time to send ${process.env.QUERY_LIMIT || 100} transactions to queue:`);
   }
 
