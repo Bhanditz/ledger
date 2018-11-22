@@ -1,5 +1,4 @@
 import amqp from 'amqplib';
-import Promise from 'bluebird';
 import config from '../../config/config';
 import Logger from '../globals/logger';
 import TransactionService from '../services/transactionService';
