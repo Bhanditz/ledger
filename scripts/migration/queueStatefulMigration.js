@@ -101,6 +101,7 @@ export class QueueStatefulMigration {
   async sendTransactionsToQueue() {
     const currentProdDbClient = await this.getProductionConnection();
     const latestLegacyIdFromLedger = await this.getLatestLegacyIdFromLedger();
+    const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
     console.log(`Inserting data starting from Legacy Id: ${latestLegacyIdFromLedger}`);
     const query = ` SELECT
       t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
@@ -141,7 +142,7 @@ export class QueueStatefulMigration {
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
       WHERE t.id>${latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
-      ORDER BY t.id ASC limit ${process.env.QUERY_LIMIT || 1};
+      ORDER BY t.id ASC limit ${queryLimit};
     `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
 
