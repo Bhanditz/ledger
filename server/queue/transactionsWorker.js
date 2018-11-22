@@ -33,7 +33,7 @@ export default class TransactionsWorker {
       exclusive: false,
       durable: true,
     });
-    const channelPrefetchSize = process.env.PREFETCH_SIZE || 1;
+    const channelPrefetchSize = parseInt(process.env.PREFETCH_SIZE) || 1;
     channel.prefetch(channelPrefetchSize);
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
