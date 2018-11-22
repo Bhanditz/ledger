@@ -28,29 +28,34 @@ export default class TransactionsWorker {
   */
   async consume() {
     // connecting to queue server
+    const NO_TRANSACTIONS_ERROR = 'No transactions were found on queue message';
     const channel = await this.getAmqpChannel();
     const q = await channel.assertQueue(config.queue.transactionQueue, {
       exclusive: false,
       durable: true,
     });
-    const channelPrefetchSize = parseInt(process.env.PREFETCH_SIZE) || 1;
-    channel.prefetch(channelPrefetchSize);
+    channel.prefetch(config.queue.prefetchSize);
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
       try {
         const incomingTransactions = JSON.parse(msg.content);
         if (!incomingTransactions || incomingTransactions.length <= 0) {
-          throw new Error('No transactions were found on queue message');
+          throw new Error(NO_TRANSACTIONS_ERROR);
         }
         for (let i = 0; i < incomingTransactions.length; i++) {
-          await this.transactionService
-            .parseAndInsertTransaction(incomingTransactions[i]);
+          const parsedTx = this.transactionService.parseTransaction(incomingTransactions[i]);
+          const parsedTransactions = await this.transactionService.getSequencedTransactions(parsedTx);
+          await this.transactionService.insertMultipleParsedTransactions(parsedTransactions);
         }
-        await channel.ack(msg);
+        channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
-        await channel.nack(msg);
-        this.logger.error(error);
+        channel.ack(msg);
+        // as there is a prefetch, showing that there is no transactions
+        // in the queue is polluting the logs, better skip it
+        if (!error.toString().includes(NO_TRANSACTIONS_ERROR)) {
+          this.logger.error(error);
+        }
       }
     }, { noAck: false });
   }
