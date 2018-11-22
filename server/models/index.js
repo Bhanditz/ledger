@@ -13,12 +13,10 @@ export default class Database {
     if (!_database) {
       // starting sequelize db connections
       if (!this.sequelize) {
-        console.log('START DB');
         this.startDatabase();
       }
       // looking for db models
       if (!this.models) {
-        console.log('START MODELS');
         this.findDatabaseModels();
       }
       _database = this;
