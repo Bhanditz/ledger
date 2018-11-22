@@ -50,7 +50,7 @@ export default class TransactionsWorker {
         channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
-        channel.ack(msg);
+        channel.nack(msg);
         // as there is a prefetch, showing that there is no transactions
         // in the queue is polluting the logs, better skip it
         if (!error.toString().includes(NO_TRANSACTIONS_ERROR)) {
