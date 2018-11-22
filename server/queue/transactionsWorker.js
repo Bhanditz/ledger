@@ -46,9 +46,10 @@ export default class TransactionsWorker {
           await this.transactionService
             .parseAndInsertTransaction(incomingTransactions[i]);
         }
-        channel.ack(msg);
+        await channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
+        await channel.nack(msg);
         this.logger.error(error);
       }
     }, { noAck: false });
