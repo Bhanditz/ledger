@@ -42,8 +42,8 @@ export default class TransactionsWorker {
         if (!incomingTransactions || incomingTransactions.length <= 0) {
           throw new Error(NO_TRANSACTIONS_ERROR);
         }
-        for (let i = 0; i < incomingTransactions.length; i++) {
-          const parsedTx = this.transactionService.parseTransaction(incomingTransactions[i]);
+        for (const transaction of incomingTransactions) {
+          const parsedTx = this.transactionService.parseTransaction(transaction);
           const parsedTransactions = await this.transactionService.getSequencedTransactions(parsedTx);
           await this.transactionService.insertMultipleParsedTransactions(parsedTransactions);
         }
