@@ -21,7 +21,7 @@ export default class AbstractRouter {
   get() {
     this.app.get(this.path, (req, res) => {
       this.service.get(req.query).then( data => {
-        res.send({ data: data });
+        res.send(data);
       }).catch(error => {
         this.logger.error(error);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);
