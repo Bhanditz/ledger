@@ -20,7 +20,13 @@ export default class AbstractCrudService {
     if (cacheItem) {
       return cacheItem;
     }
-    const result = await this.model.findAll({ where: query });
+    let modelQuery = { where: query, order: [['createdAt', 'DESC']] };
+    if (query.where) {
+      query.where = JSON.parse(query.where);
+      query.order = [['createdAt', 'DESC']];
+      modelQuery = query;
+    }
+    const result = await this.model.findAll(modelQuery);
     this.cache.set(key, result);
     return result;
   }
