@@ -23,6 +23,14 @@ export default class AbstractCrudService {
     let modelQuery = { where: query, order: [['createdAt', 'DESC']] };
     if (query.where) {
       query.where = JSON.parse(query.where);
+      if (query.where.or) {
+        const Op = this.database.sequelize.Op;
+        query.where = {
+          ...query.where,
+          [Op.or]: query.where.or,
+        };
+        delete query.where.or;
+      }
       query.order = [['createdAt', 'DESC']];
       modelQuery = query;
     }
