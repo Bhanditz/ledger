@@ -46,6 +46,8 @@ export default class ForexConversionTransactions {
       LegacyCreditTransactionId: this.transaction.LegacyCreditTransactionId,
       LegacyDebitTransactionId: this.transaction.LegacyDebitTransactionId,
       description: this.transaction.description,
+      createdAt: this.transaction.createdAt,
+      updatedAt: this.transaction.updatedAt,
     };
     return this.transactionLib.getDoubleEntryArray(conversionTransaction);
   }
