@@ -26,11 +26,22 @@ export default class Wallet extends Sequelize.Model {
       PaymentMethodId: {
         type: Sequelize.INTEGER,
       },
+      SourcePaymentMethodId: {
+        type: Sequelize.INTEGER,
+      },
       OrderId: {
         type: Sequelize.INTEGER,
       },
       ExpenseId: {
         type: Sequelize.INTEGER,
+      },
+      SourceWalletId: {
+        type: Sequelize.INTEGER,
+        references: { key: 'id', model: 'Wallets' },
+        allowNull: true,
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+        description: 'References the Wallet used to actually pay through this gift card',
       },
       temporary: {
         type: Sequelize.BOOLEAN,
@@ -47,6 +58,17 @@ export default class Wallet extends Sequelize.Model {
       deletedAt: {
         type: Sequelize.DATE,
       },
+      expiryDate: {
+        type: Sequelize.DATE,
+      },
+      maxBalance: {
+        type: Sequelize.INTEGER,
+        description: 'some wallets may have limited budget',
+      },
+      monthlyMaxBalance: {
+        type: Sequelize.INTEGER,
+        description: 'some wallets may have monthly limited budget',
+      },
     },
     {
       sequelize,
@@ -57,5 +79,13 @@ export default class Wallet extends Sequelize.Model {
           },
       ],
     });
+  }
+
+  /**
+   * responsible to associate the model relationships
+   * @param {*} models - sequelize models
+   */
+  static associate(models) {
+    this.belongsTo(models.Wallet, { foreignKey: 'SourceWalletId', as: 'sourceWallet' });
   }
 }
