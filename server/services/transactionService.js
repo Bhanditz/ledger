@@ -4,11 +4,17 @@ import TransactionRegularStrategy from '../strategies/transactionRegularStrategy
 import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import TransactionRefundStrategy from '../strategies/transactionRefundStrategy';
 import TransactionForexRefundStrategy from '../strategies/transactionForexRefundStrategy';
+import Wallet from '../models/Wallet';
 
 export default class TransactionService extends AbstractCrudService {
 
   constructor() {
     super(LedgerTransaction);
+  }
+
+  get(query = {}) {
+    query.include = [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }];
+    return super.get(query);
   }
 
   /** Given a transaction, identify which kind of transaction it will be and
