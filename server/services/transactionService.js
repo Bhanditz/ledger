@@ -5,16 +5,43 @@ import TransactionForexStrategy from '../strategies/transactionForexStrategy';
 import TransactionRefundStrategy from '../strategies/transactionRefundStrategy';
 import TransactionForexRefundStrategy from '../strategies/transactionForexRefundStrategy';
 import Wallet from '../models/Wallet';
+import Database from '../models';
 
 export default class TransactionService extends AbstractCrudService {
 
   constructor() {
     super(LedgerTransaction);
+    this.database = new Database();
   }
 
   get(query = {}) {
     query.include = [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }];
-    return super.get(query);
+    return this.getLegacyCreditTransactionsIdsOrderByCreatedAt(query)
+    .then(groupLegacyIdAndDateArr => {
+      if (!groupLegacyIdAndDateArr || !groupLegacyIdAndDateArr[0]) {
+        throw new Error('no results were found');
+      }
+      const groupLegacyCreditIds = groupLegacyIdAndDateArr[0].map(t => t.LegacyCreditTransactionId);
+      const legacyIdQuery = {
+        where: {
+          LegacyCreditTransactionId: groupLegacyCreditIds,
+        },
+        include: [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }],
+      };
+      return super.get(legacyIdQuery);
+    })
+  }
+
+  async getLegacyCreditTransactionsIdsOrderByCreatedAt(query = {}) {
+    const where = JSON.parse(query.where);
+    return this.database.sequelize.query(`
+      WITH groupIds AS (SELECT max("createdAt") as "createdAt",
+        "LegacyCreditTransactionId"
+        FROM "LedgerTransactions"
+        GROUP BY "LegacyCreditTransactionId", "ToAccountId"
+        HAVING "ToAccountId"='${where.ToAccountId}')
+      SELECT * FROM groupIds ORDER BY "createdAt" DESC limit ${query.limit || 20};`
+    );
   }
 
   /** Given a transaction, identify which kind of transaction it will be and
@@ -124,6 +151,9 @@ export default class TransactionService extends AbstractCrudService {
         forexRateDestinationCoin: transaction.hostCurrency,
         description: transaction.description,
         RefundTransactionId: transaction.RefundTransactionId,
+        SourcePaymentMethodId: transaction.SourcePaymentMethodId,
+        createdAt: transaction.createdAt,
+        updatedAt: transaction.updatedAt,
       };
       // setting toWallet
       ledgerTransaction.toWallet = {
