@@ -79,6 +79,10 @@ export default class LedgerTransaction extends Sequelize.Model {
         onDelete: 'SET NULL',
         onUpdate: 'SET NULL',
       },
+      uuid: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
