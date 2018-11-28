@@ -43,6 +43,11 @@ export default class WalletLib {
       where.PaymentMethodId = data.PaymentMethodId;
       defaultFields = omit(defaultFields, ['PaymentMethodId']);
     }
+    // Gift card consideration
+    if (data.SourcePaymentMethodId) {
+      where.SourcePaymentMethodId = data.SourcePaymentMethodId;
+      defaultFields = omit(defaultFields, ['SourcePaymentMethodId']);
+    }
     // if there is no PaymentMethodId but there is OrderId, do as above
     if (!data.PaymentMethodId && data.OrderId) {
       where.OrderId = data.OrderId;
