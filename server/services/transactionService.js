@@ -29,7 +29,7 @@ export default class TransactionService extends AbstractCrudService {
         include: [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }],
       };
       return super.get(legacyIdQuery);
-    })
+    });
   }
 
   async getLegacyCreditTransactionsIdsOrderByCreatedAt(query = {}) {

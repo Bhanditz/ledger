@@ -40,6 +40,9 @@ export default class TransactionLib {
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
       description: transaction.description,
+      uuid: uuidv4(),
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt,
     };
     const creditTransaction = {
       type: transactionTypeEnum.CREDIT,
@@ -58,6 +61,9 @@ export default class TransactionLib {
       transactionGroupId: transaction.transactionGroupId,
       doubleEntryGroupId: doubleEntryGroupId,
       description: transaction.description,
+      uuid: uuidv4(),
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt,
     };
     return [debitTransaction, creditTransaction];
   }
