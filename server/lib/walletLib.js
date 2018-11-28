@@ -29,15 +29,15 @@ export default class WalletLib {
   }
 
   async findOrCreateCurrencyWallet(data, temp){
+    data.name = data.name || 'UNKNOWN';
     // setting where query
     const where = {
       currency: data.currency,
       AccountId: `${data.AccountId || 'UNKNOWN'}`,
       OwnerAccountId: `${data.OwnerAccountId || 'UNKNOWN'}`,
-      name: `${data.name || 'UNKNOWN'}`,
     };
     // setting default fields
-    let defaultFields = omit(data, ['currency', 'AccountId', 'OwnerAccountId', 'name']);
+    let defaultFields = omit(data, ['currency', 'AccountId', 'OwnerAccountId']);
     // setting Payment method id on where query and ommiting from default fields
     if (data.PaymentMethodId) {
       where.PaymentMethodId = data.PaymentMethodId;
@@ -61,8 +61,8 @@ export default class WalletLib {
     return Wallet.findOrCreate({
       where,
       defaults: {
-       temp: temp || false,
-       ...defaultFields,
+        temporary: temp || false,
+        ...defaultFields,
       },
     }).spread((result) => {
       return result;
