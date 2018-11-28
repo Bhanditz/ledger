@@ -20,9 +20,10 @@ export default class AbstractCrudService {
     if (cacheItem) {
       return cacheItem;
     }
-    let modelQuery = { where: query, order: [['createdAt', 'DESC']] };
-    if (query.where) {
-      query.where = JSON.parse(query.where);
+    const { where, include, ...regularQuery } = query;
+    let modelQuery = { where: regularQuery, order: [['createdAt', 'DESC']] };
+    if (where) {
+      query.where = JSON.parse(where);
       if (query.where.or) {
         const Op = this.database.sequelize.Op;
         query.where = {
@@ -33,6 +34,9 @@ export default class AbstractCrudService {
       }
       query.order = [['createdAt', 'DESC']];
       modelQuery = query;
+    }
+    if (include) {
+      modelQuery.include = include;
     }
     const result = await this.model.findAll(modelQuery);
     this.cache.set(key, result);
