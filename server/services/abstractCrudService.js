@@ -15,15 +15,14 @@ export default class AbstractCrudService {
   }
 
   async get(query = {}) {
-    const key = `${this.model.name}_${JSON.stringify(query)}_all`;
-    const cacheItem = this.cache.get(key);
-    if (cacheItem) {
-      return cacheItem;
-    }
+    // const key = `${this.model.name}_${JSON.stringify(query)}_all`;
+    // const cacheItem = this.cache.get(key);
+    // if (cacheItem) {
+    //   return cacheItem;
+    // }
     const { where, include, ...regularQuery } = query;
     let modelQuery = { where: regularQuery, order: [['createdAt', 'DESC']] };
     if (where) {
-      query.where = JSON.parse(where);
       if (query.where.or) {
         const Op = this.database.sequelize.Op;
         query.where = {
@@ -39,19 +38,19 @@ export default class AbstractCrudService {
       modelQuery.include = include;
     }
     const result = await this.model.findAll(modelQuery);
-    this.cache.set(key, result);
+    // this.cache.set(key, result);
     return result;
   }
 
   getOne(query = {}) {
-    const key = `${this.model.name}_${JSON.stringify(query)}_one`;
-    const cacheItem = this.cache.get(key);
-    if (cacheItem) {
-      return cacheItem;
-    }
+    // const key = `${this.model.name}_${JSON.stringify(query)}_one`;
+    // const cacheItem = this.cache.get(key);
+    // if (cacheItem) {
+    //   return cacheItem;
+    // }
     return this.model.findOne({ where: query })
     .then(result => {
-      this.cache.set(key, result);
+      // this.cache.set(key, result);
       return result;
     }).catch(error => {
       throw error;
