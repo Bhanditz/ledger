@@ -43,9 +43,9 @@ export default class TransactionsWorker {
           throw new Error(NO_TRANSACTIONS_ERROR);
         }
         for (const transaction of incomingTransactions) {
-          const parsedTx = this.transactionService.parseTransaction(transaction);
-          const parsedTransactions = await this.transactionService.getSequencedTransactions(parsedTx);
-          await this.transactionService.insertMultipleParsedTransactions(parsedTransactions);
+          const parsedTransaction = this.transactionService.parseTransaction(transaction);
+          const sequencedTransaction = await this.transactionService.getSequencedTransactions(parsedTransaction);
+          await this.transactionService.insertMultipleParsedTransactions(sequencedTransaction);
         }
         channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
