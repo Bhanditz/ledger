@@ -3,7 +3,8 @@ import amqp from 'amqplib';
 import Database from '../../server/models';
 import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
-
+import axios from 'axios';
+import TransactionService from '../../server/services/transactionService';
 /*
 Migration, starts inserting by looking at the min id of the current prod's transaction table
 and then insert on the ledger(keeping state through the ledger's transaction fields "LegacyCreditTransactionId" and "LegacyDebitTransactionId")
@@ -54,6 +55,7 @@ export class QueueStatefulMigration {
       console.log('Initializing Ledger db...');
       this.ledgerDbConnection = new Database();
     }
+    this.transactionService = new TransactionService();
     return this.ledgerDbConnection;
   }
 
@@ -95,6 +97,26 @@ export class QueueStatefulMigration {
     channel.sendToQueue(config.queue.transactionQueue,
       Buffer.from(JSON.stringify(transactions), 'utf8'), { persistent: true });
     console.timeEnd(`Time to send ${queryLimit} transactions to queue:`);
+  }
+
+  /** execute insertion of transactions into the database
+  * @param {Object} transaction - the transaction object to be sent to queue
+  * @param {Object} channel - amqp initiated channel object
+  * @return {void}
+  */
+  async insertLedgerTransaction(transactions) {
+    const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
+    console.log(`inserting ${queryLimit} transactions `);
+    // const dbTransactions = [];
+    for (const transaction of transactions) {
+      console.time('transaction inserted in ');
+      const parsedTransaction = this.transactionService.parseTransaction(transaction);
+      const sequencedTransaction = await this.transactionService.getSequencedTransactions(parsedTransaction);
+      // dbTransactions.push(sequencedTransaction);
+      await this.transactionService.insertMultipleParsedTransactions(sequencedTransaction);
+      console.timeEnd('transaction inserted in ');
+    }
+    // await this.transactionService.insertMultipleParsedTransactions(dbTransactions);
   }
 
   /** Parse transactions from Current production database(Transactions table)
@@ -154,8 +176,9 @@ export class QueueStatefulMigration {
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
-    console.log(`res.rows: ${JSON.stringify(res.rows, null,2)}`);
-    await this.sendToQueue(res.rows);
+    // console.log(`res.rows: ${JSON.stringify(res.rows, null,2)}`);
+    // await this.sendToQueue(res.rows);
+    await this.insertLedgerTransaction(res.rows);
     const transactionLegacyIds = res.rows.map(t => t.id);
     this.latestLegacyIdFromLedger = Math.max(...transactionLegacyIds);
     console.log(`Latest Legacy Id inserted: ${this.latestLegacyIdFromLedger}`);
