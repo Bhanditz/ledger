@@ -72,12 +72,9 @@ export default class LedgerTransaction extends Sequelize.Model {
       LegacyDebitTransactionId: {
         type: Sequelize.INTEGER,
       },
-      RefundTransactionId: {
-        type: Sequelize.INTEGER,
-        references: { key: 'id', model: 'LedgerTransactions' },
+      refundTransactionGroupId: {
+        ttype: Sequelize.UUID,
         allowNull: true,
-        onDelete: 'SET NULL',
-        onUpdate: 'SET NULL',
       },
       uuid: {
         type: Sequelize.UUID,

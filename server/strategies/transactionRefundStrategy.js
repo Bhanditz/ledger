@@ -36,24 +36,37 @@ export default class TransactionRefundStrategy extends AbstractTransactionStrate
       ...providerFeeTransactions,
       ...transactions.filter(t => t.category === transactionCategoryEnum.ACCOUNT),
     ], async ledgerTransaction => {
-      // when a refund is made, the RefundTransactionId of a CREDIT transaction
-      // corresponds to the id of the original correlated DEBIT transaction
-      const refundTransaction = await LedgerTransaction.findOne({
-        attributes: ['id', 'amount'],
-        where: {
-          LegacyDebitTransactionId: this.incomingTransaction
-            .RefundTransactionId,
-          type: ledgerTransaction.type,
-          category: ledgerTransaction.category,
-        },
-      });
+
+      let refundTransaction;
+      // Either it has a refundTransactionGroupId(UUID) or it has a RefundTransactionId ( id referringLegacy)
+      if (this.incomingTransaction.refundTransactionGroupId) {
+        refundTransaction = await LedgerTransaction.findOne({
+          attributes: ['transactionGroupId'],
+          where: {
+            transactionGroupId: this.incomingTransaction.refundTransactionGroupId,
+          },
+        });
+      } else if (this.incomingTransaction.RefundTransactionId) {
+        refundTransaction = await LedgerTransaction.findOne({
+          attributes: ['transactionGroupId'],
+          where: {
+            LegacyDebitTransactionId: this.incomingTransaction.RefundTransactionId,
+            type: ledgerTransaction.type,
+            category: ledgerTransaction.category,
+          },
+        });
+      }
       // the contributor will always be fully reimbursed as the host pays any fee loss
       if (ledgerTransaction.category === transactionCategoryEnum.ACCOUNT) {
         ledgerTransaction.amount = refundTransaction.amount;
       }
-      ledgerTransaction.RefundTransactionId = refundTransaction.id;
+      if (!refundTransaction) return ledgerTransaction;
+
+      ledgerTransaction.refundTransactionGroupId = refundTransaction.transactionGroupId;
       ledgerTransaction.category = `REFUND: ${ledgerTransaction.category}`;
       return ledgerTransaction;
+
+
     });
     return ledgerTransactions;
   }

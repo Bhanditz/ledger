@@ -94,23 +94,28 @@ export default class TransactionForexRefundStrategy  extends AbstractTransaction
       ...accountToAccountlDestinationCurrencyTransactions,
       ...conversionReceiverTransactions,
     ], async ledgerTransaction => {
-      // when a refund is made, the RefundTransactionId of a CREDIT transaction
-      // corresponds to the id of the original correlated DEBIT transaction
-      const refundTransaction = await LedgerTransaction.findOne({
-        attributes: ['id', 'amount'],
-        where: {
-          LegacyDebitTransactionId: this.incomingTransaction.RefundTransactionId,
-          type: ledgerTransaction.type,
-          category: ledgerTransaction.category,
-        },
-      });
+      let refundTransaction;
+      // Either it has a refundTransactionGroupId(UUID) or it has a RefundTransactionId ( id referringLegacy)
+      if (this.incomingTransaction.refundTransactionGroupId) {
+        refundTransaction = await LedgerTransaction.findOne({
+          attributes: ['transactionGroupId'],
+          where: {
+            transactionGroupId: this.incomingTransaction.refundTransactionGroupId,
+          },
+        });
+      } else if (this.incomingTransaction.RefundTransactionId) {
+        refundTransaction = await LedgerTransaction.findOne({
+          attributes: ['transactionGroupId'],
+          where: {
+            LegacyDebitTransactionId: this.incomingTransaction.RefundTransactionId,
+            type: ledgerTransaction.type,
+            category: ledgerTransaction.category,
+          },
+        });
+      }
       if (!refundTransaction) return ledgerTransaction;
-      // the contributor will always be fully reimbursed as the host pays any fee loss
-      // IF THERE IS A CONVERSION THIS MAY NOT BE TRUE FOR ALL CASES(SEE opencollective-api Transactions table ids 99446 and 83642)
-      // if (ledgerTransaction.category === transactionCategoryEnum.ACCOUNT) {
-      //   ledgerTransaction.amount = refundTransaction.amount;
-      // }
-      ledgerTransaction.RefundTransactionId = refundTransaction.id;
+
+      ledgerTransaction.refundTransactionGroupId = refundTransaction.transactionGroupId;
       ledgerTransaction.category = `REFUND: ${ledgerTransaction.category}`;
       return ledgerTransaction;
     });
