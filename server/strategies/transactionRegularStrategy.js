@@ -9,6 +9,10 @@ export default class TransactionRegularStrategy extends AbstractTransactionStrat
 
   async getTransactions() {
     await this.findOrCreateWallets();
+    return this.getFormattedTransactions();
+  }
+
+  async getFormattedTransactions() {
     const [paymentProviderFeeTransactions, platformFeeTransactions, providerFeeTransactions] = await this.getFeeTransactions();
     // if senderPayFees, he will discount the fees from the total amount to send the net amount to the receiver
     // otherwise the sender will send the full amount and the receiver will pay the fees
