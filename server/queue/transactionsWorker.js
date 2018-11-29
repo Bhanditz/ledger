@@ -23,6 +23,17 @@ export default class TransactionsWorker {
     return this.amqpChannel;
   }
 
+  /** Sends data to fail queue when transactions are not parsed successfully
+  * @param {Object} transaction - the transaction object to be sent to queue
+  * @param {Object} channel - amqp initiated channel object
+  * @return {void}
+  */
+ async sendToFailQueue(data) {
+  const channel = await this.getAmqpChannel();
+  await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
+  channel.sendToQueue(config.queue.failTransactionQueue, data, { persistent: true });
+}
+
   /** Opens Queue channel to wait for incoming transactions to be consumed
   * @return {void}
   */
@@ -50,12 +61,13 @@ export default class TransactionsWorker {
         channel.ack(msg);
         this.logger.info('Transactions Parsed and inserted successfully');
       } catch (error) {
-        channel.nack(msg);
+        channel.ack(msg);
         // as there is a prefetch, showing that there is no transactions
         // in the queue is polluting the logs, better skip it
         if (!error.toString().includes(NO_TRANSACTIONS_ERROR)) {
           this.logger.error(error);
         }
+        this.sendToFailQueue(msg.content);
       }
     }, { noAck: false });
   }

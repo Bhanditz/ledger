@@ -19,6 +19,7 @@ export default {
   queue: {
     url: process.env.QUEUE_URL || 'amqp://localhost',
     transactionQueue: process.env.TRANSACTION_QUEUE || 'transactions',
+    failTransactionQueue: process.env.FAIL_TRANSACTION_QUEUE || 'fail_transactions',
     prefetchSize: parseInt(process.env.PREFETCH_SIZE) || 1,
   },
 };
