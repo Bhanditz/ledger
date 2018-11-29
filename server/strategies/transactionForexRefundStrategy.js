@@ -1,10 +1,10 @@
 import Promise from 'bluebird';
+import { pickBy, identity } from 'lodash';
 import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 import ForexToAccountConvertTransactions from '../lib/forexToAccountConvertTransactions';
 import AbstractTransactionForexStrategy from './abstractTransactionForexStrategy';
 import TransactionForexStrategy from './transactionForexStrategy';
 import LedgerTransaction from '../models/LedgerTransaction';
-import Wallet from '../models/Wallet';
 
 export default class TransactionForexRefundStrategy  extends AbstractTransactionForexStrategy {
   constructor(transaction) {
@@ -12,19 +12,29 @@ export default class TransactionForexRefundStrategy  extends AbstractTransaction
   }
 
   async _generateRefundWallets() {
-    // tries to find existing wallet(its very likely it exists due the fact it is a refund)
-    this.incomingTransaction.fromWalletDestinationCurrency = await Wallet.findOne({
-      where: {
-        currency: this.incomingTransaction.destinationCurrency,
-        AccountId: `${this.incomingTransaction.fromWallet.AccountId}`,
-        OwnerAccountId: `${this.incomingTransaction.fromWallet.OwnerAccountId}`,
-      },
-    });
-    await this.findOrCreateWallets(false);
+    // check whether there is a payment provider
+    if (this.incomingTransaction.paymentProviderWallet) {
+      this.incomingTransaction.paymentProviderWallet = await this.walletLib
+        .findOrCreateCurrencyWallet(pickBy(this.incomingTransaction.paymentProviderWallet, identity));
+        this.incomingTransaction.PaymentProviderAccountId =
+          this.incomingTransaction.paymentProviderWallet.PaymentProviderAccountId;
+    }
+    // finding or creating from and to Wallets
+    this.incomingTransaction.fromWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.fromWallet);
+    this.incomingTransaction.toWallet = await this.walletLib
+      .findOrCreateCurrencyWallet(this.incomingTransaction.toWallet);
+    this.incomingTransaction.FromWalletId = this.incomingTransaction.fromWallet.id;
+    this.incomingTransaction.ToWalletId = this.incomingTransaction.toWallet.id;
     this.incomingTransaction.toWalletSourceCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(
       this.incomingTransaction.currency,
       this.incomingTransaction.toWallet.AccountId,
       this.incomingTransaction.toWallet.OwnerAccountId
+    );
+    this.incomingTransaction.fromWalletDestinationCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(
+      this.incomingTransaction.destinationCurrency,
+      this.incomingTransaction.fromWallet.AccountId,
+      this.incomingTransaction.fromWallet.OwnerAccountId
     );
   }
 
