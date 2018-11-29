@@ -1,13 +1,13 @@
 import Database from '../models';
 import LedgerTransaction from '../models/LedgerTransaction';
 import Wallet from '../models/Wallet';
+import Sequelize from 'sequelize';
 
 export default class WalletLib {
 
   constructor() {
     this.database = new Database();
-    this.sequelize = this.database.sequelize;
-    this.Op = this.sequelize.Op;
+    this.Op = Sequelize.Op;
   }
 
   getBalanceFromWalletId(walletId) {
@@ -32,16 +32,16 @@ export default class WalletLib {
     data.name = data.name || 'UNKNOWN';
     data.AccountId = `${data.AccountId || 'UNKNOWN'}`;
     data.OwnerAccountId = `${data.OwnerAccountId || 'UNKNOWN'}`;
-    data.temporary = temp || false;
+
     // setting where query
     const where = {
       currency: data.currency,
       AccountId: data.AccountId,
       OwnerAccountId: data.OwnerAccountId,
-      PaymentMethodId: data.PaymentMethodId || { [this.Op.eq]: null },
-      SourcePaymentMethodId: data.SourcePaymentMethodId || { [this.Op.eq]: null },
-      OrderId: { [this.Op.eq]: null },
-      ExpenseId: { [this.Op.eq]: null },
+      PaymentMethodId: data.PaymentMethodId || null, // { [this.Op.eq]: null },
+      SourcePaymentMethodId: data.SourcePaymentMethodId || null, // { [this.Op.eq]: null },
+      OrderId: null, // { [this.Op.eq]: null },
+      ExpenseId: null, // { [this.Op.eq]: null },
     };
     // if there is no PaymentMethodId but there is OrderId, do as above
     if (!data.PaymentMethodId && data.OrderId) {
@@ -51,7 +51,15 @@ export default class WalletLib {
     if (!data.PaymentMethodId && data.ExpenseId) {
       where.ExpenseId = data.ExpenseId;
     }
-    return Wallet.findOrCreate({ where });
+    return Wallet.findOrCreate({
+      where,
+      defaults: {
+       temp: temp || false,
+       name: data.name,
+      },
+    }).spread((result) => {
+      return result;
+    });
   }
 
   async findOrCreateTemporaryCurrencyWallet(currency, AccountId, OwnerAccountId){
