@@ -209,7 +209,7 @@ export default class TransactionService extends AbstractCrudService {
         }
       }
       // setting wallet provider account id
-      ledgerTransaction.WalletProviderAccountId = ledgerTransaction.walletProviderWallet.AccountId;
+      ledgerTransaction.WalletProviderAccountId = ledgerTransaction.walletProviderWallet && ledgerTransaction.walletProviderWallet.AccountId;
       // setting base of fromWallet
       ledgerTransaction.fromWallet = {
         name: '',
@@ -265,7 +265,7 @@ export default class TransactionService extends AbstractCrudService {
         }
       }
       // setting payment provider provider account id
-      ledgerTransaction.PaymentProviderAccountId = ledgerTransaction.paymentProviderWallet.AccountId;
+      ledgerTransaction.PaymentProviderAccountId = ledgerTransaction.paymentProviderWallet && ledgerTransaction.paymentProviderWallet.AccountId;
       return ledgerTransaction;
   }
 
