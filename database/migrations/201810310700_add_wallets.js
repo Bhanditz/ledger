@@ -72,6 +72,19 @@ module.exports = {
       timestamps: true,
     })
     .then( () => {
+      return queryInterface.addConstraint('Wallets', [
+        'currency',
+        'AccountId',
+        'OwnerAccountId',
+        'PaymentMethodId',
+        'OrderId',
+        'ExpenseId',
+        'SourcePaymentMethodId'
+      ], {
+        type: 'unique',
+        name: 'wallets_constraint_uniq'
+      });
+    }).then( () => {
       return queryInterface.addIndex('Wallets', {
         fields: ['AccountId', 'OwnerAccountId'],
         name: 'ledger_wallet_idx_account_owner'
