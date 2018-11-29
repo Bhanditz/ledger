@@ -1,7 +1,6 @@
 import Database from '../models';
 import LedgerTransaction from '../models/LedgerTransaction';
 import Wallet from '../models/Wallet';
-import { omit } from 'lodash';
 
 export default class WalletLib {
 
@@ -30,43 +29,34 @@ export default class WalletLib {
 
   async findOrCreateCurrencyWallet(data, temp){
     data.name = data.name || 'UNKNOWN';
+    data.AccountId = `${data.AccountId || 'UNKNOWN'}`;
+    data.OwnerAccountId = `${data.OwnerAccountId || 'UNKNOWN'}`;
+    data.temporary = temp || false;
     // setting where query
     const where = {
       currency: data.currency,
-      AccountId: `${data.AccountId || 'UNKNOWN'}`,
-      OwnerAccountId: `${data.OwnerAccountId || 'UNKNOWN'}`,
+      AccountId: data.AccountId,
+      OwnerAccountId: data.OwnerAccountId,
     };
-    // setting default fields
-    let defaultFields = omit(data, ['currency', 'AccountId', 'OwnerAccountId']);
     // setting Payment method id on where query and ommiting from default fields
     if (data.PaymentMethodId) {
       where.PaymentMethodId = data.PaymentMethodId;
-      defaultFields = omit(defaultFields, ['PaymentMethodId']);
     }
     // Gift card consideration
     if (data.SourcePaymentMethodId) {
       where.SourcePaymentMethodId = data.SourcePaymentMethodId;
-      defaultFields = omit(defaultFields, ['SourcePaymentMethodId']);
     }
     // if there is no PaymentMethodId but there is OrderId, do as above
     if (!data.PaymentMethodId && data.OrderId) {
       where.OrderId = data.OrderId;
-      defaultFields = omit(defaultFields, ['OrderId']);
     }
     // if there is no PaymentMethodId but there is ExpenseId, do as above
     if (!data.PaymentMethodId && data.ExpenseId) {
       where.ExpenseId = data.ExpenseId;
-      defaultFields = omit(defaultFields, ['ExpenseId']);
     }
-    return Wallet.findOrCreate({
-      where,
-      defaults: {
-        temporary: temp || false,
-        ...defaultFields,
-      },
-    }).spread((result) => {
-      return result;
-    });
+    const walletFound = await Wallet.findOne({ where });
+    if (walletFound) return walletFound;
+    return Wallet.create(data);
   }
 
   async findOrCreateTemporaryCurrencyWallet(currency, AccountId, OwnerAccountId){
