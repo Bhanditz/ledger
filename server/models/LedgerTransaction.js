@@ -73,7 +73,7 @@ export default class LedgerTransaction extends Sequelize.Model {
         type: Sequelize.INTEGER,
       },
       refundTransactionGroupId: {
-        ttype: Sequelize.UUID,
+        type: Sequelize.UUID,
         allowNull: true,
       },
       uuid: {

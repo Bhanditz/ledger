@@ -70,7 +70,7 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       refundTransactionGroupId: {
-        ttype: Sequelize.UUID,
+        type: Sequelize.UUID,
         allowNull: true,
       },
       uuid: {
