@@ -51,9 +51,7 @@ export default class WalletLib {
     if (!data.PaymentMethodId && data.ExpenseId) {
       where.ExpenseId = data.ExpenseId;
     }
-    const walletFound = await Wallet.findOne({ where });
-    if (walletFound) return walletFound;
-    return Wallet.create(data);
+    return Wallet.findOrCreate({ where });
   }
 
   async findOrCreateTemporaryCurrencyWallet(currency, AccountId, OwnerAccountId){
