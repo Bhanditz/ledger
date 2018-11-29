@@ -13,19 +13,19 @@ export default class TransactionForexRefundStrategy  extends AbstractTransaction
 
   async _generateRefundWallets() {
     // tries to find existing wallet(its very likely it exists due the fact it is a refund)
-    const fromWalletDestinationCurrency = await Wallet.findOne({
+    this.incomingTransaction.fromWalletDestinationCurrency = await Wallet.findOne({
       where: {
         currency: this.incomingTransaction.destinationCurrency,
         AccountId: `${this.incomingTransaction.fromWallet.AccountId}`,
         OwnerAccountId: `${this.incomingTransaction.fromWallet.OwnerAccountId}`,
       },
     });
-    if (fromWalletDestinationCurrency) {
-      await this.findOrCreateWallets();
-      this.incomingTransaction.fromWalletDestinationCurrency = fromWalletDestinationCurrency;
-      return;
-    }
-    await this.findOrCreateWallets(true);
+    await this.findOrCreateWallets(false);
+    this.incomingTransaction.toWalletSourceCurrency = await this.walletLib.findOrCreateTemporaryCurrencyWallet(
+      this.incomingTransaction.currency,
+      this.incomingTransaction.toWallet.AccountId,
+      this.incomingTransaction.toWallet.OwnerAccountId
+    );
   }
 
   async getTransactions() {
