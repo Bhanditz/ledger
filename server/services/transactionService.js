@@ -93,18 +93,19 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Object} strategy - Return defined Strategy Class Object
   */
   async _defineTransactionStrategy(transaction) {
+    // boolean to check whether it's has fields and conditions to be a Legacy Refund transaction
+    const legacyDbRefund = transaction.RefundTransactionId
+      && transaction.LegacyCreditTransactionId > transaction.RefundTransactionId;
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
-      // Check whether it's a REFUND transaction
-      if (transaction.RefundTransactionId && transaction.LegacyCreditTransactionId &&
-        transaction.LegacyCreditTransactionId > transaction.RefundTransactionId) {
+      // Check whether it's a REFUND either through current case or through a legacy transaction
+      if (transaction.refundTransactionGroupId || legacyDbRefund) {
         return new TransactionRefundStrategy(transaction);
       }
       return new TransactionRegularStrategy(transaction);
     }
     // Check whether the forex Transaction is also a REFUND transaction
-    if (transaction.RefundTransactionId && transaction.LegacyCreditTransactionId &&
-      transaction.LegacyCreditTransactionId > transaction.RefundTransactionId) {
+    if (transaction.refundTransactionGroupId || legacyDbRefund) {
       return new TransactionForexRefundStrategy(transaction);
     }
     return new TransactionForexStrategy(transaction);
