@@ -27,7 +27,7 @@ export default class TransactionRefundStrategy extends AbstractTransactionStrate
       providerFeeManager ? providerFeeManager.getFeeDoubleEntryTransactions() : [],
     ];
     const accountStrategy = new TransactionRegularStrategy(this.incomingTransaction);
-    const transactions = await accountStrategy.getTransactions();
+    const transactions = await accountStrategy.getFormattedTransactions();
     // finding "original" transactions to be refunded by current transaction
     // and order them by fees first
     const ledgerTransactions = Promise.map([
