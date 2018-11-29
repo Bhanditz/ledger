@@ -7,6 +7,7 @@ export default class WalletLib {
   constructor() {
     this.database = new Database();
     this.sequelize = this.database.sequelize;
+    this.Op = this.sequelize.Op;
   }
 
   getBalanceFromWalletId(walletId) {
@@ -37,15 +38,11 @@ export default class WalletLib {
       currency: data.currency,
       AccountId: data.AccountId,
       OwnerAccountId: data.OwnerAccountId,
+      PaymentMethodId: data.PaymentMethodId || { [this.Op.eq]: null },
+      SourcePaymentMethodId: data.SourcePaymentMethodId || { [this.Op.eq]: null },
+      OrderId: { [this.Op.eq]: null },
+      ExpenseId: { [this.Op.eq]: null },
     };
-    // setting Payment method id on where query and ommiting from default fields
-    if (data.PaymentMethodId) {
-      where.PaymentMethodId = data.PaymentMethodId;
-    }
-    // Gift card consideration
-    if (data.SourcePaymentMethodId) {
-      where.SourcePaymentMethodId = data.SourcePaymentMethodId;
-    }
     // if there is no PaymentMethodId but there is OrderId, do as above
     if (!data.PaymentMethodId && data.OrderId) {
       where.OrderId = data.OrderId;
