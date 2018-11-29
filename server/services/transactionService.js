@@ -168,7 +168,6 @@ export default class TransactionService extends AbstractCrudService {
         // according to the Host Collective properties
         if (hostFeeInHostCurrency) {
           ledgerTransaction.walletProviderFee = hostFeeInHostCurrency;
-          ledgerTransaction.WalletProviderAccountId = transaction.HostCollectiveId;
           ledgerTransaction.walletProviderWallet = {
             name: `owner and account: ${transaction.hostCollectiveSlug}, multi-currency`,
             currency: null,
@@ -189,28 +188,28 @@ export default class TransactionService extends AbstractCrudService {
             ledgerTransaction.toWallet.name = `owner: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail}), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
             ledgerTransaction.toWallet.OwnerAccountId = `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`;
             // setting wallet provider wallet
-            ledgerTransaction.WalletProviderAccountId = `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`;
             ledgerTransaction.walletProviderWallet = {
-              name: `owner and account: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail}), multi-currency`,
+              name: `owner and account: ${transaction.expensePayoutMethod}, multi-currency`,
               currency: transaction.expenseCurrency,
-              AccountId: `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`,
-              OwnerAccountId: `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`,
+              AccountId: transaction.expensePayoutMethod,
+              OwnerAccountId: transaction.expensePayoutMethod,
             };
           } else { // Order
             // setting toWallet properties in case there's host fees through an Expense
             ledgerTransaction.toWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}(Order), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
             ledgerTransaction.toWallet.OwnerAccountId = `${transaction.orderPaymentMethodCollectiveSlug}(Order)`;
             // setting wallet provider wallet
-            ledgerTransaction.WalletProviderAccountId = `${transaction.orderPaymentMethodCollectiveSlug}(Order)`;
             ledgerTransaction.walletProviderWallet = {
-              name: `owner and account: ${transaction.orderPaymentMethodCollectiveSlug}(Order), multi-currency`,
+              name: `owner and account: ${transaction.orderPaymentMethodCollectiveSlug}, multi-currency`,
               currency: null,
-              AccountId: `${transaction.orderPaymentMethodCollectiveSlug}(Order)`,
-              OwnerAccountId: `${transaction.orderPaymentMethodCollectiveSlug}(Order)`,
+              AccountId: transaction.orderPaymentMethodCollectiveSlug,
+              OwnerAccountId: transaction.orderPaymentMethodCollectiveSlug,
             };
           }
         }
       }
+      // setting wallet provider account id
+      ledgerTransaction.WalletProviderAccountId = ledgerTransaction.walletProviderWallet.AccountId;
       // setting base of fromWallet
       ledgerTransaction.fromWallet = {
         name: '',
@@ -220,30 +219,26 @@ export default class TransactionService extends AbstractCrudService {
         ExpenseId: transaction.ExpenseId || null,
         OrderId: transaction.OrderId || null,
       };
-      // setting from and payment provider wallets through one of the following:
+      // setting from and payment provider wallets fields through one of the following:
       // PaymentMethodId or ExpenseId or OrderId, respectively
       if (transaction.PaymentMethodId) {
         ledgerTransaction.fromWallet.name = `owner: ${transaction.paymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
         ledgerTransaction.fromWallet.OwnerAccountId = transaction.paymentMethodCollectiveId;
         // creating Payment Provider wallet
-        ledgerTransaction.PaymentProviderAccountId = transaction.paymentMethodService;
         ledgerTransaction.paymentProviderWallet = {
           name: transaction.paymentMethodType,
           currency: null,
           AccountId: transaction.paymentMethodService,
           OwnerAccountId: transaction.paymentMethodService,
-          PaymentMethodId: transaction.PaymentMethodId,
         };
       } else if (transaction.ExpenseId) {
         ledgerTransaction.fromWallet.name = `owner: ${transaction.expenseCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
         ledgerTransaction.fromWallet.OwnerAccountId = transaction.expenseCollectiveId;
-        ledgerTransaction.PaymentProviderAccountId = transaction.expensePayoutMethod;
         ledgerTransaction.paymentProviderWallet = {
           name: `owner and account: ${transaction.expensePayoutMethod}, multi-currency`,
           currency: null,
           AccountId: transaction.expensePayoutMethod,
           OwnerAccountId: transaction.expensePayoutMethod,
-          ExpenseId: transaction.ExpenseId,
         };
       } else {
         // Order has PaymentMethod, then the slug will come from the transaction.order.paymentmethod
@@ -251,27 +246,25 @@ export default class TransactionService extends AbstractCrudService {
         if (transaction.orderPaymentMethodCollectiveSlug) {
           ledgerTransaction.fromWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${transaction.currency}`;
           ledgerTransaction.fromWallet.OwnerAccountId = transaction.orderPaymentMethodCollectiveId;
-          ledgerTransaction.PaymentProviderAccountId = `${transaction.orderPaymentMethodCollectiveId}_${transaction.orderPaymentMethodService}_${transaction.orderPaymentMethodType}`;
           ledgerTransaction.paymentProviderWallet = {
-            name: `account and owner:${transaction.orderPaymentMethodCollectiveId}, service: ${transaction.orderPaymentMethodService}, type: ${transaction.orderPaymentMethodType}`,
+            name: `account and owner:${transaction.orderPaymentMethodService}, service: ${transaction.orderPaymentMethodService}, type: ${transaction.orderPaymentMethodType}`,
             currency: null,
-            AccountId: `${transaction.orderPaymentMethodCollectiveId}_${transaction.orderPaymentMethodService}_${transaction.orderPaymentMethodType}`,
-            OwnerAccountId: `${transaction.orderPaymentMethodCollectiveId}_${transaction.orderPaymentMethodService}_${transaction.orderPaymentMethodType}`,
-            OrderId: transaction.OrderId,
+            AccountId: transaction.orderPaymentMethodService,
+            OwnerAccountId: transaction.orderPaymentMethodService,
           };
         } else {
           ledgerTransaction.fromWallet.name = `owner: ${transaction.orderFromCollectiveSlug}, account: ${transaction.fromCollectiveSlug}, ${hostCurrency}`;
           ledgerTransaction.fromWallet.OwnerAccountId = transaction.orderFromCollectiveId;
-          ledgerTransaction.PaymentProviderAccountId = `${transaction.orderFromCollectiveId}_${transaction.OrderId}`;
           ledgerTransaction.paymentProviderWallet = {
-            name: `from ${transaction.orderFromCollectiveSlug}(Order id ${transaction.OrderId})`,
+            name: `Payment Provider, account and owner:${transaction.orderFromCollectiveSlug}(FromCollective slug, Order id ${transaction.OrderId})`,
             currency: null,
             AccountId: `${transaction.orderFromCollectiveId}_${transaction.OrderId}`,
             OwnerAccountId: `${transaction.orderFromCollectiveId}_${transaction.OrderId}`,
-            OrderId: transaction.OrderId,
           };
         }
       }
+      // setting payment provider provider account id
+      ledgerTransaction.PaymentProviderAccountId = ledgerTransaction.paymentProviderWallet.AccountId;
       return ledgerTransaction;
   }
 
