@@ -216,6 +216,7 @@ export default class TransactionService extends AbstractCrudService {
         currency: transaction.currency,
         AccountId: transaction.FromCollectiveId,
         PaymentMethodId: transaction.PaymentMethodId || null,
+        SourcePaymentMethodId: transaction.SourcePaymentMethodId || null,
         ExpenseId: transaction.ExpenseId || null,
         OrderId: transaction.OrderId || null,
       };
