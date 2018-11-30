@@ -136,6 +136,10 @@ export class QueueStatefulMigration {
       f.slug as "fromCollectiveSlug",
       c.slug as "collectiveSlug",
       h.slug as "hostCollectiveSlug",
+      ch.id as "CollectiveHostId",
+      fch.id as "FromCollectiveHostId",
+      ch.slug as "collectiveHostSlug",
+      fch.slug as "fromCollectiveHostSlug",
       p.service as "paymentMethodService",
       p.type as "paymentMethodType",
       p."SourcePaymentMethodId",
@@ -157,6 +161,8 @@ export class QueueStatefulMigration {
       LEFT JOIN "Collectives" f on t."FromCollectiveId" =f.id and f."deletedAt" is null
       LEFT JOIN "Collectives" c on t."CollectiveId" =c.id and c."deletedAt" is null
       LEFT JOIN "Collectives" h on t."HostCollectiveId" =h.id and h."deletedAt" is null
+      LEFT JOIN "Collectives" ch on c."HostCollectiveId" =ch.id and ch."deletedAt" is null
+      LEFT JOIN "Collectives" fch on f."HostCollectiveId" =fch.id and fch."deletedAt" is null
       LEFT JOIN "PaymentMethods" p on t."PaymentMethodId"=p.id and p."deletedAt" is null
       LEFT JOIN "Collectives" pmc on p."CollectiveId" =pmc.id and pmc."deletedAt" is null
       LEFT JOIN "Expenses" e on t."ExpenseId" =e.id and e."deletedAt" is null
