@@ -3,9 +3,9 @@ import amqp from 'amqplib';
 import Database from '../../server/models';
 import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
-import axios from 'axios';
 import TransactionService from '../../server/services/transactionService';
 /*
+Migration using the own Transaction Service(no external need)
 Migration, starts inserting by looking at the min id of the current prod's transaction table
 and then insert on the ledger(keeping state through the ledger's transaction fields "LegacyCreditTransactionId" and "LegacyDebitTransactionId")
 Use Cases that migration is NOT working at the moment:
@@ -24,7 +24,7 @@ Use Cases that migration is NOT working at the moment:
     PS: Environment variable QUERY_LIMIT defines the size of the batch
     of transactions to be inserted at once.
 */
-export class QueueStatefulMigration {
+export class InternalMigration {
 
   constructor() {
   }
@@ -59,19 +59,6 @@ export class QueueStatefulMigration {
     return this.ledgerDbConnection;
   }
 
-  /** Opens and returns Queue channel to wait for incoming
-   * transactions to be consumed
-  * @return {void}
-  */
-  async getAmqpChannel() {
-    if (!this.amqpChannel) {
-      console.log('Initializing queue...');
-      this.amqpConnection = await amqp.connect(config.queue.url);
-      this.amqpChannel = await this.amqpConnection.createChannel();
-    }
-    return this.amqpChannel;
-  }
-
   /** returns the latest Legacy Id inserted into the ledger database
   * @return {number}
   */
@@ -82,21 +69,6 @@ export class QueueStatefulMigration {
     return this.latestLegacyIdFromLedger && this.latestLegacyIdFromLedger > 0
       ? this.latestLegacyIdFromLedger
       : 0;
-  }
-
-  /** Sends data to queue
-  * @param {Object} transaction - the transaction object to be sent to queue
-  * @param {Object} channel - amqp initiated channel object
-  * @return {void}
-  */
-  async sendToQueue(transactions) {
-    const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
-    console.time(`Time to send ${queryLimit} transactions to queue:`);
-    const channel = await this.getAmqpChannel();
-    await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
-    channel.sendToQueue(config.queue.transactionQueue,
-      Buffer.from(JSON.stringify(transactions), 'utf8'), { persistent: true });
-    console.timeEnd(`Time to send ${queryLimit} transactions to queue:`);
   }
 
   /** execute insertion of transactions into the database
@@ -120,10 +92,9 @@ export class QueueStatefulMigration {
   }
 
   /** Parse transactions from Current production database(Transactions table)
-   * to be sent to the Ledger Queue Consumer
   * @return {boolean}
   */
-  async sendTransactionsToQueue() {
+  async insertTransactions() {
     const currentProdDbClient = await this.getProductionConnection();
     const latestLegacyIdFromLedger = await this.getLatestLegacyIdFromLedger();
     const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
@@ -182,8 +153,6 @@ export class QueueStatefulMigration {
     if (!res || !res.rows || res.rows.length <= 0)
       console.error('No records were found');
 
-    // console.log(`res.rows: ${JSON.stringify(res.rows, null,2)}`);
-    // await this.sendToQueue(res.rows);
     await this.insertLedgerTransaction(res.rows);
     const transactionLegacyIds = res.rows.map(t => t.id);
     this.latestLegacyIdFromLedger = Math.max(...transactionLegacyIds);
@@ -195,7 +164,7 @@ export class QueueStatefulMigration {
     try {
       this.getLedgerConnection();
       console.log('migrating single transaction...');
-      await this.sendTransactionsToQueue();
+      await this.insertTransactions();
       console.log('tx sent to queue...');
       this.run();
     } catch (error) {
@@ -205,5 +174,5 @@ export class QueueStatefulMigration {
   }
 }
 console.log('Initializing migration...');
-const migration = new QueueStatefulMigration();
+const migration = new InternalMigration();
 migration.run();
