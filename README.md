@@ -622,7 +622,7 @@ This script will generate a png chart containg a chart of the number of requests
 Using the GET transactions endpoint to get the last 20 transactions of the `AccountId 442`.
 
 ```
-sh benchmark.sh -c1 -n100 http://localhost:3070/transactions?limit=20&offset=0&where=%7B%22ToAccountId%22%3A442%7D
+sh benchmark.sh -c1 -n100 http://127.0.0.1:3070/transactions?limit=20&offset=0&where=%7B%22ToAccountId%22%3A442%7D
 ```
 
 #### Concurrency:10, number of requests: 1000
@@ -630,5 +630,5 @@ sh benchmark.sh -c1 -n100 http://localhost:3070/transactions?limit=20&offset=0&w
 Using the GET transactions endpoint to get the last 20 transactions of the `AccountId 442`.
 
 ```
-sh benchmark.sh -c10 -n1000 http://localhost:3070/transactions?limit=20&offset=0&where=%7B%22ToAccountId%22%3A442%7D
+sh benchmark.sh -c10 -n1000 http://127.0.0.1:3070/transactions?limit=20&offset=0&where=%7B%22ToAccountId%22%3A442%7D
 ```
