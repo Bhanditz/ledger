@@ -50,8 +50,9 @@ export default class TransactionService extends AbstractCrudService {
   * @return {Array} containing the original incoming transaction + its double entry equivalent.
   */
   async insert(data) {
-    const transactions = this.getSequencedTransactions(data);
-    this.insertMultipleParsedTransactions(transactions);
+    const parsedTransaction = this.parseTransaction(data);
+    const sequencedTransaction = await this.getSequencedTransactions(parsedTransaction);
+    await this.insertMultipleParsedTransactions(sequencedTransaction);
   }
 
   /** Defines Strategy, get transactions from strategy and sequence them
@@ -94,7 +95,7 @@ export default class TransactionService extends AbstractCrudService {
   */
   async _defineTransactionStrategy(transaction) {
     // boolean to check whether it's has fields and conditions to be a Legacy Refund transaction
-    const legacyDbRefund = transaction.LegacyCreditTransactionId > transaction.RefundTransactionId;
+    const legacyDbRefund = transaction.RefundTransactionId && transaction.LegacyCreditTransactionId > transaction.RefundTransactionId;
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
       // Check whether it's a REFUND either through current case or through a legacy transaction
