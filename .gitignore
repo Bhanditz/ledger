@@ -36,3 +36,5 @@ output/
 *.iml
 
 *.swp
+
+benchmark*.png
