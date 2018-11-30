@@ -121,6 +121,14 @@ The Wallet provider only be created if the fee **transaction.hostFeeInHostCurren
 
 ## forex
 
+The ledger is going to recognize a ledger transaction with the following conditions:
+
+1. the fields **destinationAmount** and **destinationCurrency** are present in the payload.
+2. the field **destinationCurrency** is different than the field **currency**
+
 ## refunds
 
-In the migration case we'll look
+The ledger understand refunds transaction for:
+
+- Migration: In the migration we will have the field **RefundTransactionId**
+- Incoming transaction refunds: in case of "new" transactions we're gonna consider the field **refundTransactionGroupId**. The main reason is that there is not necessarily the same number of records if we compare the original and its refund transactions, so we need to look through the transaction group.
