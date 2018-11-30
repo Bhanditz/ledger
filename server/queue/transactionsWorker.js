@@ -16,7 +16,7 @@ export default class TransactionsWorker {
   */
   async getAmqpChannel() {
     if (!this.amqpChannel) {
-      console.log('Initializing queue...');
+      this.logger.info('Initializing queue...');
       this.amqpConnection = await amqp.connect(config.queue.url);
       this.amqpChannel = await this.amqpConnection.createChannel();
     }

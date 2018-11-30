@@ -94,8 +94,7 @@ export default class TransactionService extends AbstractCrudService {
   */
   async _defineTransactionStrategy(transaction) {
     // boolean to check whether it's has fields and conditions to be a Legacy Refund transaction
-    const legacyDbRefund = transaction.RefundTransactionId
-      && transaction.LegacyCreditTransactionId > transaction.RefundTransactionId;
+    const legacyDbRefund = transaction.LegacyCreditTransactionId > transaction.RefundTransactionId;
     // Check if it is NOT a foreign exchange Transaction
     if (!transaction.destinationCurrency || transaction.destinationCurrency === transaction.currency) {
       // Check whether it's a REFUND either through current case or through a legacy transaction
@@ -131,7 +130,7 @@ export default class TransactionService extends AbstractCrudService {
       // and the WalletProvider and PaymentProvider Account ids
       const hostCurrency = transaction.hostCurrency || transaction.currency;
       const amountInHostCurrency = transaction.amountInHostCurrency || transaction.amount;
-      // Fees are negative in DEBIT transactions...
+      // make fees positive as fees are negative in CREDIT transactions(We expect only incoming legacy CREDIT transaction)...
       const hostFeeInHostCurrency = -1 * transaction.hostFeeInHostCurrency;
       const platformFeeInHostCurrency = -1 * transaction.platformFeeInHostCurrency;
       const paymentProcessorFeeInHostCurrency = -1 * transaction.paymentProcessorFeeInHostCurrency;
@@ -155,20 +154,30 @@ export default class TransactionService extends AbstractCrudService {
         SourcePaymentMethodId: transaction.SourcePaymentMethodId,
         createdAt: transaction.createdAt,
         updatedAt: transaction.updatedAt,
-      };
-      // setting toWallet
-      ledgerTransaction.toWallet = {
-        currency: hostCurrency,
-        AccountId: transaction.CollectiveId,
+        toWallet: {
+          name: `owner: ${transaction.collectiveHostSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`,
+          currency: hostCurrency,
+          AccountId: transaction.CollectiveId,
+          OwnerAccountId: transaction.CollectiveHostId,
+        },
+        fromWallet: {
+          name: '',
+          currency: transaction.currency,
+          AccountId: transaction.FromCollectiveId,
+          PaymentMethodId: transaction.PaymentMethodId || null,
+          SourcePaymentMethodId: transaction.SourcePaymentMethodId || null,
+          ExpenseId: transaction.ExpenseId || null,
+          OrderId: transaction.OrderId || null,
+        },
       };
       if (transaction.HostCollectiveId) {
-        // setting toWallet properties
-        ledgerTransaction.toWallet.name = `owner: ${transaction.hostCollectiveSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
+        // replace toWallet.OwnerAccountId by Host present in transaction
+        ledgerTransaction.toWallet.name = `owner: ${transaction.hostCollectiveSlug},`+
+          ` account: ${transaction.collectiveSlug}, ${hostCurrency}`;
         ledgerTransaction.toWallet.OwnerAccountId = transaction.HostCollectiveId;
         // if there is HostCollectiveId and hostFeeInHostCurrency, so we add the Wallet Provider
         // according to the Host Collective properties
         if (hostFeeInHostCurrency) {
-          ledgerTransaction.walletProviderFee = hostFeeInHostCurrency;
           ledgerTransaction.walletProviderWallet = {
             name: `owner and account: ${transaction.hostCollectiveSlug}, multi-currency`,
             currency: null,
@@ -178,16 +187,22 @@ export default class TransactionService extends AbstractCrudService {
         }
       } else {
         // setting toWallet properties in case there's no host fees
-        ledgerTransaction.toWallet.name = `owner: ${transaction.collectiveSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
-        ledgerTransaction.toWallet.OwnerAccountId = transaction.CollectiveId;
+        ledgerTransaction.toWallet.name = ledgerTransaction.toWallet.OwnerAccountId
+          ? ledgerTransaction.toWallet.name
+          : `owner: ${transaction.collectiveSlug}, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
+        ledgerTransaction.toWallet.OwnerAccountId = ledgerTransaction.toWallet.OwnerAccountId || transaction.CollectiveId;
         // if there is No HostCollectiveId but there ishostFeeInHostCurrency,
         // We add the wallet provider through either the ExpenseId or OrderId
         if (hostFeeInHostCurrency) {
-          ledgerTransaction.walletProviderFee = hostFeeInHostCurrency;
           if (transaction.ExpenseId) {
             // setting toWallet properties in case there's host fees through an Expense
-            ledgerTransaction.toWallet.name = `owner: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail}), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
-            ledgerTransaction.toWallet.OwnerAccountId = `payment method: ${transaction.expensePayoutMethod}, paypal email: ${transaction.expenseUserPaypalEmail}`;
+            ledgerTransaction.toWallet.name = ledgerTransaction.toWallet.OwnerAccountId
+              ? ledgerTransaction.toWallet.name
+              :`owner: ${transaction.expensePayoutMethod}(through ${transaction.expenseUserPaypalEmail})`+
+              `, account: ${transaction.collectiveSlug}, ${hostCurrency}`;
+            ledgerTransaction.toWallet.OwnerAccountId = ledgerTransaction.toWallet.OwnerAccountId ||
+              `payment method: ${transaction.expensePayoutMethod}, `+
+              `paypal email: ${transaction.expenseUserPaypalEmail}`;
             // setting wallet provider wallet
             ledgerTransaction.walletProviderWallet = {
               name: `owner and account: ${transaction.expensePayoutMethod}, multi-currency`,
@@ -197,30 +212,25 @@ export default class TransactionService extends AbstractCrudService {
             };
           } else { // Order
             // setting toWallet properties in case there's host fees through an Expense
-            ledgerTransaction.toWallet.name = `owner: ${transaction.orderPaymentMethodCollectiveSlug}(Order), account: ${transaction.collectiveSlug}, ${hostCurrency}`;
-            ledgerTransaction.toWallet.OwnerAccountId = `${transaction.orderPaymentMethodCollectiveSlug}(Order)`;
+            ledgerTransaction.toWallet.name = ledgerTransaction.toWallet.OwnerAccountId
+              ? ledgerTransaction.toWallet.name
+              : `owner: ${transaction.orderPaymentMethodCollectiveSlug}, ` +
+                `account: ${transaction.collectiveSlug}, ${hostCurrency}`;
+            ledgerTransaction.toWallet.OwnerAccountId = ledgerTransaction.toWallet.OwnerAccountId
+              || transaction.orderPaymentMethodCollectiveId;
             // setting wallet provider wallet
             ledgerTransaction.walletProviderWallet = {
               name: `owner and account: ${transaction.orderPaymentMethodCollectiveSlug}, multi-currency`,
               currency: null,
-              AccountId: transaction.orderPaymentMethodCollectiveSlug,
-              OwnerAccountId: transaction.orderPaymentMethodCollectiveSlug,
+              AccountId: transaction.orderPaymentMethodCollectiveId,
+              OwnerAccountId: transaction.orderPaymentMethodCollectiveId,
             };
           }
         }
       }
       // setting wallet provider account id
-      ledgerTransaction.WalletProviderAccountId = ledgerTransaction.walletProviderWallet && ledgerTransaction.walletProviderWallet.AccountId;
-      // setting base of fromWallet
-      ledgerTransaction.fromWallet = {
-        name: '',
-        currency: transaction.currency,
-        AccountId: transaction.FromCollectiveId,
-        PaymentMethodId: transaction.PaymentMethodId || null,
-        SourcePaymentMethodId: transaction.SourcePaymentMethodId || null,
-        ExpenseId: transaction.ExpenseId || null,
-        OrderId: transaction.OrderId || null,
-      };
+      ledgerTransaction.WalletProviderAccountId =
+        ledgerTransaction.walletProviderWallet && ledgerTransaction.walletProviderWallet.AccountId;
       // setting from and payment provider wallets fields through one of the following:
       // PaymentMethodId or ExpenseId or OrderId, respectively
       if (transaction.PaymentMethodId) {
