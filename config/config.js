@@ -3,7 +3,7 @@ export default {
     database: process.env.DB_NAME || 'opencollective_prod_snapshot',
     username: process.env.DB_USER || 'opencollective',
     port: parseInt(process.env.DB_PORT) || 5432,
-    password: process.env.DB_PASSWORD || '',
+    password: process.env.DB_PASS || '',
     host: process.env.DB_HOST || '127.0.0.1',
     dialect: process.env.DB_DIALECT || 'postgres',
     sslMode: process.env.DB_SSL_MODE || false,
