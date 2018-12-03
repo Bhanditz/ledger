@@ -13,9 +13,6 @@ jobs:
       DB_NAME: 'opencollective_ledger_test'
       DB_USER: 'postgres'
       DB_PORT: 5432
-      DB_NAME: 'opencollective_ledger_test'
-      DB_USER: 'postgres'
-      DB_PORT: 5432
       DB_PASS: ''
       DB_TYPE: 'postgres'
     steps:
@@ -31,11 +28,8 @@ jobs:
           key: cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+            - ../.cache
+            - ../cache
       - run: npm run test:circleci
       - store_test_results:
-          path: /tmp/circleci-test-results  
-    branches:
-      ignore:
-        - heroku
-        - staging
-        - production
+          path: /tmp/circleci-test-results

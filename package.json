@@ -17,7 +17,7 @@
     "dev": "nodemon server/app.js -x babel-node . -e js,hbs",
     "start": "npm run build && node ./dist/server/app.js",
     "test": "NODE_ENV=test mocha --recursive --exit --require babel-core/register 'test/**/*.test.js' ",
-    "test:circleci": "npm run db:migrate && npm run db:seed && npm run build-test && mocha --recursive --exit 'dist/test/**/*.test.js'",
+    "test:circleci": "TZ=UTC mocha --reporter-options mochaFile=$(bash scripts/test_output_dir.sh junit)/junit.xml",
     "recreate-test-db": "sh scripts/recreate_test_db_and_migrate.sh",
     "ledger-migration": "npm run build && node ./dist/scripts/migration/queueMigration.js",
     "ledger-internal-migration": "npm run build && node ./dist/scripts/migration/internalMigration.js",
@@ -89,5 +89,8 @@
     "sinon": "6.1.5",
     "uuid": "3.3.2",
     "webpack": "4.16.5"
+  },
+  "devDependencies": {
+    "mocha-circleci-reporter": "0.0.3"
   }
 }
