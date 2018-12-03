@@ -6,8 +6,7 @@ PORT=3062
 DB_NAME=opencollective_ledger_test
 
 # recreating db
-dropdb -U postgres $DB_NAME
-createdb -U postgres $DB_NAME
+./recreate_test.sh
 
 # creating db schema
 NODE_ENV=test npm run db:migrate && npm run db:seed
