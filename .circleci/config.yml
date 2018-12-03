@@ -10,14 +10,14 @@ jobs:
       NODE_ENV: 'test'
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: ''
-      DB_NAME: 'opencollective_ledger_test',
-      DB_USER: 'postgres',
-      DB_PORT: 5432,
-      DB_NAME: 'opencollective_ledger_test',
-      DB_USER: 'postgres',
-      DB_PORT: 5432,
-      DB_PASS: '',
-      DB_TYPE: 'postgres',
+      DB_NAME: 'opencollective_ledger_test'
+      DB_USER: 'postgres'
+      DB_PORT: 5432
+      DB_NAME: 'opencollective_ledger_test'
+      DB_USER: 'postgres'
+      DB_PORT: 5432
+      DB_PASS: ''
+      DB_TYPE: 'postgres'
     steps:
       - checkout
       - setup_remote_docker
