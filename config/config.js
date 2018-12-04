@@ -14,8 +14,8 @@ export default {
     logging: parseToBoolean(process.env.DB_LOGGING) || false,
   },
   skipWorkers: parseToBoolean(process.env.SKIP_WORKERS) || false,
-  host: process.env.HOST || '0.0.0.0',
-  port: process.env.PORT || 3060,
+  host: process.env.HOST || '127.0.0.1',
+  port: process.env.PORT || 3070,
   queue: {
     url: process.env.QUEUE_URL || 'amqp://localhost',
     transactionQueue: process.env.TRANSACTION_QUEUE || 'transactions',
@@ -26,7 +26,7 @@ export default {
 
 function parseToBoolean(value) {
   const lowerValue = value && value.trim().toLowerCase();
-  if (['on', 'enabled', '1', 'true', 'yes'].includes(lowerValue)) {
+  if (['on', 'enabled', '1', 'true', 'yes', 1].includes(lowerValue)) {
     return true;
   }
   return false;

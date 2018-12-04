@@ -7,7 +7,7 @@ COPY package.json /usr/src/app
 RUN npm install
 COPY . /usr/src/app
 
-ARG PORT=3000
+ARG PORT=3070
 ENV PORT $PORT
 
 ARG NODE_ENV=production
@@ -15,4 +15,4 @@ ENV NODE_ENV $NODE_ENV
 
 EXPOSE ${PORT}
 
-CMD ["npm", "run", "start"]
+RUN npm run build

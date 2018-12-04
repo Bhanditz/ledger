@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  dbpostgres:
+    image: postgres:9.6.8-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - /tmp/postgres:/var/lib/postgresql  
+  migration:
+    build: .
+    command: npm run db:migrate
+    ports:
+        - "3065:3070"
+    depends_on:
+      - dbpostgres 
+    environment:
+      NODE_ENV: development
+      TZ: UTC
+      DB_NAME: opencollective_ledger_dvl
+      DB_HOST: dbpostgres
+      DB_USER: postgres
+      DB_PORT: 5432
+      SKIP_WORKER: 1
+      DB_PASS: postgres
+      DB_TYPE: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      WAIT_HOSTS: dbpostgres:5432
+  ledger:
+    build: .
+    command: npm run start
+    ports:
+        - "3070:3070"
+    depends_on:
+        - dbpostgres
+    environment:
+      NODE_ENV: development
+      TZ: UTC
+      DB_NAME: opencollective_ledger_dvl
+      DB_USER: postgres
+      DB_PORT: 5432
+      DB_HOST: dbpostgres
+      SKIP_WORKER: 1
+      DB_PASS: postgres
+      DB_TYPE: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      WAIT_HOSTS: dbpostgres:5432
+      
+  

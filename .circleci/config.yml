@@ -7,13 +7,14 @@ jobs:
       - image: circleci/postgres:9.6.8-alpine-postgis-ram
     environment:
       TZ: 'UTC'
-      NODE_ENV: 'test'
-      DB_NAME: 'opencollective_ledger_test'
-      DB_USER: 'postgres'
+      NODE_ENV: 'circleci'
+      SEQUELIZE_ENV: 'circleci'
+      DB_NAME: 'circle_ledger_test'
+      DB_USER: 'ubuntu'
       DB_PORT: 5432
       DB_PASS: ''
       DB_TYPE: 'postgres'
-      POSTGRES_USER: 'postgres'
+      POSTGRES_USER: 'ubuntu'
       POSTGRES_PASSWORD: ''
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
@@ -22,13 +23,14 @@ jobs:
       - setup_remote_docker
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      - run: sudo apt -y update
+      - run: sudo apt -y install postgresql-client    
       - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
       - run: npm install
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
-
       - run: npm run test:circleci
       - store_test_results:
           path: /tmp/circleci-test-results
