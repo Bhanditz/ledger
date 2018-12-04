@@ -5,16 +5,21 @@ jobs:
       - image: circleci/node:10.3.0
         command: /sbin/init
       - image: circleci/postgres:9.6.8-alpine-postgis-ram
+        environment:
+          POSTGRES_USER: 'opencollective'
+          POSTGRES_DB: opencollective_dvl
+          POSTGRES_PASSWORD: ''
     environment:
       TZ: 'UTC'
       NODE_ENV: 'circleci'
       SEQUELIZE_ENV: 'circleci'
-      DB_NAME: 'circle_ledger_test'
-      DB_USER: 'ubuntu'
+      DB_NAME: 'opencollective_dvl'
+      DB_USER: 'opencollective'
       DB_PORT: 5432
       DB_PASS: ''
       DB_TYPE: 'postgres'
-      POSTGRES_USER: 'ubuntu'
+      POSTGRES_USER: 'opencollective'
+      POSTGRES_DB: opencollective_dvl
       POSTGRES_PASSWORD: ''
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
@@ -31,7 +36,7 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
-      - run: npm run test:circleci
+      - run: npm run test
       - store_test_results:
           path: /tmp/circleci-test-results
     branches:
