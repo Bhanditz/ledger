@@ -1,13 +1,18 @@
 FROM node:10.3.0
 
-RUN echo 'deb http://ftp.debian.org/debian jessie-backports main' > \
-    /etc/apt/sources.list.d/jessie-backports.list
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5=9.6.6-0+deb9u1~bpo8+1 postgresql-client-9.6 && rm -rf /var/lib/apt/lists/*
-
 RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-VOLUME /usr/src/api
+COPY package.json /usr/src/app
+RUN npm install
+COPY . /usr/src/app
 
-WORKDIR /usr/src/api
+ARG PORT=3000
+ENV PORT $PORT
+
+ARG NODE_ENV=production
+ENV NODE_ENV $NODE_ENV
+
+EXPOSE ${PORT}
+
+CMD ["npm", "run", "start"]
