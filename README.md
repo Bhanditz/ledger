@@ -15,8 +15,11 @@ After having the database created, run :
 
 #### Docker
 
-// TO DO
+install [docker](https://www.docker.com/get-started) and simply run:
 
+`docker-compose up`
+
+you can change the config and check hosts, ports and extras in the `docker-compose.yml` file on the root of the project.
 
 ## Tests
 
