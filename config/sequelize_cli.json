@@ -8,7 +8,7 @@
     "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "test": {
-    "database": "opencollective_ledger_test",
+    "database": "opencollective_test",
     "username": "opencollective",
     "password": "",
     "host": "127.0.0.1",
@@ -16,8 +16,8 @@
     "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "circleci": {
-    "database": "circle_ledger_test",
-    "username": "ubuntu",
+    "database": "opencollective_dvl",
+    "username": "opencollective",
     "password": "",
     "host": "localhost",
     "protocol": "postgres",
