@@ -17,11 +17,6 @@ jobs:
       POSTGRES_PASSWORD: ''
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
-      DB_NAME: 'opencollective_ledger_test'
-      DB_USER: 'postgres'
-      DB_PORT: 5432
-      DB_PASS: ''
-      DB_TYPE: 'postgres'
     steps:
       - checkout
       - setup_remote_docker
