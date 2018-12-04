@@ -40,12 +40,8 @@ export default class Database {
       },
       logging: config.database.logging ? console.log : false,
     };
-    console.log(`config.database:${JSON.stringify(config.database, null,2)}`);
     this.sequelize = new Sequelize(
       config.database.url,
-      // config.database.database,
-      // config.database.username,
-      // config.database.password,
       options
     );
   }

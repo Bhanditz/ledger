@@ -18,6 +18,7 @@ jobs:
       DB_PORT: 5432
       DB_PASS: ''
       DB_TYPE: 'postgres'
+      DB_URL: postgres://opencollective@127.0.0.1:5432/opencollective_dvl
       POSTGRES_USER: 'opencollective'
       POSTGRES_DB: opencollective_dvl
       POSTGRES_PASSWORD: ''
