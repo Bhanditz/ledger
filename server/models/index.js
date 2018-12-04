@@ -26,7 +26,7 @@ export default class Database {
 
   startDatabase() {
     const options = {
-      host: config.database.host,
+      // host: config.database.host,
       dialect: config.database.dialect,
       dialectOptions: {
         ssl: config.database.sslMode,
@@ -40,10 +40,12 @@ export default class Database {
       },
       logging: config.database.logging ? console.log : false,
     };
+    console.log(`config.database:${JSON.stringify(config.database, null,2)}`);
     this.sequelize = new Sequelize(
-      config.database.database,
-      config.database.username,
-      config.database.password,
+      config.database.url,
+      // config.database.database,
+      // config.database.username,
+      // config.database.password,
       options
     );
   }

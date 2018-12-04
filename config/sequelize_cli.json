@@ -25,10 +25,10 @@
     "migrationStorageTableName": "SequelizeLedgerMeta"
   },
   "docker": {
-    "database": "opencollective_ledger_dvl",
+    "database": "opencollective_dvl",
     "username": "opencollective",
     "password": "",
-    "host": "postgres",
+    "host": "dbpostgres",
     "protocol": "postgres",
     "dialect": "postgres",
     "migrationStorageTableName": "SequelizeLedgerMeta"

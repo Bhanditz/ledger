@@ -18,8 +18,17 @@ fi
 
 # On circleci environment
 if [ "$NODE_ENV" = "circleci" ]; then
-  echo "- run migration if any"
+  echo "- setup db user and run migration if any"
   npm run db:migrate
+else
+  if psql -lqt | cut -d \| -f 1 | grep -qw opencollective_dvl; then
+    echo "✓ opencollective_dvl exists"
+  else
+    echo "- restoring opencollective_dvl";
+    ./scripts/db_restore.sh -d opencollective_dvl
+  fi
+  echo "- running migration if any"
+  PG_DATABASE=opencollective_dvl npm run db:migrate
 fi
 
 echo ""

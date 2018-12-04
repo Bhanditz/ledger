@@ -5,7 +5,7 @@ pkill -f node
 # defining API PORT
 PORT=3062
 # defining DB_NAME
-DB_NAME=opencollective_ledger_dvl
+DB_NAME=opencollective_dvl
 
 # recreating db
 dropdb -U postgres $DB_NAME

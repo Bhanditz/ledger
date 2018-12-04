@@ -18,11 +18,11 @@ Now, assuming the postgres database superuser is `postgres`:
 
 ```
 createdb -U postgres opencollective_ledger_test
-createdb -U postgres opencollective_ledger_dvl
+createdb -U postgres opencollective_dvl
 createuser -U postgres opencollective
-psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE opencollective_ledger_dvl TO opencollective'
+psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE opencollective_dvl TO opencollective'
 psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE opencollective_ledger_test TO opencollective'
-psql -U postgres -d opencollective_ledger_dvl -c 'CREATE EXTENSION postgis'
+psql -U postgres -d opencollective_dvl -c 'CREATE EXTENSION postgis'
 psql -U postgres -d opencollective_ledger_test -c 'CREATE EXTENSION postgis'
 ```
 

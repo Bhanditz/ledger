@@ -1,6 +1,7 @@
 export default {
   database: {
     database: process.env.DB_NAME || 'opencollective_prod_snapshot',
+    url: process.env.DB_URL || 'postgres://opencollective@127.0.0.1:5432/opencollective_prod_snapshot',
     username: process.env.DB_USER || 'opencollective',
     port: parseInt(process.env.DB_PORT) || 5432,
     password: process.env.DB_PASS || '',

@@ -6,7 +6,7 @@ Core Ledger(Double-Entry System) Requirements AND features.
 
 ### Local
 
-Make sure you have postgres installed AND create the database `opencollective_ledger_dvl` . You will find all the details ON how to install AND create the necessary permissions ON the [postgres doc](docs/postgres.md).
+Make sure you have postgres installed AND create the database `opencollective_dvl` . You will find all the details ON how to install AND create the necessary permissions ON the [postgres doc](docs/postgres.md).
 After having the database created, run :
 
 - `npm install`
@@ -631,4 +631,34 @@ Using the GET transactions endpoint to get the last 20 transactions of the `Acco
 
 ```
 sh benchmark.sh -c10 -n1000 http://127.0.0.1:3070/transactions?limit=20&offset=0&where=%7B%22ToAccountId%22%3A442%7D
+```
+
+### Heroku remotes
+
+#### Add staging heroku app
+
+```
+$ heroku git:remote -a opencollective-ledger-staging
+# git remote rename heroku staging
+```
+
+#### Add staging heroku app
+
+```
+$ heroku git:remote -a opencollective-ledger-prod
+# git remote rename heroku prod
+```
+
+### Deploying to heroku
+
+#### staging
+
+```
+npm run deploy:staging
+```
+
+#### production
+
+```
+npm run deploy:prod
 ```
