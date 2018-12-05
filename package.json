@@ -8,12 +8,12 @@
     "npm": "6.2.0"
   },
   "scripts": {
-    "clean": "rm -rf dist && mkdir dist",
+    "build:clean": "rm -rf dist && mkdir dist",
     "build-config": "babel config -d ./dist/config",
     "build-server": "babel server -d ./dist/server",
     "build-scripts": "babel scripts -d ./dist/scripts",
     "build-test": "babel test -d ./dist/test",
-    "build": "npm run clean && npm run build-config && npm run build-server && npm run build-scripts && npm run build-test",
+    "build": "npm run build:clean && npm run build-config && npm run build-server && npm run build-scripts && npm run build-test",
     "dev": "nodemon server/app.js -x babel-node . -e js,hbs",
     "start": "node ./dist/server/app.js",
     "postinstall": "npm run postinstall:build && sh ./scripts/postinstall.sh",
