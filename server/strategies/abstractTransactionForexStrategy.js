@@ -60,6 +60,9 @@ export default class AbstractTransactionForexStrategy extends AbstractTransactio
     if (!this.incomingTransaction.destinationCurrency) {
       throw Error(operationNotAllowed('field destinationCurrency missing'));
     }
+    if (!this.incomingTransaction.paymentProviderWallet) {
+      throw Error(operationNotAllowed('field paymentProviderWallet missing'));
+    }
   }
 
 }
