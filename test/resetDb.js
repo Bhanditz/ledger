@@ -1,5 +1,4 @@
 import Database from '../server/models';
-import config from '../config/config';
 
 export default class ResetDb {
   static async run() {
