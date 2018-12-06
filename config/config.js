@@ -7,7 +7,7 @@ export default {
     password: process.env.DB_PASS || '',
     host: process.env.DB_HOST || '127.0.0.1',
     dialect: process.env.DB_DIALECT || 'postgres',
-    sslMode: process.env.DB_SSL_MODE || false,
+    sslMode: parseToBoolean(process.env.DB_SSL_MODE) || false,
     poolMax: parseInt(process.env.DB_POOL_MAX) || 5,
     poolMin: parseInt(process.env.DB_POOL_MIN) || 0,
     poolIdle: parseInt(process.env.DB_POOL_IDLE) || 10000,
