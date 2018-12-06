@@ -51,8 +51,18 @@ export default class TransactionService extends AbstractCrudService {
   */
   async insert(data) {
     const parsedTransaction = this.parseTransaction(data);
+    return this.insertParsedTransaction(parsedTransaction);
+
+  }
+  /** inserts a transaction that is already in the "ledger" format
+   ** which in practice will mean this already Parsed transaction will be independent
+   ** from the opencollective-api(it won't happen at the moment)
+   * @param {Object} parsedTransaction - transaction parsed in ledger format
+   * @return {Array} list of inserted transactions
+  */
+  async insertParsedTransaction(parsedTransaction) {
     const sequencedTransaction = await this.getSequencedTransactions(parsedTransaction);
-    await this.insertMultipleParsedTransactions(sequencedTransaction);
+    return this.insertMultipleParsedTransactions(sequencedTransaction);
   }
 
   /** Defines Strategy, get transactions from strategy and sequence them
