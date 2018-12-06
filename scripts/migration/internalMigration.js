@@ -1,5 +1,4 @@
 import PgAsync from 'pg-async';
-import amqp from 'amqplib';
 import Database from '../../server/models';
 import LedgerTransaction from '../../server/models/LedgerTransaction';
 import config from '../../config/config';
