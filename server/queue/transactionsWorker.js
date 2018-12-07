@@ -31,7 +31,7 @@ export default class TransactionsWorker {
  async sendToFailQueue(data) {
   this.logger.info('Sending transactions that somehow failed to parse to "Fail QUEUE"');
   const channel = await this.getAmqpChannel();
-  await channel.assertQueue(config.queue.transactionQueue, { exclusive: false });
+  await channel.assertQueue(config.queue.failTransactionQueue, { exclusive: false });
   channel.sendToQueue(config.queue.failTransactionQueue, data, { persistent: true });
 }
 
