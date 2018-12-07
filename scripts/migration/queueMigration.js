@@ -76,21 +76,22 @@ export class QueueMigration {
   * @return {number}
   */
   async getLatestLegacyIdFromLedger() {
-    if (!this.latestLegacyIdFromLedger) {
-      try {
+    try {
+      if (!this.latestLegacyIdFromLedger) {
         const count = await LedgerTransaction.count();
+        console.log(`number of transactions in the LedgerTransactions table:${count}`);
         if (count === 0) {
           return 0;
         }
         this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
-        if (isNaN(this.latestLegacyIdFromLedger)) {
-          throw new Error(`Latest Legacy Id From Ledger is not a number: ${this.latestLegacyIdFromLedger}`);
+        if (isNaN(this.latestLegacyIdFromLedger) || this.latestLegacyIdFromLedger < 0) {
+          throw new Error(`Latest Legacy Id From Ledger is wrong: ${this.latestLegacyIdFromLedger}`);
         }
-      } catch (error) {
-        throw error;
       }
+      return this.latestLegacyIdFromLedger;  
+    } catch (error) {
+      throw error;
     }
-    return this.latestLegacyIdFromLedger;
   }
 
   /** Sends data to queue
