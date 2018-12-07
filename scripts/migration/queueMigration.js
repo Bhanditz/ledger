@@ -77,11 +77,17 @@ export class QueueMigration {
   */
   async getLatestLegacyIdFromLedger() {
     if (!this.latestLegacyIdFromLedger) {
-      this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
+      try {
+        const count = await LedgerTransaction.count();
+        if (count === 0) {
+          return 0;
+        }
+        this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
+      } catch (error) {
+        throw error;
+      }
     }
-    return this.latestLegacyIdFromLedger && this.latestLegacyIdFromLedger > 0
-      ? this.latestLegacyIdFromLedger
-      : 0;
+    return this.latestLegacyIdFromLedger;
   }
 
   /** Sends data to queue
@@ -108,6 +114,11 @@ export class QueueMigration {
     const latestLegacyIdFromLedger = await this.getLatestLegacyIdFromLedger();
     const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
     console.log(`Inserting data starting from Legacy Id: ${latestLegacyIdFromLedger}`);
+    let whereLegacyIdQuery = ` t.id>${latestLegacyIdFromLedger} `;
+    // if we want to run the script for a specific legacy id 
+    if (process.env.LEGACY_CREDIT_ID) {
+      whereLegacyIdQuery = ` WHERE t.id=${LEGACY_CREDIT_ID} `;
+    }
     const query = ` SELECT
       t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
       t.description, t."hostFeeInHostCurrency", t."platformFeeInHostCurrency",t."paymentProcessorFeeInHostCurrency", t."OrderId",
@@ -154,9 +165,9 @@ export class QueueMigration {
       LEFT JOIN "PaymentMethods" opm on o."PaymentMethodId"=opm.id and opm."deletedAt" is null
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
-      WHERE t.id>${latestLegacyIdFromLedger} and t.type=\'CREDIT\' and t."deletedAt" is null
+      WHERE ` + whereLegacyIdQuery + ` and t.type=\'CREDIT\' and t."deletedAt" is null
       ORDER BY t.id ASC limit ${queryLimit};
-    `; // WHERE t.id=XXXXXX and t."RefundTransactionId" is not null
+    `; //  WHERE t.id=137050 and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
 
     if (!res || !res.rows || res.rows.length <= 0)
