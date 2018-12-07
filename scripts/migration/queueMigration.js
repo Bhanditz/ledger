@@ -89,7 +89,7 @@ export class QueueMigration {
           throw new Error(`Latest Legacy Id From Ledger is wrong: ${this.latestLegacyIdFromLedger}`);
         }
       }
-      return this.latestLegacyIdFromLedger;  
+      return this.latestLegacyIdFromLedger;
     } catch (error) {
       throw error;
     }
@@ -120,7 +120,7 @@ export class QueueMigration {
     const queryLimit = parseInt(process.env.QUERY_LIMIT) || 1;
     console.log(`Inserting data starting from Legacy Id: ${latestLegacyIdFromLedger}`);
     let whereLegacyIdQuery = ` t.id>${latestLegacyIdFromLedger} `;
-    // if we want to run the script for a specific legacy id 
+    // if we want to run the script for a specific legacy id
     if (process.env.LEGACY_CREDIT_ID) {
       whereLegacyIdQuery = ` t.id=${process.env.LEGACY_CREDIT_ID} `;
     }
@@ -170,7 +170,7 @@ export class QueueMigration {
       LEFT JOIN "PaymentMethods" opm on o."PaymentMethodId"=opm.id and opm."deletedAt" is null
       LEFT JOIN "Collectives" opmc on opm."CollectiveId"=opmc.id  and opmc."deletedAt" is null
       LEFT JOIN "Transactions" td on t."TransactionGroup"=td."TransactionGroup" and td.type='DEBIT' and td."deletedAt" is null
-      WHERE ` + whereLegacyIdQuery + ` and t.type=\'CREDIT\' and t."deletedAt" is null
+      WHERE ${whereLegacyIdQuery} and t.type=\'CREDIT\' and t."deletedAt" is null
       ORDER BY t.id ASC limit ${queryLimit};
     `; //  WHERE t.id=137050 and t."RefundTransactionId" is not null
     const res = await currentProdDbClient.query(query);
