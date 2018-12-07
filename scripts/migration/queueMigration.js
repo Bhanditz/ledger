@@ -84,7 +84,8 @@ export class QueueMigration {
           return 0;
         }
         this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
-        if (isNaN(this.latestLegacyIdFromLedger) || this.latestLegacyIdFromLedger < 0) {
+        // sequelize returns -Infinity or Infinity in some cases
+        if (isNaN(this.latestLegacyIdFromLedger) || !isFinite(this.latestLegacyIdFromLedger)) {
           throw new Error(`Latest Legacy Id From Ledger is wrong: ${this.latestLegacyIdFromLedger}`);
         }
       }
