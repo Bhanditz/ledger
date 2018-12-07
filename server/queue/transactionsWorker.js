@@ -49,29 +49,26 @@ export default class TransactionsWorker {
     channel.prefetch(config.queue.prefetchSize);
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
-      try {
-        const incomingTransactions = JSON.parse(msg.content);
-        if (!incomingTransactions || incomingTransactions.length <= 0) {
-          throw new Error(NO_TRANSACTIONS_ERROR);
-        }
-        const persistingTransactions = [];
-        for (const transaction of incomingTransactions) {
-          const parsedTransaction = this.transactionService.parseTransaction(transaction);
-          const sequencedTransaction = await this.transactionService.getSequencedTransactions(parsedTransaction);
-          persistingTransactions.push(sequencedTransaction);
-        }
-        await this.transactionService.insertMultipleParsedTransactions(persistingTransactions);
-        channel.ack(msg);
-        this.logger.info('Transactions Parsed and inserted successfully');
-      } catch (error) {
-        channel.ack(msg);
-        // as there is a prefetch, showing that there is no transactions
-        // in the queue is polluting the logs, better skip it
-        if (!error.toString().includes(NO_TRANSACTIONS_ERROR)) {
-          this.logger.error(error);
-        }
-        this.sendToFailQueue(msg.content);
+      const incomingTransactions = JSON.parse(msg.content);
+      if (!incomingTransactions || incomingTransactions.length <= 0) {
+        throw new Error(NO_TRANSACTIONS_ERROR);
       }
+      for (const transaction of incomingTransactions) {
+        try {
+          const parsedTransactions = this.transactionService.parseTransaction(transaction);
+          const sequencedTransactions = await this.transactionService.getSequencedTransactions(parsedTransactions);
+          await this.transactionService.insertMultipleParsedTransactions(sequencedTransactions);
+          this.logger.info('Transactions Parsed and inserted successfully');
+        } catch (error) {
+          // we only resend transaction to FAIL queue if it's not already inserted
+          if (error && error.name == 'SequelizeUniqueConstraintError') {
+            this.logger.error('Transaction was already inserted into the database');
+          } else {
+            this.sendToFailQueue(Buffer.from(JSON.stringify([transaction]), 'utf8'));
+          }
+        }
+      }
+      channel.ack(msg);
     }, { noAck: false });
   }
 
