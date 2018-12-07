@@ -83,6 +83,9 @@ export class QueueMigration {
           return 0;
         }
         this.latestLegacyIdFromLedger = await LedgerTransaction.max('LegacyCreditTransactionId');
+        if (isNaN(this.latestLegacyIdFromLedger)) {
+          throw new Error(`Latest Legacy Id From Ledger is not a number: ${this.latestLegacyIdFromLedger}`);
+        }
       } catch (error) {
         throw error;
       }
@@ -117,7 +120,7 @@ export class QueueMigration {
     let whereLegacyIdQuery = ` t.id>${latestLegacyIdFromLedger} `;
     // if we want to run the script for a specific legacy id 
     if (process.env.LEGACY_CREDIT_ID) {
-      whereLegacyIdQuery = ` WHERE t.id=${LEGACY_CREDIT_ID} `;
+      whereLegacyIdQuery = ` t.id=${process.env.LEGACY_CREDIT_ID} `;
     }
     const query = ` SELECT
       t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
