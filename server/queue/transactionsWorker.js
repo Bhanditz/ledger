@@ -49,26 +49,35 @@ export default class TransactionsWorker {
     channel.prefetch(config.queue.prefetchSize);
     this.logger.info('Transactions Queue Worker has started.');
     channel.consume(q.queue, async (msg) => {
-      const incomingTransactions = JSON.parse(msg.content);
-      if (!incomingTransactions || incomingTransactions.length <= 0) {
-        throw new Error(NO_TRANSACTIONS_ERROR);
-      }
-      for (const transaction of incomingTransactions) {
-        try {
-          const parsedTransactions = this.transactionService.parseTransaction(transaction);
-          const sequencedTransactions = await this.transactionService.getSequencedTransactions(parsedTransactions);
-          await this.transactionService.insertMultipleParsedTransactions(sequencedTransactions);
-          this.logger.info('Transactions Parsed and inserted successfully');
-        } catch (error) {
-          // we only resend transaction to FAIL queue if it's not already inserted
-          if (error && error.name == 'SequelizeUniqueConstraintError') {
-            this.logger.error('Transaction was already inserted into the database');
-          } else {
-            this.sendToFailQueue(Buffer.from(JSON.stringify([transaction]), 'utf8'));
+      try {
+        const incomingTransactions = JSON.parse(msg.content);
+        if (!incomingTransactions || incomingTransactions.length <= 0) {
+          throw new Error(NO_TRANSACTIONS_ERROR);
+        }
+        for (const transaction of incomingTransactions) {
+          try {
+            const parsedTransactions = this.transactionService.parseTransaction(transaction);
+            const sequencedTransactions = await this.transactionService.getSequencedTransactions(parsedTransactions);
+            await this.transactionService.insertMultipleParsedTransactions(sequencedTransactions);
+            this.logger.info('Transactions Parsed and inserted successfully');
+          } catch (error) {
+            // we only resend transaction to FAIL queue if it's not already inserted
+            if (error && error.name == 'SequelizeUniqueConstraintError') {
+              this.logger.error('Transaction was already inserted into the database');
+            } else {
+              this.sendToFailQueue(Buffer.from(JSON.stringify([transaction]), 'utf8'));
+            }
           }
         }
+      } catch (error) {
+        // as there is a prefetch, showing that there is no transactions
+        // in the queue is polluting the logs, better skip it
+        if (!error.toString().includes(NO_TRANSACTIONS_ERROR)) {
+          this.logger.error(error);
+        }
+      } finally {
+        channel.ack(msg);
       }
-      channel.ack(msg);
     }, { noAck: false });
   }
 
