@@ -176,7 +176,7 @@ export class QueueMigration {
     const res = await currentProdDbClient.query(query);
 
     if (!res || !res.rows || res.rows.length <= 0)
-      console.error('No records were found');
+      throw new Error('No records were found');
 
     await this.sendToQueue(res.rows);
     const transactionLegacyIds = res.rows.map(t => t.id);
