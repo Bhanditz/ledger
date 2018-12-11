@@ -6,6 +6,7 @@ import TransactionRefundStrategy from '../strategies/transactionRefundStrategy';
 import TransactionForexRefundStrategy from '../strategies/transactionForexRefundStrategy';
 import Wallet from '../models/Wallet';
 import Database from '../models';
+import transactionCategoryEnum from '../globals/enums/transactionCategoryEnum';
 
 export default class TransactionService extends AbstractCrudService {
 
@@ -15,8 +16,9 @@ export default class TransactionService extends AbstractCrudService {
   }
 
   get(query = {}) {
-    query.include = [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }];
-    return this.getLegacyCreditTransactionsIdsOrderByCreatedAt(query)
+    const { includeHostedCollectivesTransactions, ...idsQuery } = query;
+    idsQuery.include = [{ model: Wallet, as: 'fromWallet' }, { model: Wallet, as: 'toWallet' }];
+    return this.getLegacyCreditTransactionsIdsOrderByCreatedAt(idsQuery, includeHostedCollectivesTransactions)
     .then(groupLegacyIdAndDateArr => {
       if (!groupLegacyIdAndDateArr || !groupLegacyIdAndDateArr[0]) {
         throw new Error('no results were found');
@@ -32,14 +34,20 @@ export default class TransactionService extends AbstractCrudService {
     });
   }
 
-  async getLegacyCreditTransactionsIdsOrderByCreatedAt(query = {}) {
+  async getLegacyCreditTransactionsIdsOrderByCreatedAt(query = {}, includeHostedCollectivesTransactions) {
     const where = JSON.parse(query.where);
+    let groupByQuery = ' GROUP BY "LegacyCreditTransactionId", "ToAccountId" ';
+    let havingQuery = ` HAVING "ToAccountId"='${where.ToAccountId}' `;
+    if (!includeHostedCollectivesTransactions) {
+      groupByQuery += ' , category ';
+      havingQuery += ` AND category='${transactionCategoryEnum.ACCOUNT}' `;
+    }
     return this.database.sequelize.query(`
       WITH groupIds AS (SELECT max("createdAt") as "createdAt",
         "LegacyCreditTransactionId"
         FROM "LedgerTransactions"
-        GROUP BY "LegacyCreditTransactionId", "ToAccountId"
-        HAVING "ToAccountId"='${where.ToAccountId}')
+        ${groupByQuery}
+        ${havingQuery})
       SELECT * FROM groupIds ORDER BY "createdAt" DESC limit ${query.limit || 20};`
     );
   }
