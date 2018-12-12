@@ -36,20 +36,21 @@ export default class TransactionService extends AbstractCrudService {
 
   async getLegacyCreditTransactionsIdsOrderByCreatedAt(query = {}, includeHostedCollectivesTransactions) {
     const where = JSON.parse(query.where);
+    includeHostedCollectivesTransactions = includeHostedCollectivesTransactions && JSON.parse(includeHostedCollectivesTransactions);
     let groupByQuery = ' GROUP BY "LegacyCreditTransactionId", "ToAccountId" ';
     let havingQuery = ` HAVING "ToAccountId"='${where.ToAccountId}' `;
     if (!includeHostedCollectivesTransactions) {
       groupByQuery += ' , category ';
       havingQuery += ` AND category='${transactionCategoryEnum.ACCOUNT}' `;
     }
-    return this.database.sequelize.query(`
-      WITH groupIds AS (SELECT max("createdAt") as "createdAt",
-        "LegacyCreditTransactionId"
-        FROM "LedgerTransactions"
-        ${groupByQuery}
-        ${havingQuery})
-      SELECT * FROM groupIds ORDER BY "createdAt" DESC limit ${query.limit || 20};`
-    );
+    const ledgerQuery = `
+    WITH groupIds AS (SELECT max("createdAt") as "createdAt",
+      "LegacyCreditTransactionId"
+      FROM "LedgerTransactions"
+      ${groupByQuery}
+      ${havingQuery})
+    SELECT * FROM groupIds ORDER BY "createdAt" DESC limit ${query.limit || 20};`;
+    return this.database.sequelize.query(ledgerQuery);
   }
 
   /** Given a transaction, identify which kind of transaction it will be and
