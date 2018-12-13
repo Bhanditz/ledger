@@ -121,8 +121,9 @@ export class QueueMigration {
     console.log(`Inserting data starting from Legacy Id: ${latestLegacyIdFromLedger}`);
     let whereLegacyIdQuery = ` t.id>${latestLegacyIdFromLedger} `;
     // if we want to run the script for a specific legacy id
-    if (process.env.LEGACY_CREDIT_ID) {
-      whereLegacyIdQuery = ` t.id=${process.env.LEGACY_CREDIT_ID} `;
+    if (process.env.LEGACY_CREDIT_IDS) {
+      const idsIntArray = process.env.LEGACY_CREDIT_IDS.split(',').map(Number);
+      whereLegacyIdQuery = ` t.id in (${idsIntArray}) `;
     }
     const query = ` SELECT
       t.id, td.id as "debitId", t."FromCollectiveId", t."CollectiveId", t."amountInHostCurrency", t."hostCurrency", t.amount, t.currency,
