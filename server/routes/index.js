@@ -16,6 +16,7 @@ export class Router {
       .filter(file => {
         return (file.indexOf('.js') > -1)
         && file !== 'index.js'
+        && file !== 'walletRouter.js'
         && file !== 'abstractRouter.js';
       })
       .map((file) => {
