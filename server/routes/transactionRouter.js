@@ -29,7 +29,7 @@ export default class TransactionRouter extends AbstractRouter {
 
   /**
    * @api {post} /transactions Post Transactions
-   * @apiName get_transactions
+   * @apiName post_transactions
    * @apiGroup Transactions
    *
    * @apiParam {String} FromAccountId The identification of the Account that's sending money
