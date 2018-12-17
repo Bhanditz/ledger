@@ -192,6 +192,11 @@ export class QueueMigration {
       console.log('migrating single transaction...');
       await this.sendTransactionsToQueue();
       console.log('tx sent to queue...');
+      // If it's just a list of legacy ids to be inserted, we don't need to rerun the job
+      // therefore we just need to exit succesfully
+      if (process.env.LEGACY_CREDIT_IDS) {
+        process.exit(0);
+      }
       this.run();
     } catch (error) {
       console.error(error);
