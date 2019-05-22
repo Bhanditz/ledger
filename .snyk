@@ -1,0 +1,20 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.13.3
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-AXIOS-174505:
+    - axios:
+        patched: '2019-05-22T00:37:22.166Z'
+  'npm:hoek:20180212':
+    - npx > npm > request > hawk > hoek:
+        patched: '2019-05-22T00:37:22.166Z'
+    - npx > npm > request > hawk > boom > hoek:
+        patched: '2019-05-22T00:37:22.166Z'
+    - npx > npm > request > hawk > sntp > hoek:
+        patched: '2019-05-22T00:37:22.166Z'
+    - npx > npm > request > hawk > cryptiles > boom > hoek:
+        patched: '2019-05-22T00:37:22.166Z'
+  'npm:lodash:20180130':
+    - sequelize-temporal > lodash:
+        patched: '2019-05-22T00:37:22.166Z'

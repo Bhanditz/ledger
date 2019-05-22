@@ -32,7 +32,9 @@
     "lint": "npx eslint '**/*.js'",
     "lint-fix": "npx eslint '**/*.js' --fix",
     "deploy:staging": "git push staging master",
-    "deploy:prod": "git push prod master"
+    "deploy:prod": "git push prod master",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -80,7 +82,7 @@
     "nock": "10.0.3",
     "nodemon": "1.18.7",
     "npx": "10.2.0",
-    "nyc": "13.1.0",
+    "nyc": "13.2.0",
     "path": "0.12.7",
     "pg": "7.7.1",
     "pg-async": "3.1.0",
@@ -92,9 +94,11 @@
     "sequelize-temporal": "1.0.6",
     "sinon": "7.1.1",
     "uuid": "3.3.2",
-    "webpack": "4.27.0"
+    "webpack": "4.27.0",
+    "snyk": "^1.166.0"
   },
   "devDependencies": {
     "mocha-circleci-reporter": "0.0.3"
-  }
+  },
+  "snyk": true
 }
