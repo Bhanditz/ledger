@@ -45,7 +45,7 @@
   "dependencies": {
     "ajv": "6.6.1",
     "amqplib": "0.5.3",
-    "apidoc": "0.17.7",
+    "apidoc": "0.18.0",
     "axios": "0.18.0",
     "babel-cli": "6.26.0",
     "babel-core": "6.26.3",
