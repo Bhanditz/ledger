@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/opencollective/ledger#readme",
   "dependencies": {
-    "ajv": "6.6.1",
+    "ajv": "6.12.3",
     "amqplib": "0.5.3",
     "apidoc": "0.17.7",
     "axios": "0.18.0",
