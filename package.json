@@ -50,7 +50,7 @@
     "babel-cli": "6.26.0",
     "babel-core": "6.26.3",
     "babel-eslint": "10.0.1",
-    "babel-loader": "8.0.4",
+    "babel-loader": "8.2.4",
     "babel-plugin-add-module-exports": "1.0.0",
     "babel-plugin-istanbul": "5.1.0",
     "babel-plugin-lodash": "3.3.4",
@@ -92,7 +92,7 @@
     "sequelize-temporal": "1.0.6",
     "sinon": "7.1.1",
     "uuid": "3.3.2",
-    "webpack": "4.27.0"
+    "webpack": "5.0.0"
   },
   "devDependencies": {
     "mocha-circleci-reporter": "0.0.3"
