@@ -87,12 +87,12 @@
     "pg-format": "1.0.4",
     "pg-hstore": "2.3.2",
     "pino": "5.9.0",
-    "sequelize": "4.41.2",
+    "sequelize": "5.1.0",
     "sequelize-cli": "5.4.0",
     "sequelize-temporal": "1.0.6",
     "sinon": "7.1.1",
     "uuid": "3.3.2",
-    "webpack": "4.27.0"
+    "webpack": "5.0.0"
   },
   "devDependencies": {
     "mocha-circleci-reporter": "0.0.3"
